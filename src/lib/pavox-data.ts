@@ -6,7 +6,12 @@ export type ProductRow = {
   name: string;
   description: string;
   price: number;
+  promotional_price: number | null;
+  type: string;
   status: string;
+  main_image: string;
+  track_inventory: boolean;
+  inventory_quantity: number;
   created_at: string;
 };
 
@@ -42,7 +47,7 @@ export function useProducts(enabled = true) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, description, price, status, created_at")
+        .select("id, name, description, price, promotional_price, type, status, main_image, track_inventory, inventory_quantity, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ProductRow[];

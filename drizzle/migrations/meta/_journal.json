@@ -8,6 +8,20 @@
       "when": 1790029139288,
       "tag": "0000_pavox_multitenant_core",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790031180318,
+      "tag": "0001_products_module_expansion",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790031204608,
+      "tag": "0002_product_images_storage_policies",
+      "breakpoints": true
     }
   ]
 }
