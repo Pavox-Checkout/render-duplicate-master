@@ -77,19 +77,28 @@ function Overview() {
       <div className="surface p-5">
         <h2 className="text-base font-semibold">Faturamento</h2>
         <p className="text-[13px] text-muted-foreground">Últimos 30 dias</p>
-        <EmptyState
-          className="mt-5 border-0 bg-secondary/40"
-          icon={LineChart}
-          title="Seus dados aparecerão aqui"
-          description="Comece criando seu primeiro produto e checkout."
-          action={
-            <Button asChild>
-              <Link to="/produtos">
-                <Package className="h-4 w-4" /> Criar primeiro produto
-              </Link>
-            </Button>
-          }
-        />
+        {products.length === 0 ? (
+          <EmptyState
+            className="mt-5 border-0 bg-secondary/40"
+            icon={LineChart}
+            title="Seus dados aparecerão aqui"
+            description="Comece criando seu primeiro produto e checkout."
+            action={
+              <Button asChild>
+                <Link to="/produtos">
+                  <Package className="h-4 w-4" /> Criar primeiro produto
+                </Link>
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            className="mt-5 border-0 bg-secondary/40"
+            icon={LineChart}
+            title="Vendas aparecerão aqui"
+            description={`Você tem ${products.length} ${products.length === 1 ? "produto cadastrado" : "produtos cadastrados"}. Assim que houver vendas, este gráfico será preenchido.`}
+          />
+        )}
       </div>
 
       <div className="surface overflow-hidden">
