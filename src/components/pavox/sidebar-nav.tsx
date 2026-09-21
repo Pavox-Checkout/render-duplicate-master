@@ -59,7 +59,7 @@ function NavItem({
   to: string;
   label: string;
   icon: typeof LayoutGrid;
-  onNavigate?: () => void;
+  onNavigate?: (() => void) | undefined;
 }) {
   return (
     <Link
@@ -78,8 +78,8 @@ export function SidebarNav({
   onNavigate,
   className,
 }: {
-  onNavigate?: () => void;
-  className?: string;
+  onNavigate?: (() => void) | undefined;
+  className?: string | undefined;
 }) {
   return (
     <div
