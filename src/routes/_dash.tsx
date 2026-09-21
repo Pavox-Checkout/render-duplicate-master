@@ -14,6 +14,20 @@ export const Route = createFileRoute("/_dash")({
 
 function DashLayout() {
   const [open, setOpen] = useState(false);
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !session) void navigate({ to: "/login" });
+  }, [loading, session, navigate]);
+
+  if (loading || !session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
