@@ -23,7 +23,7 @@ import { useProducts } from "@/lib/pavox-data";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_dash/produtos")({
+export const Route = createFileRoute("/_dash/produtos/")({
   component: Produtos,
   head: () => ({
     meta: [
