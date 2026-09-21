@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_records: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          paid_at: string | null
+          reference_period: string
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          reference_period?: string
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          reference_period?: string
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checkouts: {
         Row: {
           config: Json
@@ -145,6 +184,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plans: {
+        Row: {
+          active: boolean
+          checkout_limit: number
+          created_at: string
+          features: Json
+          highlight: boolean
+          id: string
+          monthly_price: number
+          name: string
+          position: number
+          slug: string
+          transaction_fee_percent: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          checkout_limit?: number
+          created_at?: string
+          features?: Json
+          highlight?: boolean
+          id?: string
+          monthly_price?: number
+          name: string
+          position?: number
+          slug: string
+          transaction_fee_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          checkout_limit?: number
+          created_at?: string
+          features?: Json
+          highlight?: boolean
+          id?: string
+          monthly_price?: number
+          name?: string
+          position?: number
+          slug?: string
+          transaction_fee_percent?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_variants: {
         Row: {
@@ -348,6 +432,124 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          pending_plan_id: string | null
+          plan_id: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          pending_plan_id?: string | null
+          plan_id: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          pending_plan_id?: string | null
+          plan_id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_pending_plan_id_fkey"
+            columns: ["pending_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_fees: {
+        Row: {
+          billing_record_id: string | null
+          created_at: string
+          fee_amount: number
+          fee_percent: number
+          id: string
+          order_id: string | null
+          plan_id: string | null
+          reference_period: string
+          status: string
+          transaction_amount: number
+          user_id: string
+        }
+        Insert: {
+          billing_record_id?: string | null
+          created_at?: string
+          fee_amount?: number
+          fee_percent?: number
+          id?: string
+          order_id?: string | null
+          plan_id?: string | null
+          reference_period?: string
+          status?: string
+          transaction_amount?: number
+          user_id?: string
+        }
+        Update: {
+          billing_record_id?: string | null
+          created_at?: string
+          fee_amount?: number
+          fee_percent?: number
+          id?: string
+          order_id?: string | null
+          plan_id?: string | null
+          reference_period?: string
+          status?: string
+          transaction_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_fees_billing_record_id_fkey"
+            columns: ["billing_record_id"]
+            isOneToOne: false
+            referencedRelation: "billing_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_fees_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_fees_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -22,6 +22,13 @@
       "when": 1790031204608,
       "tag": "0002_product_images_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790031930890,
+      "tag": "0003_pavox_plans_billing",
+      "breakpoints": true
     }
   ]
 }
