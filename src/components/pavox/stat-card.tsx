@@ -27,6 +27,7 @@ export function StatCard({
       </div>
       <p className="mt-4 font-display text-[26px] leading-none font-bold tracking-tight">{value}</p>
       <div className="mt-3 flex items-center gap-2 text-[12px]">
+        {delta !== undefined && (
         <span
           className={cn(
             "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold",
