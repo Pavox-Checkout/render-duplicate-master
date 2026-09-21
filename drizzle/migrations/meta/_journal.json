@@ -29,6 +29,13 @@
       "when": 1790031930890,
       "tag": "0003_pavox_plans_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790032205410,
+      "tag": "0004_checkouts_publish_and_limit",
+      "breakpoints": true
     }
   ]
 }
