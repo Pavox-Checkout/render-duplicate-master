@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-rout
 import { useEffect, useState } from "react";
 import { Bell, Loader2, Menu, Search, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/lib/billing";
 import { SidebarNav } from "@/components/pavox/sidebar-nav";
 import { PavoxLogo } from "@/components/pavox/logo";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
