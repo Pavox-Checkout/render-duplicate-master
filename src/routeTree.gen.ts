@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashRouteImport } from './routes/_dash'
+import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashIndexRouteImport } from './routes/_dash/index'
 import { Route as DashAnalyticsRouteImport } from './routes/_dash/analytics'
 import { Route as DashClientesRouteImport } from './routes/_dash/clientes'
@@ -29,6 +31,16 @@ import { Route as DashPedidosIdRouteImport } from './routes/_dash/pedidos.$id'
 
 const DashRoute = DashRouteImport.update({
   id: '/_dash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashIndexRoute = DashIndexRouteImport.update({
@@ -114,6 +126,8 @@ const DashPedidosIdRoute = DashPedidosIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof DashIndexRoute
+  '/cadastro': typeof CadastroRoute
+  '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
   '/configuracoes': typeof DashConfiguracoesRoute
@@ -131,6 +145,8 @@ export interface FileRoutesByFullPath {
   '/pedidos/': typeof DashPedidosIndexRoute
 }
 export interface FileRoutesByTo {
+  '/cadastro': typeof CadastroRoute
+  '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
   '/configuracoes': typeof DashConfiguracoesRoute
@@ -151,6 +167,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_dash': typeof DashRouteWithChildren
+  '/cadastro': typeof CadastroRoute
+  '/login': typeof LoginRoute
   '/_dash/analytics': typeof DashAnalyticsRoute
   '/_dash/clientes': typeof DashClientesRoute
   '/_dash/configuracoes': typeof DashConfiguracoesRoute
@@ -172,6 +190,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cadastro'
+    | '/login'
     | '/analytics'
     | '/clientes'
     | '/configuracoes'
@@ -189,6 +209,8 @@ export interface FileRouteTypes {
     | '/pedidos/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/cadastro'
+    | '/login'
     | '/analytics'
     | '/clientes'
     | '/configuracoes'
@@ -208,6 +230,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_dash'
+    | '/cadastro'
+    | '/login'
     | '/_dash/analytics'
     | '/_dash/clientes'
     | '/_dash/configuracoes'
@@ -228,6 +252,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   DashRoute: typeof DashRouteWithChildren
+  CadastroRoute: typeof CadastroRoute
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -237,6 +263,20 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof DashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_dash/': {
@@ -396,6 +436,8 @@ const DashRouteWithChildren = DashRoute._addFileChildren(DashRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   DashRoute: DashRouteWithChildren,
+  CadastroRoute: CadastroRoute,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
