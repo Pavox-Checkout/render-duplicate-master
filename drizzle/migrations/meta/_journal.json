@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790029139288,
+      "tag": "0000_pavox_multitenant_core",
+      "breakpoints": true
+    }
+  ]
 }
