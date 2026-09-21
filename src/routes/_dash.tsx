@@ -1,6 +1,7 @@
-import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Bell, Menu, Search, Sparkles } from "lucide-react";
+import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Bell, Loader2, Menu, Search, Sparkles } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { SidebarNav } from "@/components/pavox/sidebar-nav";
 import { PavoxLogo } from "@/components/pavox/logo";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -13,6 +14,20 @@ export const Route = createFileRoute("/_dash")({
 
 function DashLayout() {
   const [open, setOpen] = useState(false);
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !session) void navigate({ to: "/login" });
+  }, [loading, session, navigate]);
+
+  if (loading || !session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">

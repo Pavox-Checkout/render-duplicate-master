@@ -16,7 +16,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import { PavoxLogo } from "./logo";
-import { user } from "@/lib/mock";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -28,7 +28,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronsUpDown, LogOut } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+
+function initialsOf(name: string, fallback: string) {
+  const source = name.trim() || fallback;
+  return (
+    source
+      .split(/[\s@.]+/)
+      .filter(Boolean)
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "PX"
+  );
+}
 
 const main = [
   { to: "/", label: "Visão geral", icon: LayoutGrid },
@@ -81,6 +95,18 @@ export function SidebarNav({
   onNavigate?: (() => void) | undefined;
   className?: string | undefined;
 }) {
+  const { profile, user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const email = profile?.email || user?.email || "";
+  const name = profile?.full_name || email.split("@")[0] || "Minha conta";
+  const company = profile?.company_name || "Sua empresa";
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Sessão encerrada");
+    void navigate({ to: "/login" });
+  };
+
   return (
     <div
       className={cn(
@@ -110,19 +136,17 @@ export function SidebarNav({
           <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-brand-gradient text-[12px] font-semibold text-primary-foreground">
-                {user.initials}
+                {initialsOf(name, email)}
               </AvatarFallback>
             </Avatar>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13px] font-semibold">{user.name}</span>
-              <span className="block truncate text-[11.5px] text-muted-foreground">
-                {user.email}
-              </span>
+              <span className="block truncate text-[13px] font-semibold">{name}</span>
+              <span className="block truncate text-[11.5px] text-muted-foreground">{email}</span>
             </span>
             <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-56">
-            <DropdownMenuLabel>{user.company}</DropdownMenuLabel>
+            <DropdownMenuLabel>{company}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/conta">Minha conta</Link>
@@ -131,7 +155,7 @@ export function SidebarNav({
               <Link to="/plano">Plano e cobrança</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast("Sessão encerrada no protótipo")}>
+            <DropdownMenuItem onClick={() => void handleSignOut()}>
               <LogOut className="mr-2 h-4 w-4" /> Sair
             </DropdownMenuItem>
           </DropdownMenuContent>

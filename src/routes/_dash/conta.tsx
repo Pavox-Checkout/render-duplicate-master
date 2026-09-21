@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import { user } from "@/lib/mock";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_dash/conta")({
@@ -21,6 +21,19 @@ export const Route = createFileRoute("/_dash/conta")({
 });
 
 function Conta() {
+  const { user: authUser, profile } = useAuth();
+  const name = profile?.full_name || authUser?.email?.split("@")[0] || "";
+  const email = profile?.email || authUser?.email || "";
+  const company = profile?.company_name || "";
+  const initials =
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "PX";
+
   return (
     <>
       <PageHeader title="Minha conta" subtitle="Seus dados pessoais e preferências de acesso." />
@@ -31,7 +44,7 @@ function Conta() {
           <div className="mt-5 flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarFallback className="bg-brand-gradient text-lg font-semibold text-primary-foreground">
-                {user.initials}
+                {initials}
               </AvatarFallback>
             </Avatar>
             <Button variant="outline" size="sm" onClick={() => toast("Envio de foto em breve")}>
@@ -41,19 +54,19 @@ function Conta() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="n">Nome</Label>
-              <Input id="n" defaultValue={user.name} />
+              <Input id="n" key={name} defaultValue={name} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="e">E-mail</Label>
-              <Input id="e" defaultValue={user.email} />
+              <Input id="e" key={email} defaultValue={email} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="t">Telefone</Label>
-              <Input id="t" defaultValue="(11) 98877-1200" />
+              <Input id="t" placeholder="(11) 90000-0000" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="c">Empresa</Label>
-              <Input id="c" defaultValue={user.company} />
+              <Input id="c" key={company} defaultValue={company} />
             </div>
           </div>
           <Button className="mt-6" onClick={() => toast.success("Alterações salvas")}>

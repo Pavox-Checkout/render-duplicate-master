@@ -11,12 +11,12 @@ export function StatCard({
 }: {
   label: string;
   value: string;
-  delta: number;
+  delta?: number;
   hint?: string;
   icon: LucideIcon;
   suffix?: string;
 }) {
-  const positive = delta >= 0;
+  const positive = (delta ?? 0) >= 0;
   return (
     <div className="surface group relative overflow-hidden p-5 transition-shadow hover:shadow-[var(--shadow-lift)]">
       <div className="flex items-start justify-between">
@@ -27,6 +27,7 @@ export function StatCard({
       </div>
       <p className="mt-4 font-display text-[26px] leading-none font-bold tracking-tight">{value}</p>
       <div className="mt-3 flex items-center gap-2 text-[12px]">
+        {delta !== undefined && (
         <span
           className={cn(
             "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold",
@@ -44,6 +45,7 @@ export function StatCard({
           {delta.toLocaleString("pt-BR")}
           {suffix}
         </span>
+        )}
         {hint && <span className="text-muted-foreground">{hint}</span>}
       </div>
     </div>
