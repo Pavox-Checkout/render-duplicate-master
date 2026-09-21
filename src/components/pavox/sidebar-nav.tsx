@@ -95,6 +95,18 @@ export function SidebarNav({
   onNavigate?: (() => void) | undefined;
   className?: string | undefined;
 }) {
+  const { profile, user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const email = profile?.email || user?.email || "";
+  const name = profile?.full_name || email.split("@")[0] || "Minha conta";
+  const company = profile?.company_name || "Sua empresa";
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Sessão encerrada");
+    void navigate({ to: "/login" });
+  };
+
   return (
     <div
       className={cn(
