@@ -146,7 +146,7 @@ export function SidebarNav({
             <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-56">
-            <DropdownMenuLabel>{user.company}</DropdownMenuLabel>
+            <DropdownMenuLabel>{company}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/conta">Minha conta</Link>
@@ -155,7 +155,7 @@ export function SidebarNav({
               <Link to="/plano">Plano e cobrança</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast("Sessão encerrada no protótipo")}>
+            <DropdownMenuItem onClick={() => void handleSignOut()}>
               <LogOut className="mr-2 h-4 w-4" /> Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
