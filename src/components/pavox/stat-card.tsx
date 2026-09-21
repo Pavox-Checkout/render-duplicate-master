@@ -45,6 +45,7 @@ export function StatCard({
           {delta.toLocaleString("pt-BR")}
           {suffix}
         </span>
+        )}
         {hint && <span className="text-muted-foreground">{hint}</span>}
       </div>
     </div>
