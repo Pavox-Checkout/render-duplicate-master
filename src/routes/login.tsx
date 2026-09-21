@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import loginHeroAsset from "@/assets/pavox-login-hero.png.asset.json";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -110,7 +111,10 @@ function LoginPage() {
         </div>
       </div>
 
-      <div className="bg-brand-gradient relative hidden flex-col justify-end p-12 lg:flex">
+      <div
+        className="relative hidden flex-col justify-end bg-cover bg-center bg-no-repeat p-12 lg:flex"
+        style={{ backgroundImage: `url(${loginHeroAsset.url})` }}
+      >
         <div className="grid-noise absolute inset-0 opacity-30" />
         <div className="relative">
           <p className="font-display text-[30px] leading-tight font-bold text-primary-foreground">
