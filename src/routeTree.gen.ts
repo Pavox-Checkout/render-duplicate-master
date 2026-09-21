@@ -28,6 +28,7 @@ import { Route as DashCheckoutsNovoRouteImport } from './routes/_dash/checkouts.
 import { Route as DashPedidosIndexRouteImport } from './routes/_dash/pedidos.index'
 import { Route as DashPedidosIdRouteImport } from './routes/_dash/pedidos.$id'
 import { Route as DashProdutosIndexRouteImport } from './routes/_dash/produtos.index'
+import { Route as DashProdutosNovoRouteImport } from './routes/_dash/produtos.novo'
 
 const DashRoute = DashRouteImport.update({
   id: '/_dash',
@@ -123,6 +124,11 @@ const DashProdutosIndexRoute = DashProdutosIndexRouteImport.update({
   path: '/produtos/',
   getParentRoute: () => DashRoute,
 } as any)
+const DashProdutosNovoRoute = DashProdutosNovoRouteImport.update({
+  id: '/produtos/novo',
+  path: '/produtos/novo',
+  getParentRoute: () => DashRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof DashIndexRoute
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/vendas': typeof DashVendasRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
+  '/produtos/novo': typeof DashProdutosNovoRoute
   '/checkouts/': typeof DashCheckoutsIndexRoute
   '/pedidos/': typeof DashPedidosIndexRoute
   '/produtos/': typeof DashProdutosIndexRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/': typeof DashIndexRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
+  '/produtos/novo': typeof DashProdutosNovoRoute
   '/checkouts': typeof DashCheckoutsIndexRoute
   '/pedidos': typeof DashPedidosIndexRoute
   '/produtos': typeof DashProdutosIndexRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/_dash/': typeof DashIndexRoute
   '/_dash/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
+  '/_dash/produtos/novo': typeof DashProdutosNovoRoute
   '/_dash/checkouts/': typeof DashCheckoutsIndexRoute
   '/_dash/pedidos/': typeof DashPedidosIndexRoute
   '/_dash/produtos/': typeof DashProdutosIndexRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/vendas'
     | '/checkouts/novo'
     | '/pedidos/$id'
+    | '/produtos/novo'
     | '/checkouts/'
     | '/pedidos/'
     | '/produtos/'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/'
     | '/checkouts/novo'
     | '/pedidos/$id'
+    | '/produtos/novo'
     | '/checkouts'
     | '/pedidos'
     | '/produtos'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_dash/'
     | '/_dash/checkouts/novo'
     | '/_dash/pedidos/$id'
+    | '/_dash/produtos/novo'
     | '/_dash/checkouts/'
     | '/_dash/pedidos/'
     | '/_dash/produtos/'
@@ -391,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashProdutosIndexRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/produtos/novo': {
+      id: '/_dash/produtos/novo'
+      path: '/produtos/novo'
+      fullPath: '/produtos/novo'
+      preLoaderRoute: typeof DashProdutosNovoRouteImport
+      parentRoute: typeof DashRoute
+    }
   }
 }
 
@@ -408,6 +427,7 @@ interface DashRouteChildren {
   DashIndexRoute: typeof DashIndexRoute
   DashCheckoutsNovoRoute: typeof DashCheckoutsNovoRoute
   DashPedidosIdRoute: typeof DashPedidosIdRoute
+  DashProdutosNovoRoute: typeof DashProdutosNovoRoute
   DashCheckoutsIndexRoute: typeof DashCheckoutsIndexRoute
   DashPedidosIndexRoute: typeof DashPedidosIndexRoute
   DashProdutosIndexRoute: typeof DashProdutosIndexRoute
@@ -427,6 +447,7 @@ const DashRouteChildren: DashRouteChildren = {
   DashIndexRoute: DashIndexRoute,
   DashCheckoutsNovoRoute: DashCheckoutsNovoRoute,
   DashPedidosIdRoute: DashPedidosIdRoute,
+  DashProdutosNovoRoute: DashProdutosNovoRoute,
   DashCheckoutsIndexRoute: DashCheckoutsIndexRoute,
   DashPedidosIndexRoute: DashPedidosIndexRoute,
   DashProdutosIndexRoute: DashProdutosIndexRoute,
