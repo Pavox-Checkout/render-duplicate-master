@@ -165,8 +165,7 @@ function CadastroPage() {
         <div className="grid-noise absolute inset-0 opacity-30" />
         <div className="relative">
           <p className="font-display text-[30px] leading-tight font-bold text-primary-foreground">
-            Comece sua
-            <br /> operação hoje.
+             <br /> operação hoje.
           </p>
           <p className="mt-3 max-w-[340px] text-[14px] text-primary-foreground/80">
             Sua conta começa limpa: crie seu primeiro produto, publique um checkout e acompanhe os
