@@ -16,7 +16,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import { PavoxLogo } from "./logo";
-import { user } from "@/lib/mock";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -28,7 +28,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronsUpDown, LogOut } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+
+function initialsOf(name: string, fallback: string) {
+  const source = name.trim() || fallback;
+  return (
+    source
+      .split(/[\s@.]+/)
+      .filter(Boolean)
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "PX"
+  );
+}
 
 const main = [
   { to: "/", label: "Visão geral", icon: LayoutGrid },
