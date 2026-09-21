@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   BadgePercent,
+  LineChart,
+  Package,
   Plus,
   Receipt,
   ShoppingCart,
@@ -10,12 +12,12 @@ import {
 import { PageHeader } from "@/components/pavox/page-header";
 import { PeriodFilter } from "@/components/pavox/period-filter";
 import { StatCard } from "@/components/pavox/stat-card";
-import { RevenueChart } from "@/components/pavox/revenue-chart";
-import { FunnelCard } from "@/components/pavox/funnel-card";
-import { IntelligenceCard } from "@/components/pavox/intelligence-card";
 import { StatusBadge } from "@/components/pavox/status-badge";
+import { EmptyState } from "@/components/pavox/empty-state";
 import { Button } from "@/components/ui/button";
-import { brl, metrics, orders, user } from "@/lib/mock";
+import { brl } from "@/lib/mock";
+import { useAuth } from "@/hooks/useAuth";
+import { useOrders } from "@/lib/pavox-data";
 
 export const Route = createFileRoute("/_dash/")({
   component: Overview,
@@ -36,18 +38,21 @@ export const Route = createFileRoute("/_dash/")({
   }),
 });
 
-const icons = {
-  revenue: Wallet,
-  orders: ShoppingCart,
-  ticket: Receipt,
-  conversion: BadgePercent,
-} as const;
-
 function Overview() {
+  const { profile, user } = useAuth();
+  const { data: orders = [] } = useOrders();
+
+  const firstName =
+    (profile?.full_name || "").trim().split(" ")[0] || user?.email?.split("@")[0] || "por aqui";
+
+  const approved = orders.filter((o) => o.status === "Aprovado");
+  const revenue = approved.reduce((sum, o) => sum + Number(o.amount), 0);
+  const ticket = approved.length ? revenue / approved.length : 0;
+
   return (
     <>
       <PageHeader
-        title={`Bom dia, ${user.name.split(" ")[0]} 👋`}
+        title={`Bom dia, ${firstName} 👋`}
         subtitle="Acompanhe o desempenho da sua operação em tempo real."
         actions={
           <>
@@ -62,23 +67,28 @@ function Overview() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((m) => (
-          <StatCard
-            key={m.label}
-            label={m.label}
-            value={m.value}
-            delta={m.delta}
-            hint={m.hint}
-            icon={icons[m.icon]}
-          />
-        ))}
+        <StatCard label="Faturamento" value={brl(revenue)} hint="30 dias" icon={Wallet} />
+        <StatCard label="Pedidos" value={String(orders.length)} hint="30 dias" icon={ShoppingCart} />
+        <StatCard label="Ticket médio" value={brl(ticket)} hint="30 dias" icon={Receipt} />
+        <StatCard label="Taxa de conversão" value="0,00%" hint="30 dias" icon={BadgePercent} />
       </div>
 
-      <IntelligenceCard />
-
-      <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
-        <RevenueChart />
-        <FunnelCard />
+      <div className="surface p-5">
+        <h2 className="text-base font-semibold">Faturamento</h2>
+        <p className="text-[13px] text-muted-foreground">Últimos 30 dias</p>
+        <EmptyState
+          className="mt-5 border-0 bg-secondary/40"
+          icon={LineChart}
+          title="Seus dados aparecerão aqui"
+          description="Comece criando seu primeiro produto e checkout."
+          action={
+            <Button asChild>
+              <Link to="/produtos">
+                <Package className="h-4 w-4" /> Criar primeiro produto
+              </Link>
+            </Button>
+          }
+        />
       </div>
 
       <div className="surface overflow-hidden">
@@ -93,42 +103,42 @@ function Overview() {
             </Link>
           </Button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[13.5px]">
-            <thead>
-              <tr className="border-y border-border bg-secondary/50 text-left text-[12px] text-muted-foreground">
-                <th className="px-5 py-2.5 font-medium">Pedido</th>
-                <th className="px-5 py-2.5 font-medium">Cliente</th>
-                <th className="px-5 py-2.5 font-medium">Produto</th>
-                <th className="px-5 py-2.5 font-medium">Valor</th>
-                <th className="px-5 py-2.5 font-medium">Pagamento</th>
-                <th className="px-5 py-2.5 font-medium">Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.slice(0, 6).map((o) => (
-                <tr key={o.id} className="border-b border-border/70 last:border-0 hover:bg-secondary/40">
-                  <td className="px-5 py-3">
-                    <Link
-                      to="/pedidos/$id"
-                      params={{ id: o.id }}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      #{o.id}
-                    </Link>
-                  </td>
-                  <td className="px-5 py-3">{o.customer}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{o.product}</td>
-                  <td className="px-5 py-3 font-semibold">{brl(o.amount)}</td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={o.status} />
-                  </td>
-                  <td className="px-5 py-3 text-muted-foreground">{o.date}</td>
+        {orders.length === 0 ? (
+          <div className="px-5 pb-5">
+            <EmptyState
+              icon={Receipt}
+              title="Nenhum pedido ainda."
+              description="Quando seus clientes realizarem compras, seus pedidos aparecerão aqui."
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13.5px]">
+              <thead>
+                <tr className="border-y border-border bg-secondary/50 text-left text-[12px] text-muted-foreground">
+                  <th className="px-5 py-2.5 font-medium">Pedido</th>
+                  <th className="px-5 py-2.5 font-medium">Valor</th>
+                  <th className="px-5 py-2.5 font-medium">Pagamento</th>
+                  <th className="px-5 py-2.5 font-medium">Data</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {orders.slice(0, 6).map((o) => (
+                  <tr key={o.id} className="border-b border-border/70 last:border-0 hover:bg-secondary/40">
+                    <td className="px-5 py-3 font-medium">#{o.reference || o.id.slice(0, 8)}</td>
+                    <td className="px-5 py-3 font-semibold">{brl(Number(o.amount))}</td>
+                    <td className="px-5 py-3">
+                      <StatusBadge status={o.status} />
+                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">
+                      {new Date(o.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </>
   );
