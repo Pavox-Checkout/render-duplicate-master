@@ -334,6 +334,7 @@ function CheckoutBuilder() {
       {/* VISUALIZAR */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent
+          className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:max-w-none"
         >
           <DialogHeader className="flex-row items-center gap-3 border-b border-border bg-background px-4 py-2.5">
             <DialogTitle className="text-[14px]">Prévia do comprador</DialogTitle>
