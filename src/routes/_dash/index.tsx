@@ -17,7 +17,7 @@ import { EmptyState } from "@/components/pavox/empty-state";
 import { Button } from "@/components/ui/button";
 import { brl } from "@/lib/mock";
 import { useAuth } from "@/hooks/useAuth";
-import { useOrders } from "@/lib/pavox-data";
+import { useOrders, useProducts } from "@/lib/pavox-data";
 
 export const Route = createFileRoute("/_dash/")({
   component: Overview,
