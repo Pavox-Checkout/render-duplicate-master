@@ -41,6 +41,7 @@ export const Route = createFileRoute("/_dash/")({
 function Overview() {
   const { profile, user } = useAuth();
   const { data: orders = [] } = useOrders();
+  const { data: products = [] } = useProducts();
 
   const firstName =
     (profile?.full_name || "").trim().split(" ")[0] || user?.email?.split("@")[0] || "por aqui";
