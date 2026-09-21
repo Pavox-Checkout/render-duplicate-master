@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductImage } from "@/components/pavox/product-image";
 import { supabase } from "@/integrations/supabase/client";
+import { useCheckoutList } from "@/lib/checkouts-data";
 import { cn } from "@/lib/utils";
 import {
   comboKey,
@@ -183,6 +184,7 @@ export function ProductFormView({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<ProductForm>(initial ?? emptyProduct());
+  const { data: checkoutList = [] } = useCheckoutList();
   const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
   const [tagInput, setTagInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -289,6 +291,7 @@ export function ProductFormView({
         main_image: form.main_image,
         images: form.images,
         status: form.status,
+        checkout_id: form.checkout_id || null,
         slug: form.slug || slugify(form.name),
         seo_title: form.seo_title.trim(),
         seo_description: form.seo_description.trim(),
@@ -727,6 +730,30 @@ export function ProductFormView({
                 <SelectItem value="Inativo">Inativo</SelectItem>
               </SelectContent>
             </Select>
+          </Section>
+
+          <Section title="Checkout" description="Vincule este produto a um checkout que você já criou.">
+            <Select
+              value={form.checkout_id || "none"}
+              onValueChange={(v) => set("checkout_id", v === "none" ? "" : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Nenhum checkout" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum checkout</SelectItem>
+                {checkoutList.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {checkoutList.length === 0 ? (
+              <p className="text-[12px] text-muted-foreground">
+                Você ainda não criou nenhum checkout. Crie um em Checkouts para vinculá-lo aqui.
+              </p>
+            ) : null}
           </Section>
 
           <div className="flex gap-2">

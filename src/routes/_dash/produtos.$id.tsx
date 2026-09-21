@@ -63,6 +63,7 @@ function toForm(product: Record<string, any>, variants: Record<string, any>[]): 
     main_image: product["main_image"] ?? "",
     images: product["images"] ?? [],
     status: product["status"] ?? "Ativo",
+    checkout_id: (product["checkout_id"] ?? "") as string,
     slug: product["slug"] ?? "",
     seo_title: product["seo_title"] ?? "",
     seo_description: product["seo_description"] ?? "",

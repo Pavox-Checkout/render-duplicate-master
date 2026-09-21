@@ -45,6 +45,7 @@ export type ProductForm = {
   main_image: string;
   images: string[];
   status: string;
+  checkout_id: string;
   slug: string;
   seo_title: string;
   seo_description: string;
@@ -78,6 +79,7 @@ export const emptyProduct = (): ProductForm => ({
   main_image: "",
   images: [],
   status: "Ativo",
+  checkout_id: "",
   slug: "",
   seo_title: "",
   seo_description: "",

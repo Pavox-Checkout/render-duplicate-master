@@ -310,6 +310,7 @@ export type Database = {
           barcode: string
           brand: string
           category: string
+          checkout_id: string | null
           cost: number | null
           created_at: string
           description: string
@@ -345,6 +346,7 @@ export type Database = {
           barcode?: string
           brand?: string
           category?: string
+          checkout_id?: string | null
           cost?: number | null
           created_at?: string
           description?: string
@@ -380,6 +382,7 @@ export type Database = {
           barcode?: string
           brand?: string
           category?: string
+          checkout_id?: string | null
           cost?: number | null
           created_at?: string
           description?: string
@@ -410,7 +413,15 @@ export type Database = {
           weight?: number | null
           width?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "checkouts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
