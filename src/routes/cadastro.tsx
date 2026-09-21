@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import cadastroHeroAsset from "@/assets/pavox-cadastro-hero.png.asset.json";
 
 export const Route = createFileRoute("/cadastro")({
   component: CadastroPage,
@@ -161,17 +162,11 @@ function CadastroPage() {
         </div>
       </div>
 
-      <div className="bg-brand-gradient relative hidden flex-col justify-end p-12 lg:flex">
+      <div
+        className="relative hidden bg-cover bg-center bg-no-repeat lg:flex"
+        style={{ backgroundImage: `url(${cadastroHeroAsset.url})` }}
+      >
         <div className="grid-noise absolute inset-0 opacity-30" />
-        <div className="relative">
-          <p className="font-display text-[30px] leading-tight font-bold text-primary-foreground">
-             <br /> operação hoje.
-          </p>
-          <p className="mt-3 max-w-[340px] text-[14px] text-primary-foreground/80">
-            Sua conta começa limpa: crie seu primeiro produto, publique um checkout e acompanhe os
-            resultados em tempo real.
-          </p>
-        </div>
       </div>
     </div>
   );
