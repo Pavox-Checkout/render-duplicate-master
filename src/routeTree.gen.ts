@@ -23,6 +23,7 @@ import { Route as DashPavoxAiRouteImport } from './routes/_dash/pavox-ai'
 import { Route as DashPlanoRouteImport } from './routes/_dash/plano'
 import { Route as DashRecuperacaoRouteImport } from './routes/_dash/recuperacao'
 import { Route as DashVendasRouteImport } from './routes/_dash/vendas'
+import { Route as PlanosSelecionarRouteImport } from './routes/planos.selecionar'
 import { Route as DashCheckoutsIndexRouteImport } from './routes/_dash/checkouts.index'
 import { Route as DashCheckoutsNovoRouteImport } from './routes/_dash/checkouts.novo'
 import { Route as DashPedidosIndexRouteImport } from './routes/_dash/pedidos.index'
@@ -100,6 +101,11 @@ const DashVendasRoute = DashVendasRouteImport.update({
   path: '/vendas',
   getParentRoute: () => DashRoute,
 } as any)
+const PlanosSelecionarRoute = PlanosSelecionarRouteImport.update({
+  id: '/planos/selecionar',
+  path: '/planos/selecionar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashCheckoutsIndexRoute = DashCheckoutsIndexRouteImport.update({
   id: '/checkouts/',
   path: '/checkouts/',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/plano': typeof DashPlanoRoute
   '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
+  '/planos/selecionar': typeof PlanosSelecionarRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
   '/produtos/$id': typeof DashProdutosIdRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/plano': typeof DashPlanoRoute
   '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
+  '/planos/selecionar': typeof PlanosSelecionarRoute
   '/': typeof DashIndexRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/_dash/plano': typeof DashPlanoRoute
   '/_dash/recuperacao': typeof DashRecuperacaoRoute
   '/_dash/vendas': typeof DashVendasRoute
+  '/planos/selecionar': typeof PlanosSelecionarRoute
   '/_dash/': typeof DashIndexRoute
   '/_dash/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/plano'
     | '/recuperacao'
     | '/vendas'
+    | '/planos/selecionar'
     | '/checkouts/novo'
     | '/pedidos/$id'
     | '/produtos/$id'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/plano'
     | '/recuperacao'
     | '/vendas'
+    | '/planos/selecionar'
     | '/'
     | '/checkouts/novo'
     | '/pedidos/$id'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/_dash/plano'
     | '/_dash/recuperacao'
     | '/_dash/vendas'
+    | '/planos/selecionar'
     | '/_dash/'
     | '/_dash/checkouts/novo'
     | '/_dash/pedidos/$id'
@@ -278,6 +290,7 @@ export interface RootRouteChildren {
   DashRoute: typeof DashRouteWithChildren
   CadastroRoute: typeof CadastroRoute
   LoginRoute: typeof LoginRoute
+  PlanosSelecionarRoute: typeof PlanosSelecionarRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -380,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashVendasRouteImport
       parentRoute: typeof DashRoute
     }
+    '/planos/selecionar': {
+      id: '/planos/selecionar'
+      path: '/planos/selecionar'
+      fullPath: '/planos/selecionar'
+      preLoaderRoute: typeof PlanosSelecionarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_dash/checkouts/': {
       id: '/_dash/checkouts/'
       path: '/checkouts'
@@ -480,6 +500,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashRoute: DashRouteWithChildren,
   CadastroRoute: CadastroRoute,
   LoginRoute: LoginRoute,
+  PlanosSelecionarRoute: PlanosSelecionarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
