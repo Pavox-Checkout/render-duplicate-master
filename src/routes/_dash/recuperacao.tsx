@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Link2, Mail, MessageCircle, RotateCcw, ShoppingCart, TrendingUp } from "lucide-react";
+import { RotateCcw, ShoppingCart, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { StatCard } from "@/components/pavox/stat-card";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/pavox/empty-state";
 import { Switch } from "@/components/ui/switch";
-import { abandoned, brl } from "@/lib/mock";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_dash/recuperacao")({
@@ -34,46 +33,25 @@ function Recuperacao() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Carrinhos abandonados" value="R$ 42.830" delta={-6.2} hint="30 dias" icon={ShoppingCart} />
-        <StatCard label="Recuperados" value="R$ 13.420" delta={21.5} hint="30 dias" icon={RotateCcw} />
-        <StatCard label="Taxa de recuperação" value="31,3%" delta={4.4} hint="30 dias" icon={TrendingUp} />
+        <StatCard label="Carrinhos abandonados" value="R$ 0,00" hint="30 dias" icon={ShoppingCart} />
+        <StatCard label="Recuperados" value="R$ 0,00" hint="30 dias" icon={RotateCcw} />
+        <StatCard label="Taxa de recuperação" value="0,00%" hint="30 dias" icon={TrendingUp} />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
         <div className="surface overflow-hidden">
           <div className="p-5">
             <h2 className="text-base font-semibold">Carrinhos abandonados</h2>
-            <p className="text-[13px] text-muted-foreground">Contate agora, enquanto o interesse é alto.</p>
+            <p className="text-[13px] text-muted-foreground">
+              Contate assim que alguém deixar a compra pela metade.
+            </p>
           </div>
-          <div className="divide-y divide-border border-t border-border">
-            {abandoned.map((a) => (
-              <div key={a.id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="font-medium">{a.name}</p>
-                  <p className="text-[12.5px] text-muted-foreground">
-                    {a.product} · {brl(a.amount)} · parou em {a.step} · {a.time}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => toast.success(`WhatsApp aberto para ${a.name}`)}>
-                    <MessageCircle className="h-4 w-4" /> WhatsApp
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => toast.success("E-mail de recuperação enviado")}>
-                    <Mail className="h-4 w-4" /> E-mail
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      void navigator.clipboard?.writeText(`https://pay.pavox.app/c/${a.id}`);
-                      toast.success("Link do checkout copiado");
-                    }}
-                  >
-                    <Link2 className="h-4 w-4" /> Link
-                  </Button>
-                </div>
-              </div>
-            ))}
+          <div className="px-5 pb-5">
+            <EmptyState
+              icon={RotateCcw}
+              title="Sem dados de recuperação ainda."
+              description="Quando seus checkouts começarem a receber visitantes, você poderá acompanhar oportunidades de recuperação aqui."
+            />
           </div>
         </div>
 
