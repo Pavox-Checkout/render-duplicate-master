@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import cadastroHeroAsset from "@/assets/pavox-cadastro-hero.png.asset.json";
 
 export const Route = createFileRoute("/cadastro")({
   component: CadastroPage,
