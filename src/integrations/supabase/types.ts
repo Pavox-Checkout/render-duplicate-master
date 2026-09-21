@@ -146,33 +146,179 @@ export type Database = {
           },
         ]
       }
-      products: {
+      product_variants: {
         Row: {
+          barcode: string
           created_at: string
-          description: string
           id: string
+          image: string
+          inventory_quantity: number
+          is_default: boolean
           name: string
+          options: Json
+          position: number
           price: number
+          product_id: string
+          promotional_price: number | null
+          sku: string
           status: string
+          updated_at: string
           user_id: string
+          weight: number | null
         }
         Insert: {
+          barcode?: string
           created_at?: string
-          description?: string
           id?: string
-          name: string
+          image?: string
+          inventory_quantity?: number
+          is_default?: boolean
+          name?: string
+          options?: Json
+          position?: number
           price?: number
+          product_id: string
+          promotional_price?: number | null
+          sku?: string
           status?: string
+          updated_at?: string
           user_id?: string
+          weight?: number | null
         }
         Update: {
+          barcode?: string
+          created_at?: string
+          id?: string
+          image?: string
+          inventory_quantity?: number
+          is_default?: boolean
+          name?: string
+          options?: Json
+          position?: number
+          price?: number
+          product_id?: string
+          promotional_price?: number | null
+          sku?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          allow_backorder: boolean
+          barcode: string
+          brand: string
+          category: string
+          cost: number | null
+          created_at: string
+          description: string
+          digital_file: string
+          digital_name: string
+          digital_url: string
+          height: number | null
+          id: string
+          images: string[]
+          inventory_quantity: number
+          length: number | null
+          main_image: string
+          minimum_stock: number
+          name: string
+          options: Json
+          price: number
+          promotional_price: number | null
+          seo_description: string
+          seo_title: string
+          sku: string
+          slug: string
+          status: string
+          tags: string[]
+          track_inventory: boolean
+          type: string
+          updated_at: string
+          user_id: string
+          weight: number | null
+          width: number | null
+        }
+        Insert: {
+          allow_backorder?: boolean
+          barcode?: string
+          brand?: string
+          category?: string
+          cost?: number | null
           created_at?: string
           description?: string
+          digital_file?: string
+          digital_name?: string
+          digital_url?: string
+          height?: number | null
           id?: string
-          name?: string
+          images?: string[]
+          inventory_quantity?: number
+          length?: number | null
+          main_image?: string
+          minimum_stock?: number
+          name: string
+          options?: Json
           price?: number
+          promotional_price?: number | null
+          seo_description?: string
+          seo_title?: string
+          sku?: string
+          slug?: string
           status?: string
+          tags?: string[]
+          track_inventory?: boolean
+          type?: string
+          updated_at?: string
           user_id?: string
+          weight?: number | null
+          width?: number | null
+        }
+        Update: {
+          allow_backorder?: boolean
+          barcode?: string
+          brand?: string
+          category?: string
+          cost?: number | null
+          created_at?: string
+          description?: string
+          digital_file?: string
+          digital_name?: string
+          digital_url?: string
+          height?: number | null
+          id?: string
+          images?: string[]
+          inventory_quantity?: number
+          length?: number | null
+          main_image?: string
+          minimum_stock?: number
+          name?: string
+          options?: Json
+          price?: number
+          promotional_price?: number | null
+          seo_description?: string
+          seo_title?: string
+          sku?: string
+          slug?: string
+          status?: string
+          tags?: string[]
+          track_inventory?: boolean
+          type?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+          width?: number | null
         }
         Relationships: []
       }
