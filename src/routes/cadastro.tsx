@@ -64,10 +64,13 @@ function CadastroPage() {
     });
     setBusy(false);
     if (error) {
+      const msg = error.message.toLowerCase();
       toast.error("Não foi possível criar a conta", {
-        description: error.message.includes("already")
+        description: msg.includes("already")
           ? "Este e-mail já possui uma conta."
-          : "Confira os dados e tente novamente.",
+          : msg.includes("weak") || msg.includes("pwned")
+            ? "Esta senha é muito comum. Escolha uma senha mais forte."
+            : "Confira os dados e tente novamente.",
       });
       return;
     }
