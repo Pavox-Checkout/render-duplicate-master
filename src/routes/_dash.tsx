@@ -16,12 +16,17 @@ function DashLayout() {
   const [open, setOpen] = useState(false);
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  const { data: subscription, isLoading: loadingSub, isFetched } = useSubscription(!!session);
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
-  if (loading || !session) {
+  useEffect(() => {
+    if (session && isFetched && !subscription) void navigate({ to: "/planos/selecionar" });
+  }, [session, isFetched, subscription, navigate]);
+
+  if (loading || !session || loadingSub || !subscription) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
