@@ -1,13 +1,47 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowLeft, Lock, Rocket, ShieldCheck } from "lucide-react";
-import { PageHeader } from "@/components/pavox/page-header";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  Copy,
+  Eye,
+  Loader2,
+  Monitor,
+  MousePointerClick,
+  Rocket,
+  Save,
+  Smartphone,
+  Sparkles,
+  Tablet,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { brl, products } from "@/lib/mock";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ElementLibrary } from "@/components/pavox/builder/element-library";
+import { CheckoutPreview } from "@/components/pavox/builder/checkout-preview";
+import { Inspector } from "@/components/pavox/builder/inspector";
+import { AppearancePanel } from "@/components/pavox/builder/appearance-panel";
+import {
+  BLOCK_LABELS,
+  INITIAL_STATE,
+  RECOMMENDATIONS,
+  createBlock,
+  type Appearance,
+  type BlockData,
+  type BlockType,
+  type BuilderState,
+} from "@/lib/checkout-builder";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -15,303 +49,369 @@ export const Route = createFileRoute("/_dash/checkouts/novo")({
   component: CheckoutBuilder,
   head: () => ({
     meta: [
-      { title: "Criar checkout · PAVOX" },
+      { title: "Checkout Builder · PAVOX" },
       {
         name: "description",
-        content: "Monte um checkout personalizado com preview em tempo real, order bump e upsell.",
+        content:
+          "Monte, personalize e publique seu checkout com preview em tempo real, order bump e prova social.",
       },
-      { property: "og:title", content: "Criar checkout · PAVOX" },
+      { property: "og:title", content: "Checkout Builder · PAVOX" },
       { property: "og:description", content: "Construtor visual de checkout da PAVOX." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
 
-const sections = [
-  { key: "produto", label: "Produto e preço" },
-  { key: "pagamento", label: "Métodos de pagamento" },
-  { key: "campos", label: "Campos do cliente" },
-  { key: "ofertas", label: "Upsell e order bump" },
-  { key: "recuperacao", label: "Recuperação" },
-  { key: "visual", label: "Personalização" },
+type SaveState = "saved" | "saving" | "dirty";
+const DEVICES = [
+  { key: "desktop", label: "Desktop", icon: Monitor },
+  { key: "tablet", label: "Tablet", icon: Tablet },
+  { key: "mobile", label: "Mobile", icon: Smartphone },
 ] as const;
 
-type SectionKey = (typeof sections)[number]["key"];
-
 function CheckoutBuilder() {
-  const [name, setName] = useState("Checkout Principal");
-  const [productId, setProductId] = useState("p1");
-  const [section, setSection] = useState<SectionKey>("produto");
-  const [methods, setMethods] = useState({ pix: true, card: true, boleto: false });
-  const [fields, setFields] = useState({ phone: true, doc: true, address: false });
-  const [bump, setBump] = useState(true);
-  const [upsell, setUpsell] = useState(false);
-  const [accent, setAccent] = useState("#2563eb");
+  const [state, setState] = useState<BuilderState>(INITIAL_STATE);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [tab, setTab] = useState("elemento");
+  const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [tipsOpen, setTipsOpen] = useState(false);
+  const first = useRef(true);
 
-  const product = products.find((p) => p.id === productId)!;
+  const selected = useMemo(
+    () => state.blocks.find((b) => b.id === selectedId) ?? null,
+    [state.blocks, selectedId],
+  );
+  const slug = state.name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  const url = `checkout.pavox.com/c/${slug || "checkout"}`;
+
+  // autosave mockado
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setSaveState("saving");
+    const t = setTimeout(() => setSaveState("saved"), 900);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  const updateBlock = useCallback(
+    (id: string, patch: Partial<BlockData>) =>
+      setState((s) => ({
+        ...s,
+        blocks: s.blocks.map((b) => (b.id === id ? { ...b, data: { ...b.data, ...patch } } : b)),
+      })),
+    [],
+  );
+
+  const addBlock = (type: BlockType) => {
+    const block = createBlock(type);
+    setState((s) => ({ ...s, blocks: [...s.blocks, block] }));
+    setSelectedId(block.id);
+    setTab("elemento");
+    toast.success(`${BLOCK_LABELS[type]} adicionado`, { description: "Ajuste no painel à direita." });
+  };
+
+  const removeBlock = (id: string) => {
+    const b = state.blocks.find((x) => x.id === id);
+    setState((s) => ({ ...s, blocks: s.blocks.filter((x) => x.id !== id) }));
+    if (selectedId === id) setSelectedId(null);
+    if (b) toast(`${BLOCK_LABELS[b.type]} removido`);
+  };
+
+  const reorder = (from: number, to: number) => {
+    setState((s) => {
+      const blocks = [...s.blocks];
+      const [moved] = blocks.splice(from, 1);
+      if (moved) blocks.splice(to, 0, moved);
+      return { ...s, blocks };
+    });
+    toast("Ordem atualizada");
+  };
+
+  const publish = () => {
+    setPublishing(true);
+    setTimeout(() => {
+      setPublishing(false);
+      setState((s) => ({ ...s, status: "Publicado" }));
+      setPublishOpen(true);
+    }, 1100);
+  };
 
   return (
-    <>
-      <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
-        <Link to="/checkouts">
-          <ArrowLeft className="h-4 w-4" /> Voltar para checkouts
-        </Link>
-      </Button>
+    <div className="-mx-1 flex min-h-[calc(100vh-7rem)] flex-col gap-3">
+      {/* TOPO */}
+      <div className="surface flex flex-wrap items-center gap-3 px-3 py-2.5">
+        <Button asChild variant="ghost" size="sm" className="-ml-1 shrink-0">
+          <Link to="/checkouts">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Voltar para checkouts</span>
+          </Link>
+        </Button>
 
-      <PageHeader
-        title="Construtor de checkout"
-        subtitle="Configure à esquerda, veja o resultado em tempo real no centro."
-        actions={
-          <>
-            <Button variant="outline" onClick={() => toast.success("Rascunho salvo")}>
-              Salvar rascunho
-            </Button>
-            <Button onClick={() => toast.success("Checkout publicado!", { description: "Link pronto para divulgação." })}>
-              <Rocket className="h-4 w-4" /> Publicar checkout
-            </Button>
-          </>
-        }
-      />
+        <div className="hidden h-6 w-px bg-border sm:block" />
 
-      <div className="grid gap-5 xl:grid-cols-[250px_minmax(0,1fr)_300px]">
-        {/* ESQUERDA */}
-        <div className="surface h-fit p-3">
-          <p className="px-2 pb-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-            Configurações
-          </p>
-          <div className="space-y-1">
-            {sections.map((s) => (
-              <button
-                key={s.key}
-                onClick={() => setSection(s.key)}
-                className={cn(
-                  "w-full rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors",
-                  section === s.key
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <div className="mt-3 space-y-1.5 border-t border-border px-1 pt-3">
-            <Label htmlFor="cname" className="text-[12px]">
-              Nome do checkout
-            </Label>
-            <Input id="cname" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
+        <div className="flex min-w-0 items-center gap-2">
+          <Label htmlFor="cname" className="sr-only">
+            Nome do checkout
+          </Label>
+          <Input
+            id="cname"
+            value={state.name}
+            onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
+            className="h-8 w-[170px] border-transparent bg-transparent px-2 text-[14px] font-semibold hover:border-border focus-visible:border-border"
+          />
+          <Badge variant={state.status === "Publicado" ? "default" : "secondary"}>{state.status}</Badge>
         </div>
 
-        {/* CENTRO — PREVIEW */}
-        <div className="surface bg-secondary/40 p-4 sm:p-8">
-          <div className="mx-auto max-w-[460px] overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-lift)]">
-            <div className="h-1.5 w-full" style={{ backgroundColor: accent }} />
-            <div className="space-y-5 p-6">
-              <div className="flex items-center justify-between">
-                <span className="font-display text-[15px] font-bold">
-                  PAVO<span style={{ color: accent }}>X</span>
-                </span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Lock className="h-3 w-3" /> Compra segura
-                </span>
-              </div>
-
-              <div className="rounded-lg border border-border p-3">
-                <div className="flex items-center justify-between text-[13.5px]">
-                  <span className="font-medium">{product.name}</span>
-                  <span className="font-semibold">{brl(product.price)}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2.5">
-                <p className="text-[12px] font-semibold tracking-wide text-muted-foreground uppercase">
-                  Seus dados
-                </p>
-                {["Nome completo", "E-mail"].map((f) => (
-                  <div key={f} className="h-9 rounded-md border border-border bg-secondary/50 px-3 text-[12.5px] leading-9 text-muted-foreground">
-                    {f}
-                  </div>
-                ))}
-                {fields.phone && (
-                  <div className="h-9 rounded-md border border-border bg-secondary/50 px-3 text-[12.5px] leading-9 text-muted-foreground">
-                    Telefone
-                  </div>
-                )}
-                {fields.doc && (
-                  <div className="h-9 rounded-md border border-border bg-secondary/50 px-3 text-[12.5px] leading-9 text-muted-foreground">
-                    CPF
-                  </div>
-                )}
-                {fields.address && (
-                  <div className="h-9 rounded-md border border-border bg-secondary/50 px-3 text-[12.5px] leading-9 text-muted-foreground">
-                    Endereço
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-[12px] font-semibold tracking-wide text-muted-foreground uppercase">
-                  Pagamento
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-center text-[12px]">
-                  {methods.pix && <div className="rounded-md border border-border py-2 font-medium">Pix</div>}
-                  {methods.card && <div className="rounded-md border border-border py-2 font-medium">Cartão</div>}
-                  {methods.boleto && <div className="rounded-md border border-border py-2 font-medium">Boleto</div>}
-                </div>
-              </div>
-
-              {bump && (
-                <div className="rounded-lg border border-dashed p-3" style={{ borderColor: accent }}>
-                  <p className="text-[12.5px] font-semibold">Adicione o Bônus Exclusivo por + R$ 47,00</p>
-                  <p className="text-[11.5px] text-muted-foreground">Oferta única nesta página.</p>
-                </div>
-              )}
-
-              <button
-                className="h-11 w-full rounded-lg text-[14px] font-semibold text-white"
-                style={{ backgroundColor: accent }}
-              >
-                Pagar {brl(product.price)}
-              </button>
-
-              <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-                <ShieldCheck className="h-3.5 w-3.5" /> Pagamento processado com criptografia
-              </p>
-            </div>
-          </div>
-          {upsell && (
-            <p className="mt-4 text-center text-[12px] text-muted-foreground">
-              Após a compra, o cliente verá uma oferta de upsell.
-            </p>
+        <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          {saveState === "saving" ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Salvando...
+            </>
+          ) : (
+            <>
+              <Check className="h-3.5 w-3.5 text-[oklch(0.62_0.16_152)]" /> Alterações salvas
+            </>
           )}
-        </div>
+        </span>
 
-        {/* DIREITA */}
-        <div className="surface h-fit space-y-5 p-5">
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-              Seção selecionada
-            </p>
-            <h3 className="mt-1 font-semibold">{sections.find((s) => s.key === section)!.label}</h3>
-          </div>
-
-          {section === "produto" && (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Produto</Label>
-                <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Preço</Label>
-                <Input defaultValue={product.price.toFixed(2).replace(".", ",")} />
-              </div>
-            </div>
-          )}
-
-          {section === "pagamento" && (
-            <div className="space-y-3">
-              {(
-                [
-                  ["pix", "Pix"],
-                  ["card", "Cartão de crédito"],
-                  ["boleto", "Boleto"],
-                ] as const
-              ).map(([key, label]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <Label className="text-[13px] font-normal">{label}</Label>
-                  <Switch
-                    checked={methods[key]}
-                    onCheckedChange={(v) => setMethods((m) => ({ ...m, [key]: v }))}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {section === "campos" && (
-            <div className="space-y-3">
-              {(
-                [
-                  ["phone", "Telefone"],
-                  ["doc", "CPF / CNPJ"],
-                  ["address", "Endereço de entrega"],
-                ] as const
-              ).map(([key, label]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <Label className="text-[13px] font-normal">{label}</Label>
-                  <Switch
-                    checked={fields[key]}
-                    onCheckedChange={(v) => setFields((f) => ({ ...f, [key]: v }))}
-                  />
-                </div>
-              ))}
-              <p className="text-[12px] text-muted-foreground">
-                Menos campos costumam aumentar a conversão.
-              </p>
-            </div>
-          )}
-
-          {section === "ofertas" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-[13px] font-normal">Order bump</Label>
-                <Switch checked={bump} onCheckedChange={setBump} />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-[13px] font-normal">Upsell pós-compra</Label>
-                <Switch checked={upsell} onCheckedChange={setUpsell} />
-              </div>
-            </div>
-          )}
-
-          {section === "recuperacao" && (
-            <div className="space-y-3 text-[13px]">
-              <div className="flex items-center justify-between">
-                <Label className="text-[13px] font-normal">Recuperação por e-mail</Label>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-[13px] font-normal">Recuperação por WhatsApp</Label>
-                <Switch />
-              </div>
-              <p className="text-[12px] text-muted-foreground">
-                As automações serão configuráveis em breve.
-              </p>
-            </div>
-          )}
-
-          {section === "visual" && (
-            <div className="space-y-3">
-              <Label className="text-[13px]">Cor de destaque</Label>
-              <div className="flex gap-2">
-                {["#2563eb", "#0f172a", "#16a34a", "#db2777", "#f59e0b"].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setAccent(c)}
-                    aria-label={`Cor ${c}`}
-                    className={cn(
-                      "h-8 w-8 rounded-full border-2 transition-transform hover:scale-105",
-                      accent === c ? "border-foreground" : "border-transparent",
-                    )}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => toast.success("Rascunho salvo")}>
+            <Save className="h-4 w-4" /> Salvar
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+            <Eye className="h-4 w-4" /> Visualizar
+          </Button>
+          <Button size="sm" onClick={publish} disabled={publishing}>
+            {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+            Publicar checkout
+          </Button>
         </div>
       </div>
-    </>
+
+      {/* EDITOR */}
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[236px_minmax(0,1fr)] xl:grid-cols-[236px_minmax(0,1fr)_312px]">
+        <div className="surface flex max-h-[520px] min-h-0 flex-col overflow-hidden lg:max-h-none">
+          <ElementLibrary
+            blocks={state.blocks}
+            selectedId={selectedId}
+            onAdd={addBlock}
+            onSelect={(id) => {
+              setSelectedId(id);
+              setTab("elemento");
+            }}
+            onRemove={removeBlock}
+            onReorder={reorder}
+          />
+        </div>
+
+        {/* PREVIEW */}
+        <div className="surface flex min-h-0 flex-col overflow-hidden">
+          <div className="flex items-center gap-3 border-b border-border px-3 py-2">
+            <span className="text-[12px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              Preview
+            </span>
+            <div className="ml-auto flex items-center gap-1 rounded-lg bg-secondary p-1">
+              {DEVICES.map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setDevice(key)}
+                  aria-label={label}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors",
+                    device === key
+                      ? "bg-card text-foreground shadow-[var(--shadow-card)]"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto bg-secondary/40 p-4">
+            {state.blocks.length === 0 ? (
+              <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border text-center">
+                <MousePointerClick className="h-6 w-6 text-muted-foreground" />
+                <p className="text-[13.5px] font-medium">Seu checkout está vazio</p>
+                <p className="max-w-[260px] text-[12.5px] text-muted-foreground">
+                  Adicione elementos pelo painel à esquerda para começar a montar a página.
+                </p>
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "mx-auto transition-all duration-300",
+                  device === "mobile" && "max-w-[400px] overflow-hidden rounded-[32px] border-8 border-foreground/85 shadow-[var(--shadow-lift)]",
+                  device === "tablet" && "max-w-[680px] overflow-hidden rounded-2xl border-[6px] border-foreground/80",
+                )}
+              >
+                <CheckoutPreview
+                  state={state}
+                  device={device}
+                  selectedId={selectedId}
+                  onSelect={(id) => {
+                    setSelectedId(id);
+                    setTab("elemento");
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* PAINEL DIREITO */}
+        <div className="surface flex max-h-[640px] min-h-0 flex-col overflow-hidden xl:max-h-none">
+          <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col gap-0">
+            <div className="border-b border-border px-3 py-2.5">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="elemento">Elemento</TabsTrigger>
+                <TabsTrigger value="aparencia">Aparência</TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="elemento" className="min-h-0 flex-1 overflow-y-auto p-4">
+              {selected ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                      Editando
+                    </p>
+                    <h3 className="font-semibold">{BLOCK_LABELS[selected.type]}</h3>
+                  </div>
+                  <Inspector block={selected} update={(patch) => updateBlock(selected.id, patch)} />
+                </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
+                  <MousePointerClick className="h-5 w-5 text-muted-foreground" />
+                  <p className="text-[13px] font-medium">Nenhum elemento selecionado</p>
+                  <p className="max-w-[210px] text-[12px] text-muted-foreground">
+                    Clique em um bloco do preview para editar suas configurações.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="aparencia" className="min-h-0 flex-1 overflow-y-auto p-4">
+              <AppearancePanel
+                appearance={state.appearance}
+                onChange={(patch: Partial<Appearance>) =>
+                  setState((s) => ({ ...s, appearance: { ...s.appearance, ...patch } }))
+                }
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* PAVOX INTELLIGENCE */}
+          <div className="border-t border-border bg-accent/40 p-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <p className="text-[12.5px] font-semibold">Pavox Intelligence</p>
+            </div>
+            <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+              {RECOMMENDATIONS.length} recomendações encontradas
+            </p>
+            <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => setTipsOpen(true)}>
+              Ver recomendações
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* VISUALIZAR */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className="h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 p-0 sm:max-w-none"
+        >
+          <DialogHeader className="flex-row items-center gap-3 border-b border-border bg-background px-4 py-2.5">
+            <DialogTitle className="text-[14px]">Prévia do comprador</DialogTitle>
+            <DialogDescription className="sr-only">
+              Visualização exata do checkout que o cliente final verá.
+            </DialogDescription>
+            <Button variant="outline" size="sm" className="ml-auto" onClick={() => setPreviewOpen(false)}>
+              <X className="h-4 w-4" /> Voltar para o editor
+            </Button>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <CheckoutPreview state={state} device="desktop" interactive={false} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* PUBLICAR */}
+      <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-[oklch(0.62_0.16_152)]/12">
+              <CheckCircle2 className="h-5 w-5 text-[oklch(0.62_0.16_152)]" />
+            </div>
+            <DialogTitle>Seu checkout está pronto</DialogTitle>
+            <DialogDescription>
+              Seu checkout foi publicado e está pronto para receber clientes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-border bg-secondary/60 px-3 py-2.5 font-mono text-[12.5px] break-all">
+            {url}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
+              onClick={() => {
+                navigator.clipboard?.writeText(`https://${url}`);
+                toast.success("Link copiado");
+              }}
+            >
+              <Copy className="h-4 w-4" /> Copiar link
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setPublishOpen(false);
+                setPreviewOpen(true);
+              }}
+            >
+              <Eye className="h-4 w-4" /> Abrir checkout
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* RECOMENDAÇÕES */}
+      <Dialog open={tipsOpen} onOpenChange={setTipsOpen}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" /> Pavox Intelligence
+            </DialogTitle>
+            <DialogDescription>
+              Sugestões geradas a partir do comportamento médio de checkouts parecidos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {RECOMMENDATIONS.map((r) => (
+              <div key={r.title} className="rounded-lg border border-border p-3">
+                <p className="text-[13px] font-semibold">{r.title}</p>
+                <p className="mt-0.5 text-[12.5px] text-muted-foreground">{r.detail}</p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
