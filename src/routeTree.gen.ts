@@ -11,8 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashRouteImport } from './routes/_dash'
 import { Route as DashIndexRouteImport } from './routes/_dash/index'
+import { Route as DashClientesRouteImport } from './routes/_dash/clientes'
 import { Route as DashProdutosRouteImport } from './routes/_dash/produtos'
+import { Route as DashRecuperacaoRouteImport } from './routes/_dash/recuperacao'
 import { Route as DashVendasRouteImport } from './routes/_dash/vendas'
+import { Route as DashCheckoutsIndexRouteImport } from './routes/_dash/checkouts.index'
+import { Route as DashCheckoutsNovoRouteImport } from './routes/_dash/checkouts.novo'
 import { Route as DashPedidosIndexRouteImport } from './routes/_dash/pedidos.index'
 import { Route as DashPedidosIdRouteImport } from './routes/_dash/pedidos.$id'
 
@@ -25,14 +29,34 @@ const DashIndexRoute = DashIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashRoute,
 } as any)
+const DashClientesRoute = DashClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashProdutosRoute = DashProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
   getParentRoute: () => DashRoute,
 } as any)
+const DashRecuperacaoRoute = DashRecuperacaoRouteImport.update({
+  id: '/recuperacao',
+  path: '/recuperacao',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashVendasRoute = DashVendasRouteImport.update({
   id: '/vendas',
   path: '/vendas',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashCheckoutsIndexRoute = DashCheckoutsIndexRouteImport.update({
+  id: '/checkouts/',
+  path: '/checkouts/',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashCheckoutsNovoRoute = DashCheckoutsNovoRouteImport.update({
+  id: '/checkouts/novo',
+  path: '/checkouts/novo',
   getParentRoute: () => DashRoute,
 } as any)
 const DashPedidosIndexRoute = DashPedidosIndexRouteImport.update({
@@ -48,39 +72,73 @@ const DashPedidosIdRoute = DashPedidosIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof DashIndexRoute
+  '/clientes': typeof DashClientesRoute
   '/produtos': typeof DashProdutosRoute
+  '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
+  '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
+  '/checkouts/': typeof DashCheckoutsIndexRoute
   '/pedidos/': typeof DashPedidosIndexRoute
 }
 export interface FileRoutesByTo {
+  '/clientes': typeof DashClientesRoute
   '/produtos': typeof DashProdutosRoute
+  '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
   '/': typeof DashIndexRoute
+  '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
+  '/checkouts': typeof DashCheckoutsIndexRoute
   '/pedidos': typeof DashPedidosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_dash': typeof DashRouteWithChildren
+  '/_dash/clientes': typeof DashClientesRoute
   '/_dash/produtos': typeof DashProdutosRoute
+  '/_dash/recuperacao': typeof DashRecuperacaoRoute
   '/_dash/vendas': typeof DashVendasRoute
   '/_dash/': typeof DashIndexRoute
+  '/_dash/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
+  '/_dash/checkouts/': typeof DashCheckoutsIndexRoute
   '/_dash/pedidos/': typeof DashPedidosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/produtos' | '/vendas' | '/pedidos/$id' | '/pedidos/'
+  fullPaths:
+    | '/'
+    | '/clientes'
+    | '/produtos'
+    | '/recuperacao'
+    | '/vendas'
+    | '/checkouts/novo'
+    | '/pedidos/$id'
+    | '/checkouts/'
+    | '/pedidos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/produtos' | '/vendas' | '/' | '/pedidos/$id' | '/pedidos'
+  to:
+    | '/clientes'
+    | '/produtos'
+    | '/recuperacao'
+    | '/vendas'
+    | '/'
+    | '/checkouts/novo'
+    | '/pedidos/$id'
+    | '/checkouts'
+    | '/pedidos'
   id:
     | '__root__'
     | '/_dash'
+    | '/_dash/clientes'
     | '/_dash/produtos'
+    | '/_dash/recuperacao'
     | '/_dash/vendas'
     | '/_dash/'
+    | '/_dash/checkouts/novo'
     | '/_dash/pedidos/$id'
+    | '/_dash/checkouts/'
     | '/_dash/pedidos/'
   fileRoutesById: FileRoutesById
 }
@@ -104,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashIndexRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/clientes': {
+      id: '/_dash/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof DashClientesRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/produtos': {
       id: '/_dash/produtos'
       path: '/produtos'
@@ -111,11 +176,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashProdutosRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/recuperacao': {
+      id: '/_dash/recuperacao'
+      path: '/recuperacao'
+      fullPath: '/recuperacao'
+      preLoaderRoute: typeof DashRecuperacaoRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/vendas': {
       id: '/_dash/vendas'
       path: '/vendas'
       fullPath: '/vendas'
       preLoaderRoute: typeof DashVendasRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/checkouts/': {
+      id: '/_dash/checkouts/'
+      path: '/checkouts'
+      fullPath: '/checkouts/'
+      preLoaderRoute: typeof DashCheckoutsIndexRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/checkouts/novo': {
+      id: '/_dash/checkouts/novo'
+      path: '/checkouts/novo'
+      fullPath: '/checkouts/novo'
+      preLoaderRoute: typeof DashCheckoutsNovoRouteImport
       parentRoute: typeof DashRoute
     }
     '/_dash/pedidos/': {
@@ -136,18 +222,26 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashRouteChildren {
+  DashClientesRoute: typeof DashClientesRoute
   DashProdutosRoute: typeof DashProdutosRoute
+  DashRecuperacaoRoute: typeof DashRecuperacaoRoute
   DashVendasRoute: typeof DashVendasRoute
   DashIndexRoute: typeof DashIndexRoute
+  DashCheckoutsNovoRoute: typeof DashCheckoutsNovoRoute
   DashPedidosIdRoute: typeof DashPedidosIdRoute
+  DashCheckoutsIndexRoute: typeof DashCheckoutsIndexRoute
   DashPedidosIndexRoute: typeof DashPedidosIndexRoute
 }
 
 const DashRouteChildren: DashRouteChildren = {
+  DashClientesRoute: DashClientesRoute,
   DashProdutosRoute: DashProdutosRoute,
+  DashRecuperacaoRoute: DashRecuperacaoRoute,
   DashVendasRoute: DashVendasRoute,
   DashIndexRoute: DashIndexRoute,
+  DashCheckoutsNovoRoute: DashCheckoutsNovoRoute,
   DashPedidosIdRoute: DashPedidosIdRoute,
+  DashCheckoutsIndexRoute: DashCheckoutsIndexRoute,
   DashPedidosIndexRoute: DashPedidosIndexRoute,
 }
 
