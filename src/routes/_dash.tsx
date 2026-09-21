@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-rout
 import { useEffect, useState } from "react";
 import { Bell, Loader2, Menu, Search, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/lib/billing";
 import { SidebarNav } from "@/components/pavox/sidebar-nav";
 import { PavoxLogo } from "@/components/pavox/logo";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -16,12 +17,17 @@ function DashLayout() {
   const [open, setOpen] = useState(false);
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  const { data: subscription, isLoading: loadingSub, isFetched } = useSubscription(!!session);
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
-  if (loading || !session) {
+  useEffect(() => {
+    if (session && isFetched && !subscription) void navigate({ to: "/planos/selecionar" });
+  }, [session, isFetched, subscription, navigate]);
+
+  if (loading || !session || loadingSub || !subscription) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

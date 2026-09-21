@@ -61,7 +61,7 @@ const settings = [
   { to: "/conta", label: "Minha conta", icon: UserCircle },
   { to: "/equipe", label: "Equipe", icon: Building2 },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
-  { to: "/plano", label: "Plano e cobrança", icon: CreditCard },
+  { to: "/planos", label: "Planos", icon: CreditCard },
 ] as const;
 
 function NavItem({
@@ -152,7 +152,7 @@ export function SidebarNav({
               <Link to="/conta">Minha conta</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/plano">Plano e cobrança</Link>
+              <Link to="/planos">Planos</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void handleSignOut()}>
