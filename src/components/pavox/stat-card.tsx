@@ -11,12 +11,12 @@ export function StatCard({
 }: {
   label: string;
   value: string;
-  delta: number;
+  delta?: number;
   hint?: string;
   icon: LucideIcon;
   suffix?: string;
 }) {
-  const positive = delta >= 0;
+  const positive = (delta ?? 0) >= 0;
   return (
     <div className="surface group relative overflow-hidden p-5 transition-shadow hover:shadow-[var(--shadow-lift)]">
       <div className="flex items-start justify-between">
