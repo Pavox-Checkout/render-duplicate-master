@@ -11,7 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashRouteImport } from './routes/_dash'
 import { Route as DashIndexRouteImport } from './routes/_dash/index'
+import { Route as DashAnalyticsRouteImport } from './routes/_dash/analytics'
 import { Route as DashClientesRouteImport } from './routes/_dash/clientes'
+import { Route as DashConfiguracoesRouteImport } from './routes/_dash/configuracoes'
+import { Route as DashContaRouteImport } from './routes/_dash/conta'
+import { Route as DashEquipeRouteImport } from './routes/_dash/equipe'
+import { Route as DashIntegracoesRouteImport } from './routes/_dash/integracoes'
+import { Route as DashPavoxAiRouteImport } from './routes/_dash/pavox-ai'
+import { Route as DashPlanoRouteImport } from './routes/_dash/plano'
 import { Route as DashProdutosRouteImport } from './routes/_dash/produtos'
 import { Route as DashRecuperacaoRouteImport } from './routes/_dash/recuperacao'
 import { Route as DashVendasRouteImport } from './routes/_dash/vendas'
@@ -29,9 +36,44 @@ const DashIndexRoute = DashIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashRoute,
 } as any)
+const DashAnalyticsRoute = DashAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashClientesRoute = DashClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashConfiguracoesRoute = DashConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashContaRoute = DashContaRouteImport.update({
+  id: '/conta',
+  path: '/conta',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashEquipeRoute = DashEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashIntegracoesRoute = DashIntegracoesRouteImport.update({
+  id: '/integracoes',
+  path: '/integracoes',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashPavoxAiRoute = DashPavoxAiRouteImport.update({
+  id: '/pavox-ai',
+  path: '/pavox-ai',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashPlanoRoute = DashPlanoRouteImport.update({
+  id: '/plano',
+  path: '/plano',
   getParentRoute: () => DashRoute,
 } as any)
 const DashProdutosRoute = DashProdutosRouteImport.update({
@@ -72,7 +114,14 @@ const DashPedidosIdRoute = DashPedidosIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof DashIndexRoute
+  '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
+  '/configuracoes': typeof DashConfiguracoesRoute
+  '/conta': typeof DashContaRoute
+  '/equipe': typeof DashEquipeRoute
+  '/integracoes': typeof DashIntegracoesRoute
+  '/pavox-ai': typeof DashPavoxAiRoute
+  '/plano': typeof DashPlanoRoute
   '/produtos': typeof DashProdutosRoute
   '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
@@ -82,7 +131,14 @@ export interface FileRoutesByFullPath {
   '/pedidos/': typeof DashPedidosIndexRoute
 }
 export interface FileRoutesByTo {
+  '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
+  '/configuracoes': typeof DashConfiguracoesRoute
+  '/conta': typeof DashContaRoute
+  '/equipe': typeof DashEquipeRoute
+  '/integracoes': typeof DashIntegracoesRoute
+  '/pavox-ai': typeof DashPavoxAiRoute
+  '/plano': typeof DashPlanoRoute
   '/produtos': typeof DashProdutosRoute
   '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
@@ -95,7 +151,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_dash': typeof DashRouteWithChildren
+  '/_dash/analytics': typeof DashAnalyticsRoute
   '/_dash/clientes': typeof DashClientesRoute
+  '/_dash/configuracoes': typeof DashConfiguracoesRoute
+  '/_dash/conta': typeof DashContaRoute
+  '/_dash/equipe': typeof DashEquipeRoute
+  '/_dash/integracoes': typeof DashIntegracoesRoute
+  '/_dash/pavox-ai': typeof DashPavoxAiRoute
+  '/_dash/plano': typeof DashPlanoRoute
   '/_dash/produtos': typeof DashProdutosRoute
   '/_dash/recuperacao': typeof DashRecuperacaoRoute
   '/_dash/vendas': typeof DashVendasRoute
@@ -109,7 +172,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
     | '/clientes'
+    | '/configuracoes'
+    | '/conta'
+    | '/equipe'
+    | '/integracoes'
+    | '/pavox-ai'
+    | '/plano'
     | '/produtos'
     | '/recuperacao'
     | '/vendas'
@@ -119,7 +189,14 @@ export interface FileRouteTypes {
     | '/pedidos/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/analytics'
     | '/clientes'
+    | '/configuracoes'
+    | '/conta'
+    | '/equipe'
+    | '/integracoes'
+    | '/pavox-ai'
+    | '/plano'
     | '/produtos'
     | '/recuperacao'
     | '/vendas'
@@ -131,7 +208,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_dash'
+    | '/_dash/analytics'
     | '/_dash/clientes'
+    | '/_dash/configuracoes'
+    | '/_dash/conta'
+    | '/_dash/equipe'
+    | '/_dash/integracoes'
+    | '/_dash/pavox-ai'
+    | '/_dash/plano'
     | '/_dash/produtos'
     | '/_dash/recuperacao'
     | '/_dash/vendas'
@@ -162,11 +246,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashIndexRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/analytics': {
+      id: '/_dash/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof DashAnalyticsRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/clientes': {
       id: '/_dash/clientes'
       path: '/clientes'
       fullPath: '/clientes'
       preLoaderRoute: typeof DashClientesRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/configuracoes': {
+      id: '/_dash/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof DashConfiguracoesRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/conta': {
+      id: '/_dash/conta'
+      path: '/conta'
+      fullPath: '/conta'
+      preLoaderRoute: typeof DashContaRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/equipe': {
+      id: '/_dash/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof DashEquipeRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/integracoes': {
+      id: '/_dash/integracoes'
+      path: '/integracoes'
+      fullPath: '/integracoes'
+      preLoaderRoute: typeof DashIntegracoesRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/pavox-ai': {
+      id: '/_dash/pavox-ai'
+      path: '/pavox-ai'
+      fullPath: '/pavox-ai'
+      preLoaderRoute: typeof DashPavoxAiRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/plano': {
+      id: '/_dash/plano'
+      path: '/plano'
+      fullPath: '/plano'
+      preLoaderRoute: typeof DashPlanoRouteImport
       parentRoute: typeof DashRoute
     }
     '/_dash/produtos': {
@@ -222,7 +355,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashRouteChildren {
+  DashAnalyticsRoute: typeof DashAnalyticsRoute
   DashClientesRoute: typeof DashClientesRoute
+  DashConfiguracoesRoute: typeof DashConfiguracoesRoute
+  DashContaRoute: typeof DashContaRoute
+  DashEquipeRoute: typeof DashEquipeRoute
+  DashIntegracoesRoute: typeof DashIntegracoesRoute
+  DashPavoxAiRoute: typeof DashPavoxAiRoute
+  DashPlanoRoute: typeof DashPlanoRoute
   DashProdutosRoute: typeof DashProdutosRoute
   DashRecuperacaoRoute: typeof DashRecuperacaoRoute
   DashVendasRoute: typeof DashVendasRoute
@@ -234,7 +374,14 @@ interface DashRouteChildren {
 }
 
 const DashRouteChildren: DashRouteChildren = {
+  DashAnalyticsRoute: DashAnalyticsRoute,
   DashClientesRoute: DashClientesRoute,
+  DashConfiguracoesRoute: DashConfiguracoesRoute,
+  DashContaRoute: DashContaRoute,
+  DashEquipeRoute: DashEquipeRoute,
+  DashIntegracoesRoute: DashIntegracoesRoute,
+  DashPavoxAiRoute: DashPavoxAiRoute,
+  DashPlanoRoute: DashPlanoRoute,
   DashProdutosRoute: DashProdutosRoute,
   DashRecuperacaoRoute: DashRecuperacaoRoute,
   DashVendasRoute: DashVendasRoute,
