@@ -1,0 +1,2 @@
+ALTER TABLE public.products ADD COLUMN checkout_id uuid REFERENCES public.checkouts(id) ON DELETE SET NULL;
+COMMENT ON COLUMN public.products.checkout_id IS 'Checkout vinculado ao produto (opcional).';
