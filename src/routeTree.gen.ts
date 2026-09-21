@@ -28,6 +28,7 @@ import { Route as DashCheckoutsNovoRouteImport } from './routes/_dash/checkouts.
 import { Route as DashPedidosIndexRouteImport } from './routes/_dash/pedidos.index'
 import { Route as DashPedidosIdRouteImport } from './routes/_dash/pedidos.$id'
 import { Route as DashProdutosIndexRouteImport } from './routes/_dash/produtos.index'
+import { Route as DashProdutosIdRouteImport } from './routes/_dash/produtos.$id'
 import { Route as DashProdutosNovoRouteImport } from './routes/_dash/produtos.novo'
 
 const DashRoute = DashRouteImport.update({
@@ -124,6 +125,11 @@ const DashProdutosIndexRoute = DashProdutosIndexRouteImport.update({
   path: '/produtos/',
   getParentRoute: () => DashRoute,
 } as any)
+const DashProdutosIdRoute = DashProdutosIdRouteImport.update({
+  id: '/produtos/$id',
+  path: '/produtos/$id',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashProdutosNovoRoute = DashProdutosNovoRouteImport.update({
   id: '/produtos/novo',
   path: '/produtos/novo',
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/vendas': typeof DashVendasRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
+  '/produtos/$id': typeof DashProdutosIdRoute
   '/produtos/novo': typeof DashProdutosNovoRoute
   '/checkouts/': typeof DashCheckoutsIndexRoute
   '/pedidos/': typeof DashPedidosIndexRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/': typeof DashIndexRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
+  '/produtos/$id': typeof DashProdutosIdRoute
   '/produtos/novo': typeof DashProdutosNovoRoute
   '/checkouts': typeof DashCheckoutsIndexRoute
   '/pedidos': typeof DashPedidosIndexRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/_dash/': typeof DashIndexRoute
   '/_dash/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
+  '/_dash/produtos/$id': typeof DashProdutosIdRoute
   '/_dash/produtos/novo': typeof DashProdutosNovoRoute
   '/_dash/checkouts/': typeof DashCheckoutsIndexRoute
   '/_dash/pedidos/': typeof DashPedidosIndexRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/vendas'
     | '/checkouts/novo'
     | '/pedidos/$id'
+    | '/produtos/$id'
     | '/produtos/novo'
     | '/checkouts/'
     | '/pedidos/'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/'
     | '/checkouts/novo'
     | '/pedidos/$id'
+    | '/produtos/$id'
     | '/produtos/novo'
     | '/checkouts'
     | '/pedidos'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/_dash/'
     | '/_dash/checkouts/novo'
     | '/_dash/pedidos/$id'
+    | '/_dash/produtos/$id'
     | '/_dash/produtos/novo'
     | '/_dash/checkouts/'
     | '/_dash/pedidos/'
@@ -403,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashProdutosIndexRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/produtos/$id': {
+      id: '/_dash/produtos/$id'
+      path: '/produtos/$id'
+      fullPath: '/produtos/$id'
+      preLoaderRoute: typeof DashProdutosIdRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/produtos/novo': {
       id: '/_dash/produtos/novo'
       path: '/produtos/novo'
@@ -427,6 +446,7 @@ interface DashRouteChildren {
   DashIndexRoute: typeof DashIndexRoute
   DashCheckoutsNovoRoute: typeof DashCheckoutsNovoRoute
   DashPedidosIdRoute: typeof DashPedidosIdRoute
+  DashProdutosIdRoute: typeof DashProdutosIdRoute
   DashProdutosNovoRoute: typeof DashProdutosNovoRoute
   DashCheckoutsIndexRoute: typeof DashCheckoutsIndexRoute
   DashPedidosIndexRoute: typeof DashPedidosIndexRoute
@@ -447,6 +467,7 @@ const DashRouteChildren: DashRouteChildren = {
   DashIndexRoute: DashIndexRoute,
   DashCheckoutsNovoRoute: DashCheckoutsNovoRoute,
   DashPedidosIdRoute: DashPedidosIdRoute,
+  DashProdutosIdRoute: DashProdutosIdRoute,
   DashProdutosNovoRoute: DashProdutosNovoRoute,
   DashCheckoutsIndexRoute: DashCheckoutsIndexRoute,
   DashPedidosIndexRoute: DashPedidosIndexRoute,

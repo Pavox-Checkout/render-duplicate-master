@@ -72,14 +72,20 @@ function Produtos() {
   const toggleStatus = async (id: string, current: string) => {
     const next = current === "Ativo" ? "Inativo" : "Ativo";
     const { error } = await supabase.from("products").update({ status: next }).eq("id", id);
-    if (error) return toast.error("Não foi possível atualizar o status");
+    if (error) {
+      toast.error("Não foi possível atualizar o status");
+      return;
+    }
     void refresh();
     toast.success(next === "Ativo" ? "Produto ativado" : "Produto desativado");
   };
 
   const duplicate = async (id: string) => {
     const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
-    if (error || !data) return toast.error("Não foi possível duplicar o produto");
+    if (error || !data) {
+      toast.error("Não foi possível duplicar o produto");
+      return;
+    }
     const { id: _id, created_at, updated_at, user_id, ...rest } = data as Record<string, unknown> & { id: string };
     void _id;
     void created_at;
@@ -90,7 +96,10 @@ function Produtos() {
       .insert({ ...rest, name: `${data.name} (cópia)`, slug: "", status: "Inativo" } as never)
       .select("id")
       .single();
-    if (insErr || !created) return toast.error("Não foi possível duplicar o produto");
+    if (insErr || !created) {
+      toast.error("Não foi possível duplicar o produto");
+      return;
+    }
 
     const { data: variants } = await supabase.from("product_variants").select("*").eq("product_id", id);
     if (variants?.length) {
@@ -114,7 +123,10 @@ function Produtos() {
     const { error } = await supabase.from("products").delete().eq("id", toDelete.id);
     setBusy(false);
     setToDelete(null);
-    if (error) return toast.error("Não foi possível excluir o produto");
+    if (error) {
+      toast.error("Não foi possível excluir o produto");
+      return;
+    }
     void refresh();
     toast.success("Produto excluído");
   };
