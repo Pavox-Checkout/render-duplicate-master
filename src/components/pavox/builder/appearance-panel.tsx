@@ -132,7 +132,7 @@ export function AppearancePanel({
           max={24}
           step={2}
           value={[appearance.radius]}
-          onValueChange={([radius]) => onChange({ radius })}
+          onValueChange={([radius]) => onChange({ radius: radius! })}
         />
       </div>
 
@@ -145,7 +145,7 @@ export function AppearancePanel({
           max={720}
           step={20}
           value={[appearance.width]}
-          onValueChange={([width]) => onChange({ width })}
+          onValueChange={([width]) => onChange({ width: width! })}
         />
       </div>
     </div>

@@ -91,7 +91,7 @@ function FieldEditor({
     const next = [...fields];
     const j = i + dir;
     if (j < 0 || j >= next.length) return;
-    [next[i], next[j]] = [next[j], next[i]];
+    [next[i], next[j]] = [next[j]!, next[i]!];
     update({ fields: next });
   };
 
@@ -171,7 +171,7 @@ export function Inspector({
             <AlignPicker value={d.align} onChange={(align) => update({ align })} />
           </Row>
           <Row label="Tamanho">
-            <Select value={d.size ?? "md"} onValueChange={(size) => update({ size: size as BlockData["size"] })}>
+            <Select value={d.size ?? "md"} onValueChange={(size) => update({ size: size as NonNullable<BlockData["size"]> })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -250,7 +250,7 @@ export function Inspector({
               max={64}
               step={2}
               value={[d.buttonHeight ?? 48]}
-              onValueChange={([v]) => update({ buttonHeight: v })}
+              onValueChange={([v]) => update({ buttonHeight: v! })}
             />
           </Row>
           <ToggleRow label="Largura total" checked={!!d.buttonFull} onChange={(v) => update({ buttonFull: v })} />
@@ -305,7 +305,7 @@ export function Inspector({
             <Input value={d.author ?? ""} onChange={(e) => update({ author: e.target.value })} />
           </Row>
           <Row label={`Avaliação — ${d.rating ?? 5} estrelas`}>
-            <Slider min={1} max={5} step={1} value={[d.rating ?? 5]} onValueChange={([v]) => update({ rating: v })} />
+            <Slider min={1} max={5} step={1} value={[d.rating ?? 5]} onValueChange={([v]) => update({ rating: v! })} />
           </Row>
         </div>
       );
