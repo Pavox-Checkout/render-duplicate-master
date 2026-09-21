@@ -58,11 +58,11 @@ function Field({
   className,
 }: {
   label: string;
-  htmlFor?: string;
-  hint?: string;
-  error?: string;
+  htmlFor?: string | undefined;
+  hint?: string | undefined;
+  error?: string | undefined;
   children: React.ReactNode;
-  className?: string;
+  className?: string | undefined;
 }) {
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -255,15 +255,15 @@ export function ProductFormView({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = "Informe o nome do produto.";
+    if (!form.name.trim()) e["name"] = "Informe o nome do produto.";
     const price = parseMoney(form.price);
-    if (price === null) e.price = "Informe o preço de venda.";
-    else if (price < 0) e.price = "O preço não pode ser negativo.";
+    if (price === null) e["price"] = "Informe o preço de venda.";
+    else if (price < 0) e["price"] = "O preço não pode ser negativo.";
     const promo = parseMoney(form.promotional_price);
     if (promo !== null && price !== null && promo >= price)
-      e.promotional_price = "O preço promocional deve ser menor que o preço de venda.";
+      e["promotional_price"] = "O preço promocional deve ser menor que o preço de venda.";
     if (form.type === "fisico" && form.track_inventory && !form.options.length) {
-      if (intOrZero(form.inventory_quantity) < 0) e.inventory_quantity = "Quantidade inválida.";
+      if (intOrZero(form.inventory_quantity) < 0) e["inventory_quantity"] = "Quantidade inválida.";
     }
     setErrors(e);
     if (Object.keys(e).length) toast.error("Revise os campos destacados antes de salvar.");
@@ -373,7 +373,7 @@ export function ProductFormView({
       <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
           <Section title="Informações do produto" description="Como o produto será apresentado ao comprador.">
-            <Field label="Nome do produto *" htmlFor="name" error={errors.name}>
+            <Field label="Nome do produto *" htmlFor="name" error={errors["name"]}>
               <Input
                 id="name"
                 value={form.name}
@@ -447,10 +447,10 @@ export function ProductFormView({
 
           <Section title="Preço" description="Valores em reais (BRL).">
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Preço de venda *" htmlFor="price" error={errors.price}>
+              <Field label="Preço de venda *" htmlFor="price" error={errors["price"]}>
                 <Input id="price" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="149,90" />
               </Field>
-              <Field label="Preço promocional" htmlFor="promo" error={errors.promotional_price}>
+              <Field label="Preço promocional" htmlFor="promo" error={errors["promotional_price"]}>
                 <Input
                   id="promo"
                   value={form.promotional_price}
@@ -492,7 +492,7 @@ export function ProductFormView({
                 {form.track_inventory ? (
                   <>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <Field label="Quantidade disponível" htmlFor="qty" error={errors.inventory_quantity}>
+                      <Field label="Quantidade disponível" htmlFor="qty" error={errors["inventory_quantity"]}>
                         <Input
                           id="qty"
                           value={form.inventory_quantity}
