@@ -19,7 +19,7 @@ import { brl } from "@/lib/mock";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrders, useProducts } from "@/lib/pavox-data";
 
-export const Route = createFileRoute("/_dash/")({
+export const Route = createFileRoute("/_dash/dashboard")({
   component: Overview,
   head: () => ({
     meta: [
