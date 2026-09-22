@@ -1,11 +1,36 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Plus, Settings2, ShoppingBag, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  CreditCard,
+  Eye,
+  Layers,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Search,
+  ShoppingBag,
+  Trash2,
+} from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { StatusBadge } from "@/components/pavox/status-badge";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +62,39 @@ export const Route = createFileRoute("/_dash/checkouts/")({
 });
 
 const dateBR = (value: string | null) =>
-  value ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+  value
+    ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "—";
+
+const timeBR = (value: string | null) =>
+  value ? new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+
+function SummaryCard({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  icon: typeof Layers;
+  label: string;
+  value: number | string;
+  hint: string;
+  tone: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border/70 bg-card p-4">
+      <div className="flex items-center gap-3">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${tone}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-[13px] text-muted-foreground">{label}</p>
+      </div>
+      <p className="mt-3 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-1 text-[12px] text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
 
 function Checkouts() {
   const { data: checkouts = [], isLoading } = useCheckoutList();
@@ -46,9 +103,25 @@ function Checkouts() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [toDelete, setToDelete] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("todos");
 
   const limit = subscription?.plan?.checkout_limit ?? 3;
   const reachedLimit = checkouts.length >= limit;
+  const publishedCount = checkouts.filter((c) => c.published).length;
+  const draftCount = checkouts.length - publishedCount;
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return checkouts.filter((c) => {
+      const matchTerm = !term || c.name.toLowerCase().includes(term) || c.slug.toLowerCase().includes(term);
+      const matchStatus =
+        status === "todos" ||
+        (status === "publicado" && c.published) ||
+        (status === "rascunho" && !c.published);
+      return matchTerm && matchStatus;
+    });
+  }, [checkouts, search, status]);
 
   const handleCreate = () => {
     if (reachedLimit) {
@@ -81,7 +154,7 @@ function Checkouts() {
     <>
       <PageHeader
         title="Checkouts"
-        subtitle={`Cada checkout é uma página de compra com conversão medida individualmente. ${checkouts.length} de ${limit} usados.`}
+        subtitle="Gerencie seus checkouts e otimize suas vendas. Crie, edite e acompanhe o desempenho dos seus funis de checkout."
         actions={createButton("Criar checkout")}
       />
 
@@ -93,67 +166,163 @@ function Checkouts() {
           action={createButton("Criar checkout")}
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {checkouts.map((c) => {
-            const product = products.find((p) => p.id === c.product_id);
-            return (
-              <div key={c.id} className="surface flex flex-col p-5 transition-shadow hover:shadow-[var(--shadow-lift)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate font-semibold">{c.name}</h3>
-                    <p className="truncate text-[12.5px] text-muted-foreground">
-                      {product ? product.name : "Nenhum produto vinculado"}
-                    </p>
-                  </div>
-                  <StatusBadge status={c.published ? "Publicado" : "Rascunho"} />
-                </div>
+        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-6">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <SummaryCard
+              icon={CreditCard}
+              label="Total de checkouts"
+              value={checkouts.length}
+              hint="Checkouts criados"
+              tone="bg-primary/10 text-primary"
+            />
+            <SummaryCard
+              icon={CheckCircle2}
+              label="Publicados"
+              value={publishedCount}
+              hint="Ativos e prontos para uso"
+              tone="bg-emerald-500/10 text-emerald-600"
+            />
+            <SummaryCard
+              icon={Eye}
+              label="Rascunhos"
+              value={draftCount}
+              hint="Em edição ou não publicados"
+              tone="bg-violet-500/10 text-violet-600"
+            />
+            <SummaryCard
+              icon={Layers}
+              label="Limite do plano"
+              value={limit}
+              hint="Checkouts disponíveis"
+              tone="bg-sky-500/10 text-sky-600"
+            />
+          </div>
 
-                <p className="mt-2 truncate text-[12px] text-muted-foreground">
-                  {c.published ? `/c/${c.slug}` : "Sem link publicado"}
-                </p>
-
-                <dl className="mt-4 space-y-1 text-[12.5px]">
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Criado em</dt>
-                    <dd>{dateBR(c.created_at)}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Atualizado em</dt>
-                    <dd>{dateBR(c.updated_at)}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Publicação</dt>
-                    <dd>{c.published ? dateBR(c.published_at) : "Não publicado"}</dd>
-                  </div>
-                </dl>
-
-                <div className="mt-4 flex gap-2">
-                  <Button asChild variant="outline" size="sm" className="flex-1">
-                    <Link to="/checkouts/$id" params={{ id: c.id }}>
-                      <Settings2 className="h-4 w-4" /> Editar
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toast("Prévia pública disponível em breve")}
-                    aria-label="Visualizar"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => setToDelete(c.id)}
-                    aria-label="Excluir"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+          <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">Seus checkouts</h2>
+              <p className="text-[13px] text-muted-foreground">
+                Acompanhe e gerencie todos os seus checkouts criados.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="relative sm:w-64">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar checkout..."
+                  className="pl-9"
+                />
               </div>
-            );
-          })}
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="sm:w-48">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os status</SelectItem>
+                  <SelectItem value="publicado">Publicados</SelectItem>
+                  <SelectItem value="rascunho">Rascunhos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="mt-5 overflow-x-auto rounded-xl border border-border/70">
+            <table className="w-full min-w-[840px] text-left text-[13.5px]">
+              <thead>
+                <tr className="border-b border-border/70 bg-secondary/30 text-[12.5px] text-muted-foreground">
+                  <th className="px-4 py-3 font-medium">Nome</th>
+                  <th className="px-4 py-3 font-medium">Produto</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Publicado em</th>
+                  <th className="px-4 py-3 font-medium">Última atualização</th>
+                  <th className="px-4 py-3 text-right font-medium">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((c) => {
+                  const product = products.find((p) => p.id === c.product_id);
+                  return (
+                    <tr key={c.id} className="border-b border-border/60 last:border-0 hover:bg-secondary/20">
+                      <td className="px-4 py-4">
+                        <p className="font-medium">{c.name}</p>
+                        <p className="text-[12px] text-muted-foreground">/{c.slug}</p>
+                      </td>
+                      <td className="px-4 py-4">
+                        {product ? (
+                          <>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-[12px] text-muted-foreground">Produto vinculado</p>
+                          </>
+                        ) : (
+                          <span className="text-[12.5px] text-muted-foreground">Nenhum produto</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        <StatusBadge status={c.published ? "Publicado" : "Rascunho"} />
+                      </td>
+                      <td className="px-4 py-4">
+                        <p>{c.published ? dateBR(c.published_at) : "—"}</p>
+                        {c.published ? (
+                          <p className="text-[12px] text-muted-foreground">{timeBR(c.published_at)}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-4">
+                        <p>{dateBR(c.updated_at)}</p>
+                        <p className="text-[12px] text-muted-foreground">{timeBR(c.updated_at)}</p>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label="Visualizar"
+                            onClick={() => toast("Prévia pública disponível em breve")}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button asChild variant="outline" size="icon" className="h-8 w-8" aria-label="Editar">
+                            <Link to="/checkouts/$id" params={{ id: c.id }}>
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Mais ações">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link to="/checkouts/$id" params={{ id: c.id }}>
+                                  <Pencil className="h-4 w-4" /> Editar
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setToDelete(c.id)}
+                              >
+                                <Trash2 className="h-4 w-4" /> Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-10 text-center text-[13px] text-muted-foreground">
+                      Nenhum checkout encontrado para os filtros aplicados.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
