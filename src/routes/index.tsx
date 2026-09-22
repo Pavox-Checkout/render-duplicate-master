@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroDevicesAsset from "@/assets/pavox-hero-devices.png.asset.json";
+import logoAsset from "@/assets/pavox-checkout-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -26,19 +27,11 @@ export const Route = createFileRoute("/")({
 
 function LandingLogo() {
   return (
-    <span className="flex items-center gap-3" aria-label="PAVOX Checkout">
-      <span className="bg-brand-gradient flex h-10 w-10 items-center justify-center rounded-lg text-primary-foreground shadow-[var(--shadow-glow)] sm:h-11 sm:w-11">
-        <span className="font-display text-lg font-extrabold">P</span>
-      </span>
-      <span>
-        <span className="font-display block text-xl leading-none font-extrabold text-foreground sm:text-2xl">
-          PAVO<span className="text-primary">X</span>
-        </span>
-        <span className="mt-1 block text-[8px] font-semibold tracking-[0.36em] text-muted-foreground sm:text-[9px]">
-          CHECKOUT
-        </span>
-      </span>
-    </span>
+    <img
+      src={logoAsset.url}
+      alt="PAVOX Checkout"
+      className="h-auto w-[174px] object-contain sm:w-[196px]"
+    />
   );
 }
 
