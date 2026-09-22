@@ -43,7 +43,7 @@ function SelecionarPlano() {
   }, [loading, session, navigate]);
 
   useEffect(() => {
-    if (subscription) void navigate({ to: "/" });
+    if (subscription) void navigate({ to: "/dashboard" });
   }, [subscription, navigate]);
 
   const handleSelect = async (plan: Plan) => {
@@ -58,7 +58,7 @@ function SelecionarPlano() {
             ? "Seu acesso está liberado. O pagamento da mensalidade será habilitado em breve."
             : "Seu acesso está liberado.",
       });
-      void navigate({ to: "/" });
+      void navigate({ to: "/dashboard" });
     } catch {
       toast.error("Não foi possível salvar seu plano. Tente novamente.");
     } finally {

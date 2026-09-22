@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashRouteImport } from './routes/_dash'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as LoginRouteImport } from './routes/login'
@@ -33,6 +34,11 @@ import { Route as DashProdutosIndexRouteImport } from './routes/_dash/produtos.i
 import { Route as DashProdutosIdRouteImport } from './routes/_dash/produtos.$id'
 import { Route as DashProdutosNovoRouteImport } from './routes/_dash/produtos.novo'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashRoute = DashRouteImport.update({
   id: '/_dash',
   getParentRoute: () => rootRouteImport,
@@ -149,7 +155,7 @@ const DashProdutosNovoRoute = DashProdutosNovoRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof DashRouteWithChildren
+  '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
@@ -174,7 +180,7 @@ export interface FileRoutesByFullPath {
   '/produtos/': typeof DashProdutosIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof DashRouteWithChildren
+  '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
@@ -200,6 +206,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_dash': typeof DashRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
@@ -277,6 +284,7 @@ export interface FileRouteTypes {
     | '/produtos'
   id:
     | '__root__'
+    | '/'
     | '/_dash'
     | '/cadastro'
     | '/login'
@@ -303,6 +311,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   DashRoute: typeof DashRouteWithChildren
   CadastroRoute: typeof CadastroRoute
   LoginRoute: typeof LoginRoute
@@ -311,6 +320,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_dash': {
       id: '/_dash'
       path: ''
@@ -522,6 +538,7 @@ const DashRouteChildren: DashRouteChildren = {
 const DashRouteWithChildren = DashRoute._addFileChildren(DashRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   DashRoute: DashRouteWithChildren,
   CadastroRoute: CadastroRoute,
   LoginRoute: LoginRoute,

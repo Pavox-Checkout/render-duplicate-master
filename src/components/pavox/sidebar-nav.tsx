@@ -45,7 +45,7 @@ function initialsOf(name: string, fallback: string) {
 }
 
 const main = [
-  { to: "/", label: "Visão geral", icon: LayoutGrid },
+  { to: "/dashboard", label: "Visão geral", icon: LayoutGrid },
   { to: "/vendas", label: "Vendas", icon: TrendingUp },
   { to: "/pedidos", label: "Pedidos", icon: Receipt },
   { to: "/produtos", label: "Produtos", icon: Package },
@@ -79,7 +79,7 @@ function NavItem({
     <Link
       to={to}
       onClick={onNavigate}
-      activeOptions={{ exact: to === "/" }}
+      activeOptions={{ exact: to === "/dashboard" }}
       className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
     >
       <Icon className="h-[17px] w-[17px] shrink-0 opacity-80 group-data-[status=active]:opacity-100" />

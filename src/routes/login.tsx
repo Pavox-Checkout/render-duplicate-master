@@ -32,7 +32,7 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) void navigate({ to: "/" });
+    if (!loading && session) void navigate({ to: "/dashboard" });
   }, [loading, session, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -45,7 +45,7 @@ function LoginPage() {
       return;
     }
     toast.success("Bem-vindo de volta");
-    void navigate({ to: "/" });
+    void navigate({ to: "/dashboard" });
   };
 
   const resetPassword = async () => {
