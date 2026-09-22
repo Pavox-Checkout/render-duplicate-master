@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import dashboardLogoAsset from "@/assets/pavox-dashboard-logo.png.asset.json";
 
 export function PavoxLogo({
   className,
@@ -8,16 +9,12 @@ export function PavoxLogo({
   compact?: boolean;
 }) {
   return (
-    <span className={cn("flex items-center gap-2.5", className)}>
-      <span className="bg-brand-gradient relative flex h-8 w-8 items-center justify-center rounded-[10px] text-primary-foreground shadow-[var(--shadow-glow)]">
-        <span className="font-display text-[15px] leading-none font-bold">X</span>
-      </span>
-      {!compact && (
-        <span className="font-display text-[18px] leading-none font-bold tracking-[-0.03em]">
-          PAVO
-          <span className="text-primary">X</span>
-        </span>
-      )}
+    <span className={cn("flex h-8 items-center", className)}>
+      <img
+        src={dashboardLogoAsset.url}
+        alt="PAVOX Checkout"
+        className={cn("h-8 object-contain object-left", compact ? "w-8" : "w-[95px]")}
+      />
     </span>
   );
 }
