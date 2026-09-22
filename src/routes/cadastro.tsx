@@ -37,7 +37,7 @@ function CadastroPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) void navigate({ to: "/" });
+    if (!loading && session) void navigate({ to: "/dashboard" });
   }, [loading, session, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -81,7 +81,7 @@ function CadastroPage() {
       return;
     }
     toast.success("Conta criada com sucesso");
-    void navigate({ to: "/" });
+    void navigate({ to: "/dashboard" });
   };
 
   return (
