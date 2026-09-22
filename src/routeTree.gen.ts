@@ -12,11 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashRouteImport } from './routes/_dash'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DashIndexRouteImport } from './routes/_dash/index'
 import { Route as DashAnalyticsRouteImport } from './routes/_dash/analytics'
 import { Route as DashClientesRouteImport } from './routes/_dash/clientes'
 import { Route as DashConfiguracoesRouteImport } from './routes/_dash/configuracoes'
 import { Route as DashContaRouteImport } from './routes/_dash/conta'
+import { Route as DashDashboardRouteImport } from './routes/_dash/dashboard'
 import { Route as DashEquipeRouteImport } from './routes/_dash/equipe'
 import { Route as DashIntegracoesRouteImport } from './routes/_dash/integracoes'
 import { Route as DashPavoxAiRouteImport } from './routes/_dash/pavox-ai'
@@ -47,11 +47,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashIndexRoute = DashIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashRoute,
-} as any)
 const DashAnalyticsRoute = DashAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -70,6 +65,11 @@ const DashConfiguracoesRoute = DashConfiguracoesRouteImport.update({
 const DashContaRoute = DashContaRouteImport.update({
   id: '/conta',
   path: '/conta',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashDashboardRoute = DashDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => DashRoute,
 } as any)
 const DashEquipeRoute = DashEquipeRouteImport.update({
@@ -149,13 +149,14 @@ const DashProdutosNovoRoute = DashProdutosNovoRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof DashIndexRoute
+  '/': typeof DashRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
   '/configuracoes': typeof DashConfiguracoesRoute
   '/conta': typeof DashContaRoute
+  '/dashboard': typeof DashDashboardRoute
   '/equipe': typeof DashEquipeRoute
   '/integracoes': typeof DashIntegracoesRoute
   '/pavox-ai': typeof DashPavoxAiRoute
@@ -173,12 +174,14 @@ export interface FileRoutesByFullPath {
   '/produtos/': typeof DashProdutosIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof DashRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
   '/configuracoes': typeof DashConfiguracoesRoute
   '/conta': typeof DashContaRoute
+  '/dashboard': typeof DashDashboardRoute
   '/equipe': typeof DashEquipeRoute
   '/integracoes': typeof DashIntegracoesRoute
   '/pavox-ai': typeof DashPavoxAiRoute
@@ -186,7 +189,6 @@ export interface FileRoutesByTo {
   '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
   '/planos/selecionar': typeof PlanosSelecionarRoute
-  '/': typeof DashIndexRoute
   '/checkouts/$id': typeof DashCheckoutsIdRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
@@ -205,6 +207,7 @@ export interface FileRoutesById {
   '/_dash/clientes': typeof DashClientesRoute
   '/_dash/configuracoes': typeof DashConfiguracoesRoute
   '/_dash/conta': typeof DashContaRoute
+  '/_dash/dashboard': typeof DashDashboardRoute
   '/_dash/equipe': typeof DashEquipeRoute
   '/_dash/integracoes': typeof DashIntegracoesRoute
   '/_dash/pavox-ai': typeof DashPavoxAiRoute
@@ -212,7 +215,6 @@ export interface FileRoutesById {
   '/_dash/recuperacao': typeof DashRecuperacaoRoute
   '/_dash/vendas': typeof DashVendasRoute
   '/planos/selecionar': typeof PlanosSelecionarRoute
-  '/_dash/': typeof DashIndexRoute
   '/_dash/checkouts/$id': typeof DashCheckoutsIdRoute
   '/_dash/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
@@ -232,6 +234,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/configuracoes'
     | '/conta'
+    | '/dashboard'
     | '/equipe'
     | '/integracoes'
     | '/pavox-ai'
@@ -249,12 +252,14 @@ export interface FileRouteTypes {
     | '/produtos/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/cadastro'
     | '/login'
     | '/analytics'
     | '/clientes'
     | '/configuracoes'
     | '/conta'
+    | '/dashboard'
     | '/equipe'
     | '/integracoes'
     | '/pavox-ai'
@@ -262,7 +267,6 @@ export interface FileRouteTypes {
     | '/recuperacao'
     | '/vendas'
     | '/planos/selecionar'
-    | '/'
     | '/checkouts/$id'
     | '/checkouts/novo'
     | '/pedidos/$id'
@@ -280,6 +284,7 @@ export interface FileRouteTypes {
     | '/_dash/clientes'
     | '/_dash/configuracoes'
     | '/_dash/conta'
+    | '/_dash/dashboard'
     | '/_dash/equipe'
     | '/_dash/integracoes'
     | '/_dash/pavox-ai'
@@ -287,7 +292,6 @@ export interface FileRouteTypes {
     | '/_dash/recuperacao'
     | '/_dash/vendas'
     | '/planos/selecionar'
-    | '/_dash/'
     | '/_dash/checkouts/$id'
     | '/_dash/checkouts/novo'
     | '/_dash/pedidos/$id'
@@ -328,13 +332,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_dash/': {
-      id: '/_dash/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof DashIndexRouteImport
-      parentRoute: typeof DashRoute
-    }
     '/_dash/analytics': {
       id: '/_dash/analytics'
       path: '/analytics'
@@ -361,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/conta'
       fullPath: '/conta'
       preLoaderRoute: typeof DashContaRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/dashboard': {
+      id: '/_dash/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashDashboardRouteImport
       parentRoute: typeof DashRoute
     }
     '/_dash/equipe': {
@@ -476,13 +480,13 @@ interface DashRouteChildren {
   DashClientesRoute: typeof DashClientesRoute
   DashConfiguracoesRoute: typeof DashConfiguracoesRoute
   DashContaRoute: typeof DashContaRoute
+  DashDashboardRoute: typeof DashDashboardRoute
   DashEquipeRoute: typeof DashEquipeRoute
   DashIntegracoesRoute: typeof DashIntegracoesRoute
   DashPavoxAiRoute: typeof DashPavoxAiRoute
   DashPlanosRoute: typeof DashPlanosRoute
   DashRecuperacaoRoute: typeof DashRecuperacaoRoute
   DashVendasRoute: typeof DashVendasRoute
-  DashIndexRoute: typeof DashIndexRoute
   DashCheckoutsIdRoute: typeof DashCheckoutsIdRoute
   DashCheckoutsNovoRoute: typeof DashCheckoutsNovoRoute
   DashPedidosIdRoute: typeof DashPedidosIdRoute
@@ -498,13 +502,13 @@ const DashRouteChildren: DashRouteChildren = {
   DashClientesRoute: DashClientesRoute,
   DashConfiguracoesRoute: DashConfiguracoesRoute,
   DashContaRoute: DashContaRoute,
+  DashDashboardRoute: DashDashboardRoute,
   DashEquipeRoute: DashEquipeRoute,
   DashIntegracoesRoute: DashIntegracoesRoute,
   DashPavoxAiRoute: DashPavoxAiRoute,
   DashPlanosRoute: DashPlanosRoute,
   DashRecuperacaoRoute: DashRecuperacaoRoute,
   DashVendasRoute: DashVendasRoute,
-  DashIndexRoute: DashIndexRoute,
   DashCheckoutsIdRoute: DashCheckoutsIdRoute,
   DashCheckoutsNovoRoute: DashCheckoutsNovoRoute,
   DashPedidosIdRoute: DashPedidosIdRoute,
