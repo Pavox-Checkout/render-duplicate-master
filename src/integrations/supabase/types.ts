@@ -191,6 +191,54 @@ export type Database = {
           },
         ]
       }
+      payment_integrations: {
+        Row: {
+          created_at: string
+          credentials: Json
+          credentials_masked: Json
+          enabled_payment_methods: string[]
+          environment: string
+          id: string
+          last_test_status: string | null
+          last_tested_at: string | null
+          provider: string
+          routing: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credentials?: Json
+          credentials_masked?: Json
+          enabled_payment_methods?: string[]
+          environment?: string
+          id?: string
+          last_test_status?: string | null
+          last_tested_at?: string | null
+          provider: string
+          routing?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          credentials?: Json
+          credentials_masked?: Json
+          enabled_payment_methods?: string[]
+          environment?: string
+          id?: string
+          last_test_status?: string | null
+          last_tested_at?: string | null
+          provider?: string
+          routing?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           active: boolean
