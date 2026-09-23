@@ -504,6 +504,81 @@ export type Database = {
           },
         ]
       }
+      team_invites: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          invited_email: string
+          invited_name: string
+          role: string
+          status: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          invited_email: string
+          invited_name?: string
+          role?: string
+          status?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          invited_email?: string
+          invited_name?: string
+          role?: string
+          status?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          accepted_at: string | null
+          account_id: string
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_email: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          account_id?: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_email?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          account_id?: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_email?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       transaction_fees: {
         Row: {
           billing_record_id: string | null
