@@ -8,6 +8,9 @@ import {
   Receipt,
   ShoppingCart,
   Wallet,
+  Award,
+  LockKeyhole,
+  Sparkles,
 } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { PeriodFilter } from "@/components/pavox/period-filter";
@@ -18,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { brl } from "@/lib/mock";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrders, useProducts } from "@/lib/pavox-data";
+import { calculatePavoxAchievements, PAVOX_MILESTONES } from "@/lib/achievements";
 
 export const Route = createFileRoute("/_dash/dashboard")({
   component: Overview,
@@ -38,9 +42,67 @@ export const Route = createFileRoute("/_dash/dashboard")({
   }),
 });
 
+function PavoxAchievements({ revenue, isError }: { revenue: number; isError: boolean }) {
+  const progress = calculatePavoxAchievements(revenue);
+
+  return (
+    <section className="surface overflow-hidden border-primary/15 bg-gradient-to-br from-background via-background to-primary/[0.04] p-5 sm:p-6" aria-labelledby="conquistas-pavox-title">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><Sparkles className="h-4 w-4" /></div>
+            <div>
+              <h2 id="conquistas-pavox-title" className="text-base font-semibold">Conquistas PAVOX</h2>
+              <p className="text-[13px] text-muted-foreground">Transforme suas vendas em conquistas.</p>
+            </div>
+          </div>
+          {isError ? (
+            <p className="mt-5 text-sm text-muted-foreground">Não foi possível carregar seu faturamento acumulado.</p>
+          ) : progress.isMaximumReached ? (
+            <p className="mt-5 text-sm font-medium text-primary">Conquista máxima atual desbloqueada: Plaquinha PAVOX 1M.</p>
+          ) : progress.revenue === 0 ? (
+            <p className="mt-5 text-sm text-muted-foreground">Comece a vender para desbloquear suas conquistas PAVOX.</p>
+          ) : progress.revenue < PAVOX_MILESTONES[0].amount ? (
+            <p className="mt-5 text-sm text-muted-foreground">Faltam {brl(progress.remaining)} para conquistar sua primeira plaquinha PAVOX.</p>
+          ) : (
+            <p className="mt-5 text-sm text-muted-foreground">Você já faturou {brl(progress.revenue)}. Continue avançando para sua próxima conquista.</p>
+          )}
+        </div>
+        <div className="text-left lg:text-right">
+          <p className="text-xs text-muted-foreground">Faturamento acumulado</p>
+          <p className="mt-1 text-2xl font-bold tracking-tight">{isError ? "—" : brl(progress.revenue)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{progress.nextMilestone ? `Próximo objetivo: ${brl(progress.nextMilestone.amount)}` : "Marco máximo disponível"}</p>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span>{isError ? "Progresso indisponível" : `${progress.percentage.toFixed(1).replace(".", ",")}% do próximo marco`}</span>
+          {!isError && <span>{progress.nextMilestone ? `Faltam ${brl(progress.remaining)}` : "Concluído"}</span>}
+        </div>
+        <div className="h-3 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuenow={isError ? 0 : progress.percentage} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso das conquistas PAVOX">
+          <div className="h-full rounded-full bg-gradient-to-r from-primary to-sky-400 transition-all" style={{ width: `${isError ? 0 : progress.percentage}%` }} />
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {PAVOX_MILESTONES.map((milestone) => {
+            const achieved = !isError && progress.revenue >= milestone.amount;
+            const next = !isError && progress.nextMilestone?.amount === milestone.amount;
+            return (
+              <div key={milestone.amount} className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${achieved ? "border-primary/40 bg-primary/10 text-primary" : next ? "border-primary/50 bg-primary/5 text-foreground" : "border-border bg-secondary/30 text-muted-foreground"}`}>
+                {achieved ? <Award className="h-4 w-4 shrink-0" /> : <LockKeyhole className="h-3.5 w-3.5 shrink-0" />}
+                <div className="min-w-0"><p className="text-xs font-semibold">R$ {milestone.shortLabel}</p><p className="truncate text-[10px]">{achieved ? "Alcançado" : next ? milestone.reward : "Bloqueado"}</p></div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Overview() {
   const { profile, user } = useAuth();
-  const { data: orders = [] } = useOrders();
+  const { data: orders = [], isError: ordersError } = useOrders();
   const { data: products = [] } = useProducts();
 
   const firstName =
@@ -73,6 +135,8 @@ function Overview() {
         <StatCard label="Ticket médio" value={brl(ticket)} hint="30 dias" icon={Receipt} />
         <StatCard label="Taxa de conversão" value="0,00%" hint="30 dias" icon={BadgePercent} />
       </div>
+
+      <PavoxAchievements revenue={revenue} isError={ordersError} />
 
       <div className="surface p-5">
         <h2 className="text-base font-semibold">Faturamento</h2>
