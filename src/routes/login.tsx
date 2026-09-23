@@ -40,6 +40,16 @@ function LoginPage() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
+    if (error?.code === "email_not_confirmed") {
+      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+      toast.info("Confirme seu e-mail para entrar", {
+        description: resendError
+          ? "Digite o código que enviamos para o seu e-mail."
+          : "Enviamos um novo código para o seu e-mail.",
+      });
+      void navigate({ to: "/confirmar-email", search: { email: email.trim() } });
+      return;
+    }
     if (error) {
       toast.error("Não foi possível entrar", { description: "Verifique seu e-mail e senha." });
       return;
