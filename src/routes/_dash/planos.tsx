@@ -71,8 +71,11 @@ function Planos() {
             ? "O pagamento da mensalidade será habilitado em breve."
             : "Alteração aplicada na sua conta.",
       });
-    } catch {
-      toast.error("Não foi possível alterar seu plano. Tente novamente.");
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      console.error("[v0] falha ao alterar plano:", e);
+      const detail = e.code ? `Erro ${e.code}: ${e.message ?? ""}` : e.message ?? "Tente novamente.";
+      toast.error("Não foi possível alterar seu plano.", { description: detail });
     }
   };
 

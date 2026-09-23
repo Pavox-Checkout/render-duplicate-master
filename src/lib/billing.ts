@@ -239,18 +239,58 @@ export function useTransactionFees(enabled = true) {
   });
 }
 
-/** Seleciona (ou troca) o plano da conta. Planos pagos ficam pendentes até o pagamento existir. */
-export async function selectPlan(userId: string, plan: Plan) {
+export class SelectPlanError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "SelectPlanError";
+    this.code = code;
+  }
+}
+
+/**
+ * Seleciona (ou troca) o plano da conta. Planos pagos ficam pendentes até o pagamento existir.
+ *
+ * A gravação é feita com o client autenticado do navegador (RLS `auth.uid() = user_id`).
+ * Para eliminar qualquer divergência entre o `user_id` gravado e a identidade real da
+ * sessão (causa comum de bloqueio 42501), o `user_id` é derivado da sessão viva no
+ * momento do clique — não de um id repassado que possa estar obsoleto. O `.select()`
+ * confirma a linha efetivamente persistida (read-your-write); se a RLS devolver nenhuma
+ * linha, isso é sinalizado explicitamente em vez de ser tratado como sucesso.
+ */
+export async function selectPlan(_userId: string, plan: Plan) {
+  // 1) Garante uma sessão autenticada válida (renova o token se necessário).
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  const authUserId = sessionData.session?.user?.id;
+  if (!authUserId) {
+    throw new SelectPlanError("no_session", "Sua sessão expirou. Entre novamente para escolher um plano.");
+  }
+
+  // 2) Upsert na própria linha (user_id = auth.uid()), confirmando o registro gravado.
   const paid = Number(plan.monthly_price) > 0;
-  const { error } = await supabase.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      plan_id: plan.id,
-      status: paid ? "pending" : "active",
-      pending_plan_id: paid ? plan.id : null,
-      started_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .upsert(
+      {
+        user_id: authUserId,
+        plan_id: plan.id,
+        status: paid ? "pending" : "active",
+        pending_plan_id: paid ? plan.id : null,
+        started_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
+    )
+    .select("id, user_id, plan_id, status")
+    .maybeSingle();
+
   if (error) throw error;
+  if (!data) {
+    // INSERT/UPDATE não retornou a linha: RLS bloqueou a gravação da própria linha.
+    throw new SelectPlanError(
+      "rls_no_row",
+      "A gravação não retornou o registro do plano (a política de acesso bloqueou a linha).",
+    );
+  }
+  return data as { id: string; user_id: string; plan_id: string; status: string };
 }
