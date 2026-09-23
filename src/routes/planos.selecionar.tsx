@@ -57,14 +57,20 @@ function SelecionarPlano() {
   }, [subscription, navigate]);
 
   const handleSelect = async (plan: PlanDisplay) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Sua sessão expirou. Entre novamente para escolher um plano.");
+      return;
+    }
     setSaving(plan.slug);
     try {
       // Prefere o id já carregado; se indisponível, resolve sob demanda pelo slug.
       const fromCache = dbPlans.find((p) => p.slug === plan.slug)?.id ?? null;
       const planId = fromCache ?? (await resolvePlanIdBySlug(plan.slug));
       if (!planId) {
-        toast.error("Não foi possível confirmar seu plano. Tente novamente em instantes.");
+        // Slug não existe na tabela `plans` (planos não provisionados neste ambiente).
+        toast.error(`O plano "${plan.name}" não está disponível no banco de dados.`, {
+          description: `Nenhum registro com slug "${plan.slug}" foi encontrado na tabela plans.`,
+        });
         return;
       }
       await selectPlan(user.id, {
@@ -87,8 +93,12 @@ function SelecionarPlano() {
             : "Seu acesso está liberado.",
       });
       void navigate({ to: "/dashboard" });
-    } catch {
-      toast.error("Não foi possível salvar seu plano. Tente novamente.");
+    } catch (err) {
+      // Não silenciar a causa: mostra o código/mensagem reais do Supabase.
+      const e = err as { code?: string; message?: string; details?: string };
+      console.error("[v0] falha ao selecionar plano:", e);
+      const detail = e.code ? `Erro ${e.code}: ${e.message ?? ""}` : e.message ?? "Tente novamente.";
+      toast.error("Não foi possível salvar seu plano.", { description: detail });
     } finally {
       setSaving(null);
     }
