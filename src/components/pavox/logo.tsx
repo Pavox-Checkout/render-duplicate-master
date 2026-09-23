@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import dashboardLogoAsset from "@/assets/pavox-dashboard-logo.png.asset.json";
+const dashboardLogoAsset = { url: "/pavox-logo.png" };
 
 export function PavoxLogo({
   className,

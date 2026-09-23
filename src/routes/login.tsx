@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import loginHeroAsset from "@/assets/pavox-login-hero-v2.png.asset.json";
+const loginHeroAsset = { url: "/pavox-banner.png" };
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,

@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroDevicesAsset from "@/assets/pavox-hero-devices.png.asset.json";
-import logoAsset from "@/assets/pavox-checkout-logo.png.asset.json";
+const logoAsset = { url: "/pavox-logo.png" };
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -30,7 +29,7 @@ function LandingLogo() {
     <img
       src={logoAsset.url}
       alt="PAVOX Checkout"
-      className="h-auto w-[174px] object-contain sm:w-[196px]"
+      className="h-auto w-[210px] object-contain sm:w-[238px]"
     />
   );
 }
@@ -55,10 +54,19 @@ function LandingPage() {
           </nav>
         </header>
 
-        <div className="grid flex-1 items-center gap-8 pb-8 pt-6 lg:grid-cols-[0.82fr_1.18fr] lg:gap-0 lg:pb-14 lg:pt-0">
-          <div className="relative z-20 max-w-[650px] lg:py-12">
+        <section className="relative flex flex-1 items-center pb-10 pt-8 lg:pb-16 lg:pt-0" aria-labelledby="hero-title">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-[-8%] hidden w-[70%] bg-[url('/pavox-banner.png')] bg-[length:auto_100%] bg-[position:115%_center] bg-no-repeat opacity-90 [mask-image:linear-gradient(to_right,transparent_0%,transparent_48%,black_68%,black_100%)] lg:block"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-[-8%] right-[12%] hidden h-1/2 w-[48%] rounded-full bg-blue-600/20 blur-[90px] lg:block"
+          />
+
+          <div className="relative z-10 max-w-[640px] lg:py-10">
             <p className="mb-5 text-sm font-medium text-foreground/80 sm:text-base">Seu checkout.</p>
-            <h1 className="font-display text-[clamp(2.75rem,5.4vw,5.4rem)] leading-[0.96] font-extrabold">
+            <h1 id="hero-title" className="font-display text-[clamp(2.75rem,5.4vw,5.4rem)] leading-[0.96] font-extrabold">
               <span className="block text-primary">Mais conversão.</span>
               <span className="mt-2 block text-primary">Mais vendas.</span>
             </h1>
@@ -83,16 +91,7 @@ function LandingPage() {
               </Button>
             </div>
           </div>
-
-          <div className="relative -mx-5 min-h-[300px] sm:-mx-8 sm:min-h-[420px] lg:-mr-14 lg:ml-[-8%] lg:min-h-[620px] xl:-mr-20">
-            <div className="landing-device-glow absolute inset-x-[14%] bottom-[4%] h-[38%]" />
-            <img
-              src={heroDevicesAsset.url}
-              alt="Painel PAVOX em um notebook e checkout em um celular"
-              className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-2xl lg:object-right"
-            />
-          </div>
-        </div>
+        </section>
       </div>
     </main>
   );
