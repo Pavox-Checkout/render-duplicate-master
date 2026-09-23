@@ -6,7 +6,15 @@ import { toast } from "sonner";
 import { PavoxLogo } from "@/components/pavox/logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlans, useSubscription, selectPlan, pct, type Plan } from "@/lib/billing";
+import {
+  PLAN_CATALOG,
+  resolvePlanIdBySlug,
+  selectPlan,
+  useSubscription,
+  usePlans,
+  pct,
+  type PlanDisplay,
+} from "@/lib/billing";
 import { brl } from "@/lib/mock";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +42,9 @@ function SelecionarPlano() {
   const { session, user, loading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: plans = [], isLoading: loadingPlans } = usePlans();
+  // Carrega os planos do banco em segundo plano apenas para obter os IDs reais
+  // (usados na persistência). Os cards renderizam sempre a partir do catálogo.
+  const { data: dbPlans = [] } = usePlans();
   const { data: subscription, isLoading: loadingSub } = useSubscription(!!session);
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -46,15 +56,33 @@ function SelecionarPlano() {
     if (subscription) void navigate({ to: "/dashboard" });
   }, [subscription, navigate]);
 
-  const handleSelect = async (plan: Plan) => {
+  const handleSelect = async (plan: PlanDisplay) => {
     if (!user) return;
-    setSaving(plan.id);
+    setSaving(plan.slug);
     try {
-      await selectPlan(user.id, plan);
+      // Prefere o id já carregado; se indisponível, resolve sob demanda pelo slug.
+      const fromCache = dbPlans.find((p) => p.slug === plan.slug)?.id ?? null;
+      const planId = fromCache ?? (await resolvePlanIdBySlug(plan.slug));
+      if (!planId) {
+        toast.error("Não foi possível confirmar seu plano. Tente novamente em instantes.");
+        return;
+      }
+      await selectPlan(user.id, {
+        id: planId,
+        name: plan.name,
+        slug: plan.slug,
+        monthly_price: plan.monthlyPrice,
+        transaction_fee_percent: plan.feePercent,
+        checkout_limit: 0,
+        features: plan.features,
+        highlight: plan.highlight,
+        position: 0,
+        active: true,
+      });
       await queryClient.invalidateQueries({ queryKey: ["subscription"] });
       toast.success(`Plano ${plan.name} ativado`, {
         description:
-          Number(plan.monthly_price) > 0
+          plan.monthlyPrice > 0
             ? "Seu acesso está liberado. O pagamento da mensalidade será habilitado em breve."
             : "Seu acesso está liberado.",
       });
@@ -66,7 +94,7 @@ function SelecionarPlano() {
     }
   };
 
-  if (loading || loadingPlans || loadingSub) {
+  if (loading || loadingSub) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -89,11 +117,11 @@ function SelecionarPlano() {
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {plans.map((plan) => (
+          {PLAN_CATALOG.map((plan) => (
             <PlanCard
-              key={plan.id}
+              key={plan.slug}
               plan={plan}
-              saving={saving === plan.id}
+              saving={saving === plan.slug}
               disabled={saving !== null}
               onSelect={() => void handleSelect(plan)}
             />
@@ -114,12 +142,12 @@ function PlanCard({
   disabled,
   onSelect,
 }: {
-  plan: Plan;
+  plan: PlanDisplay;
   saving: boolean;
   disabled: boolean;
   onSelect: () => void;
 }) {
-  const free = Number(plan.monthly_price) === 0;
+  const free = plan.monthlyPrice === 0;
   return (
     <div
       className={cn(
@@ -137,18 +165,18 @@ function PlanCard({
       </div>
 
       <p className="mt-3 font-display text-2xl font-bold">
-        {brl(Number(plan.monthly_price))}
+        {brl(plan.monthlyPrice)}
         <span className="text-[13px] font-medium text-muted-foreground">/mês</span>
       </p>
 
       <dl className="mt-4 space-y-1.5 text-[13px]">
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Taxa PAVOX</dt>
-          <dd className="font-semibold">{pct(Number(plan.transaction_fee_percent))} por transação</dd>
+          <dd className="font-semibold">{pct(plan.feePercent)} por transação</dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Checkouts</dt>
-          <dd className="font-medium">Até {plan.checkout_limit}</dd>
+          <dd className="font-medium">{plan.checkoutLabel}</dd>
         </div>
       </dl>
 

@@ -61,6 +61,96 @@ function normalizePlan(row: Record<string, unknown>): Plan {
 export const pct = (value: number) =>
   `${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 
+/**
+ * Catálogo canônico dos planos PAVOX (fonte da verdade para exibição).
+ * Mantido em código para que os cards sempre apareçam, independentemente de
+ * hiccups de rede/token ou de o ambiente ter o seed do banco. A persistência da
+ * seleção continua usando o `id` real da tabela `plans` (via slug).
+ */
+export type PlanDisplay = {
+  slug: string;
+  name: string;
+  monthlyPrice: number;
+  feePercent: number;
+  checkoutLabel: string;
+  highlight: boolean;
+  features: string[];
+};
+
+export const PLAN_CATALOG: PlanDisplay[] = [
+  {
+    slug: "free",
+    name: "Free",
+    monthlyPrice: 0,
+    feePercent: 1.99,
+    checkoutLabel: "Até 3 checkouts",
+    highlight: false,
+    features: [
+      "Produtos ilimitados",
+      "1 domínio PAVOX",
+      "Checkout básico",
+      "Personalização básica",
+      "Gestão de produtos, pedidos e clientes",
+      "Dashboard básico",
+      "Suporte por e-mail",
+      "Sem domínio personalizado",
+      "Sem recuperação de vendas",
+      "Sem analytics avançado",
+      "Sem Pavox AI",
+      "Sem A/B Testing",
+      "Sem recursos avançados de conversão",
+    ],
+  },
+  {
+    slug: "growth",
+    name: "Growth",
+    monthlyPrice: 29.9,
+    feePercent: 1.49,
+    checkoutLabel: "Até 10 checkouts",
+    highlight: true,
+    features: [
+      "Produtos ilimitados",
+      "Domínio personalizado",
+      "Checkout avançado",
+      "Order Bump",
+      "Upsell",
+      "Cupons",
+      "Recuperação de vendas",
+      "Analytics completo",
+      "Relatórios completos",
+      "Personalização avançada",
+      "Suporte prioritário",
+    ],
+  },
+  {
+    slug: "pro",
+    name: "Pro",
+    monthlyPrice: 99,
+    feePercent: 0.99,
+    checkoutLabel: "Checkouts ilimitados",
+    highlight: false,
+    features: [
+      "Produtos ilimitados",
+      "Múltiplos domínios personalizados",
+      "Tudo do Growth",
+      "Pavox AI",
+      "Analytics avançado",
+      "A/B Testing",
+      "Recursos premium de conversão",
+      "Automação avançada",
+      "Relatórios avançados",
+      "Suporte prioritário",
+    ],
+  },
+];
+
+/** Resolve o `id` real do plano na tabela `plans` a partir do slug (para persistir a seleção). */
+export async function resolvePlanIdBySlug(slug: string): Promise<string | null> {
+  const { data, error } = await supabase.from("plans").select("id").eq("slug", slug).maybeSingle();
+  if (error || !data) return null;
+  return (data as { id: string }).id;
+}
+
 export const PLAN_STATUS_LABEL: Record<string, string> = {
   active: "Ativo",
   pending: "Aguardando pagamento",
