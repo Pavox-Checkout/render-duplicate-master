@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroDevicesAsset from "@/assets/pavox-hero-devices.png.asset.json";
-import logoAsset from "@/assets/pavox-checkout-logo.png.asset.json";
+const heroDevicesAsset = { url: "/pavox-banner.png" };
+const logoAsset = { url: "/pavox-logo.png" };
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
