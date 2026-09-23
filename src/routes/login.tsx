@@ -40,18 +40,27 @@ function LoginPage() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
-    if (error?.code === "email_not_confirmed") {
-      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: email.trim() });
-      toast.info("Confirme seu e-mail para entrar", {
-        description: resendError
-          ? "Digite o código que enviamos para o seu e-mail."
-          : "Enviamos um novo código para o seu e-mail.",
-      });
-      void navigate({ to: "/confirmar-email", search: { email: email.trim() } });
-      return;
-    }
     if (error) {
-      toast.error("Não foi possível entrar", { description: "Verifique seu e-mail e senha." });
+      const code = error.code ?? "";
+      const msg = error.message.toLowerCase();
+      // A conta existe mas o e-mail ainda não foi confirmado: encaminha para o fluxo de OTP.
+      // Verificamos code E message porque o campo `code` nem sempre vem populado (gotrue/proxy).
+      const isUnconfirmed = code === "email_not_confirmed" || msg.includes("not confirmed");
+      if (isUnconfirmed) {
+        const { error: resendError } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+        toast.info("Confirme seu e-mail para entrar", {
+          description: resendError
+            ? "Digite o código que enviamos para o seu e-mail."
+            : "Enviamos um novo código para o seu e-mail.",
+        });
+        void navigate({ to: "/confirmar-email", search: { email: email.trim() } });
+        return;
+      }
+      const isInvalidCredentials =
+        code === "invalid_credentials" || msg.includes("invalid login credentials");
+      toast.error("Não foi possível entrar", {
+        description: isInvalidCredentials ? "E-mail ou senha incorretos." : error.message,
+      });
       return;
     }
     toast.success("Bem-vindo de volta");
