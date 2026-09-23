@@ -76,8 +76,8 @@ function CadastroPage() {
       return;
     }
     if (!data.session) {
-      toast.success("Conta criada", { description: "Confirme seu e-mail para entrar." });
-      void navigate({ to: "/login" });
+      toast.success("Conta criada", { description: "Enviamos um código de confirmação para o seu e-mail." });
+      void navigate({ to: "/confirmar-email", search: { email: email.trim() } });
       return;
     }
     toast.success("Conta criada com sucesso");

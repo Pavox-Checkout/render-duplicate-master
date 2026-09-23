@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashRouteImport } from './routes/_dash'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as ConfirmarEmailRouteImport } from './routes/confirmar-email'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashAnalyticsRouteImport } from './routes/_dash/analytics'
 import { Route as DashClientesRouteImport } from './routes/_dash/clientes'
@@ -46,6 +47,11 @@ const DashRoute = DashRouteImport.update({
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmarEmailRoute = ConfirmarEmailRouteImport.update({
+  id: '/confirmar-email',
+  path: '/confirmar-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -157,6 +163,7 @@ const DashProdutosNovoRoute = DashProdutosNovoRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
+  '/confirmar-email': typeof ConfirmarEmailRoute
   '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
+  '/confirmar-email': typeof ConfirmarEmailRoute
   '/login': typeof LoginRoute
   '/analytics': typeof DashAnalyticsRoute
   '/clientes': typeof DashClientesRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_dash': typeof DashRouteWithChildren
   '/cadastro': typeof CadastroRoute
+  '/confirmar-email': typeof ConfirmarEmailRoute
   '/login': typeof LoginRoute
   '/_dash/analytics': typeof DashAnalyticsRoute
   '/_dash/clientes': typeof DashClientesRoute
@@ -236,6 +245,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cadastro'
+    | '/confirmar-email'
     | '/login'
     | '/analytics'
     | '/clientes'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cadastro'
+    | '/confirmar-email'
     | '/login'
     | '/analytics'
     | '/clientes'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_dash'
     | '/cadastro'
+    | '/confirmar-email'
     | '/login'
     | '/_dash/analytics'
     | '/_dash/clientes'
@@ -314,6 +326,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashRoute: typeof DashRouteWithChildren
   CadastroRoute: typeof CadastroRoute
+  ConfirmarEmailRoute: typeof ConfirmarEmailRoute
   LoginRoute: typeof LoginRoute
   PlanosSelecionarRoute: typeof PlanosSelecionarRoute
 }
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/cadastro'
       fullPath: '/cadastro'
       preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmar-email': {
+      id: '/confirmar-email'
+      path: '/confirmar-email'
+      fullPath: '/confirmar-email'
+      preLoaderRoute: typeof ConfirmarEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -541,6 +561,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashRoute: DashRouteWithChildren,
   CadastroRoute: CadastroRoute,
+  ConfirmarEmailRoute: ConfirmarEmailRoute,
   LoginRoute: LoginRoute,
   PlanosSelecionarRoute: PlanosSelecionarRoute,
 }
