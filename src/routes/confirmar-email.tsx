@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const confirmHeroAsset = { url: "/pavox-auth-banner.png" };
 
 // Must match "Email OTP Length" in Supabase (Authentication → Sign In / Providers → Email).
-const CODE_LENGTH = 6;
+const CODE_LENGTH = 8;
 const RESEND_COOLDOWN = 60;
 
 export const Route = createFileRoute("/confirmar-email")({
@@ -139,7 +139,7 @@ function ConfirmarEmailPage() {
               >
                 <InputOTPGroup>
                   {Array.from({ length: CODE_LENGTH }, (_, i) => (
-                    <InputOTPSlot key={i} index={i} className="h-12 w-12 text-lg" />
+                    <InputOTPSlot key={i} index={i} className="h-11 w-10 text-base sm:h-12 sm:w-12 sm:text-lg" />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
