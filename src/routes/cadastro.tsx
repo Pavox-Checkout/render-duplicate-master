@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-const cadastroHeroAsset = { url: "/pavox-banner.png" };
+const cadastroHeroAsset = { url: "/pavox-auth-banner.png" };
 
 export const Route = createFileRoute("/cadastro")({
   component: CadastroPage,
@@ -163,10 +163,9 @@ function CadastroPage() {
       </div>
 
       <div
-        className="relative hidden bg-cover bg-center bg-no-repeat lg:flex"
+        className="relative hidden bg-contain bg-center bg-no-repeat lg:flex"
         style={{ backgroundImage: `url(${cadastroHeroAsset.url})` }}
       >
-        <div className="grid-noise absolute inset-0 opacity-30" />
       </div>
     </div>
   );
