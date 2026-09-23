@@ -144,11 +144,18 @@ export const PLAN_CATALOG: PlanDisplay[] = [
   },
 ];
 
-/** Resolve o `id` real do plano na tabela `plans` a partir do slug (para persistir a seleção). */
+/**
+ * Resolve o `id` real do plano na tabela `plans` a partir do slug (para persistir a seleção).
+ * Lança em caso de erro de leitura (RLS/rede/sessão) para que a causa real não seja
+ * silenciada; retorna `null` apenas quando o slug realmente não existe no banco.
+ */
 export async function resolvePlanIdBySlug(slug: string): Promise<string | null> {
   const { data, error } = await supabase.from("plans").select("id").eq("slug", slug).maybeSingle();
-  if (error || !data) return null;
-  return (data as { id: string }).id;
+  if (error) {
+    console.error("[v0] resolvePlanIdBySlug read error:", { slug, code: error.code, message: error.message });
+    throw error;
+  }
+  return data ? (data as { id: string }).id : null;
 }
 
 export const PLAN_STATUS_LABEL: Record<string, string> = {
