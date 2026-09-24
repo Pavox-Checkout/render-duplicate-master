@@ -194,3 +194,91 @@
   background: oklch(0.58 0.23 255 / 0.28);
   filter: blur(72px);
 }
+
+/* PAVOX landing — subtle technical grid + ambient motion */
+.landing-grid {
+  background-image:
+    linear-gradient(to right, oklch(1 0 0 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(1 0 0 / 0.045) 1px, transparent 1px);
+  background-size: 58px 58px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 78%);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 78%);
+}
+
+.landing-glow {
+  background: radial-gradient(circle, oklch(0.6 0.22 258 / 0.55) 0%, transparent 68%);
+  filter: blur(70px);
+}
+
+@keyframes pavox-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes pavox-float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes pavox-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes pavox-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.animate-float {
+  animation: pavox-float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: pavox-float-slow 8.5s ease-in-out infinite;
+}
+
+.animate-dot {
+  animation: pavox-dot 1.8s ease-in-out infinite;
+}
+
+.animate-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, oklch(1 0 0 / 0.14) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: pavox-sheen 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-slow,
+  .animate-dot {
+    animation: none;
+  }
+  .animate-sheen::after {
+    display: none;
+  }
+}
