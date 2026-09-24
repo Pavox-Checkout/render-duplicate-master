@@ -20,6 +20,7 @@ import {
   Trash2,
   Truck,
   Type,
+  User,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -330,14 +331,57 @@ export function ConfigSidebar({ config, update }: Props) {
         </SectionItem>
       ) : null}
 
-      {/* ── ETAPAS ── */}
-      <SectionItem value="etapas" icon={ListChecks} title="Etapas" active={config.steps.enabled}>
+      {/* ── IDENTIFICAÇÃO ── */}
+      <SectionItem value="identificacao" icon={User} title="Identificação">
+        <Group title="Campos solicitados">
+          <FieldToggles all={CUSTOMER_FIELDS} active={config.fields.customer} onChange={(customer) => set("fields", { customer })} />
+        </Group>
+        {config.fields.customer.length > 0 ? (
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">Obrigatoriedade</p>
+            {CUSTOMER_FIELDS.filter((f) => config.fields.customer.includes(f)).map((f) => (
+              <div key={f} className="flex items-center justify-between rounded-lg border border-border px-2.5 py-2">
+                <span className="text-[12.5px] font-medium">{FIELD_LABELS[f]}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">Obrigatório</span>
+                  <MiniSwitch
+                    checked={config.fields.required.includes(f)}
+                    onChange={(v) =>
+                      set("fields", {
+                        required: v ? [...config.fields.required, f] : config.fields.required.filter((x) => x !== f),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <Divider />
         <SwitchRow
-          label="Usar checkout por etapas"
-          hint="Divide o preenchimento em passos para reduzir a fricção."
-          checked={config.steps.enabled}
-          onChange={(v) => set("steps", { enabled: v })}
+          label="Permitir compra com CNPJ"
+          hint="Adiciona a opção Pessoa jurídica (Razão social, CNPJ) na identificação."
+          checked={config.identification.allowCNPJ}
+          onChange={(v) => set("identification", { allowCNPJ: v })}
         />
+      </SectionItem>
+
+      {/* ── ESTRUTURA DO CHECKOUT ── */}
+      <SectionItem value="etapas" icon={ListChecks} title="Estrutura do checkout" active={config.steps.enabled}>
+        <Segmented
+          label="Formato"
+          value={config.steps.enabled ? "steps" : "single"}
+          onChange={(v) => set("steps", { enabled: v === "steps" })}
+          options={[
+            { value: "single", label: "Página única" },
+            { value: "steps", label: "Etapas" },
+          ]}
+        />
+        <p className="rounded-md bg-secondary/60 px-2.5 py-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+          {config.steps.enabled
+            ? "O preenchimento é dividido em Identificação → Entrega → Pagamento, um passo por vez."
+            : "Todos os campos aparecem em uma única página, com um só botão de finalização."}
+        </p>
         {config.steps.enabled ? (
           <>
             <Segmented
@@ -761,15 +805,11 @@ export function ConfigSidebar({ config, update }: Props) {
 
       {/* ── CAMPOS DO FORMULÁRIO ── */}
       {advanced ? (
-        <SectionItem value="campos" icon={AlignStartVertical} title="Formulário">
-          <Group title="Dados do cliente">
-            <FieldToggles
-              all={CUSTOMER_FIELDS}
-              active={config.fields.customer}
-              onChange={(customer) => set("fields", { customer })}
-            />
-          </Group>
-          <Divider />
+        <SectionItem value="campos" icon={AlignStartVertical} title="Endereço">
+          <p className="rounded-md bg-secondary/60 px-2.5 py-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+            Campos usados na etapa de <strong className="font-semibold text-foreground">Entrega</strong>, exibida apenas em produtos
+            físicos.
+          </p>
           <Group title="Endereço de entrega">
             <FieldToggles
               all={ADDRESS_FIELDS}
