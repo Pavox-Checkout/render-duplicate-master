@@ -1,14 +1,17 @@
 /**
  * Modelo de dados do Checkout Builder (mockado nesta etapa).
  * Toda a estrutura já está no formato que um backend futuro poderia persistir.
+ * Esta camada é 100% visual/UI — o DEV conectará os dados reais depois.
  */
 
 export type BlockType =
   | "header"
+  | "divider"
   | "product"
   | "offer"
   | "customer"
   | "address"
+  | "steps"
   | "payment"
   | "summary"
   | "footer"
@@ -17,6 +20,7 @@ export type BlockType =
   | "coupon"
   | "countdown"
   | "social"
+  | "live"
   | "guarantee"
   | "security";
 
@@ -32,12 +36,47 @@ export type FieldKey =
   | "city"
   | "state";
 
+export type Align = "left" | "center" | "right";
+
+export type CheckoutStep = { id: string; label: string };
+
+export type Testimonial = {
+  id: string;
+  name: string;
+  text: string;
+  rating: number;
+  avatar?: string;
+};
+
+export type StepsStyle = "minimal" | "progress" | "numbered";
+export type SocialStyle = "simple" | "card" | "stacked" | "rating";
+export type SecurityStyle = "inline" | "badges";
+export type LivePosition = "bottom-left" | "bottom-right" | "top-left" | "top-right";
+
 export type BlockData = {
-  // header
-  logo?: string;
-  align?: "left" | "center" | "right";
+  // ── header ──
+  identity?: "text" | "logo";
+  brandName?: string;
+  logo?: string; // compat: nome antigo do texto da marca
+  logoUrl?: string;
+  logoWidth?: number;
+  fontWeight?: number;
+  align?: Align;
   size?: "sm" | "md" | "lg";
-  // produto
+  secureEnabled?: boolean;
+  secureText?: string;
+  secureAlign?: Align;
+  secureSize?: "sm" | "md";
+  secureColor?: string;
+
+  // ── divisor ──
+  thickness?: number;
+  color?: string;
+  opacity?: number;
+  spacingTop?: number;
+  spacingBottom?: number;
+
+  // ── produto ──
   title?: string;
   description?: string;
   price?: number;
@@ -46,23 +85,59 @@ export type BlockData = {
   showDiscount?: boolean;
   image?: string;
   showQuantity?: boolean;
-  // formulários
+
+  // ── formulários ──
   fields?: FieldKey[];
   required?: FieldKey[];
-  // pagamento
+
+  // ── etapas ──
+  stepsEnabled?: boolean;
+  stepsStyle?: StepsStyle;
+  steps?: CheckoutStep[];
+  showNumbers?: boolean;
+  showStepIcons?: boolean;
+
+  // ── pagamento ──
   pix?: boolean;
   card?: boolean;
   boleto?: boolean;
-  // botão / resumo
+
+  // ── botão / resumo ──
   buttonLabel?: string;
   buttonHeight?: number;
   buttonFull?: boolean;
-  // bump / upsell
+  buttonRadius?: number;
+  buttonColor?: string;
+  buttonIcon?: boolean;
+
+  // ── bump / upsell / genéricos ──
   enabled?: boolean;
-  // prova social
-  rating?: number;
-  author?: string;
-  // rodapé / textos
+
+  // ── prova social ──
+  socialStyle?: SocialStyle;
+  testimonials?: Testimonial[];
+  rating?: number; // compat
+  author?: string; // compat
+
+  // ── compra ao vivo ──
+  liveName?: string;
+  liveProduct?: string;
+  livePhrase?: string;
+  liveLocation?: string;
+  liveShowLocation?: boolean;
+  liveShowProduct?: boolean;
+  liveShowAvatar?: boolean;
+  livePosition?: LivePosition;
+  liveDuration?: number;
+  liveInterval?: number;
+
+  // ── selos de segurança ──
+  securityStyle?: SecurityStyle;
+  securityColor?: string;
+  securityAlign?: Align;
+  securitySize?: "sm" | "md";
+
+  // ── textos genéricos ──
   text?: string;
 };
 
@@ -107,10 +182,12 @@ export const ADDRESS_FIELDS: FieldKey[] = ["zip", "street", "number", "complemen
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
   header: "Cabeçalho",
+  divider: "Divisor",
   product: "Produto",
   offer: "Oferta",
   customer: "Cliente",
   address: "Endereço",
+  steps: "Etapas",
   payment: "Pagamento",
   summary: "Resumo",
   footer: "Rodapé",
@@ -119,8 +196,19 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   coupon: "Cupom",
   countdown: "Contagem regressiva",
   social: "Prova social",
+  live: "Compra ao vivo",
   guarantee: "Garantia",
   security: "Selos de segurança",
+};
+
+export const BLOCK_HINTS: Partial<Record<BlockType, string>> = {
+  header: "Identidade da loja, selo de segurança e alinhamento.",
+  divider: "Linha fina para separar o cabeçalho do conteúdo.",
+  steps: "Divida o checkout em etapas para reduzir a fricção.",
+  payment: "Escolha os métodos exibidos ao cliente.",
+  social: "Depoimentos e avaliações reforçam a confiança.",
+  live: "Notificações de compras recentes (dados reais depois).",
+  security: "Reforce a segurança sem poluir a página.",
 };
 
 /** Blocos que não fazem sentido duplicar na página. */
@@ -129,6 +217,7 @@ export const SINGLETON_BLOCKS: BlockType[] = [
   "product",
   "customer",
   "address",
+  "steps",
   "payment",
   "summary",
   "footer",
@@ -167,10 +256,17 @@ export const FONT_STACKS: Record<Appearance["font"], string> = {
   serif: 'Georgia, "Times New Roman", serif',
 };
 
+export const LIVE_PHRASES = [
+  "acabou de comprar",
+  "acabou de adquirir",
+  "acabou de garantir o seu",
+  "fez um pedido agora",
+];
+
 let seq = 0;
-export function newId(type: BlockType) {
+export function newId(prefix: string) {
   seq += 1;
-  return `${type}-${Date.now().toString(36)}-${seq}`;
+  return `${prefix}-${Date.now().toString(36)}-${seq}`;
 }
 
 export function createBlock(type: BlockType): Block {
@@ -180,7 +276,21 @@ export function createBlock(type: BlockType): Block {
 export function defaultData(type: BlockType): BlockData {
   switch (type) {
     case "header":
-      return { logo: "Loja Demo", align: "center", size: "md" };
+      return {
+        identity: "text",
+        brandName: "Loja Demo",
+        logoWidth: 120,
+        fontWeight: 700,
+        align: "center",
+        size: "md",
+        secureEnabled: true,
+        secureText: "Pagamento 100% seguro",
+        secureAlign: "center",
+        secureSize: "sm",
+        secureColor: "#16a34a",
+      };
+    case "divider":
+      return { thickness: 1, color: "#0f172a", opacity: 10, spacingTop: 12, spacingBottom: 12 };
     case "product":
       return {
         title: "Kit Premium",
@@ -200,10 +310,29 @@ export function defaultData(type: BlockType): BlockData {
         fields: ["zip", "street", "number", "city", "state"],
         required: ["zip", "street", "number"],
       };
+    case "steps":
+      return {
+        stepsEnabled: true,
+        stepsStyle: "progress",
+        showNumbers: true,
+        showStepIcons: false,
+        steps: [
+          { id: newId("step"), label: "Dados" },
+          { id: newId("step"), label: "Endereço e frete" },
+          { id: newId("step"), label: "Pagamento" },
+        ],
+      };
     case "payment":
       return { pix: true, card: true, boleto: false };
     case "summary":
-      return { buttonLabel: "Finalizar compra", buttonHeight: 48, buttonFull: true, align: "center" };
+      return {
+        buttonLabel: "Finalizar compra",
+        buttonHeight: 52,
+        buttonFull: true,
+        buttonRadius: 12,
+        buttonIcon: true,
+        align: "center",
+      };
     case "footer":
       return { text: "© 2026 Loja Demo · Todos os direitos reservados" };
     case "bump":
@@ -221,9 +350,28 @@ export function defaultData(type: BlockType): BlockData {
       return { title: "Esta oferta expira em", text: "09:58" };
     case "social":
       return {
-        text: "Produto excelente, chegou muito rápido!",
-        author: "Cliente verificado",
-        rating: 5,
+        socialStyle: "card",
+        testimonials: [
+          {
+            id: newId("tst"),
+            name: "Mariana Alves",
+            text: "Produto excelente, chegou muito rápido e o checkout foi simples!",
+            rating: 5,
+          },
+        ],
+      };
+    case "live":
+      return {
+        liveName: "Maria",
+        liveProduct: "Kit Premium",
+        livePhrase: "acabou de comprar",
+        liveLocation: "São Paulo, SP",
+        liveShowLocation: true,
+        liveShowProduct: true,
+        liveShowAvatar: true,
+        livePosition: "bottom-left",
+        liveDuration: 5,
+        liveInterval: 8,
       };
     case "guarantee":
       return {
@@ -231,7 +379,13 @@ export function defaultData(type: BlockType): BlockData {
         description: "Seus dados estão protegidos e sua compra é processada com segurança.",
       };
     case "security":
-      return { text: "Compra segura · Pagamento protegido · Dados criptografados" };
+      return {
+        securityStyle: "badges",
+        text: "Compra protegida · Pagamento seguro · Dados protegidos",
+        securityColor: "#16a34a",
+        securityAlign: "center",
+        securitySize: "sm",
+      };
   }
 }
 
@@ -240,6 +394,7 @@ export const INITIAL_STATE: BuilderState = {
   status: "Rascunho",
   blocks: [
     createBlock("header"),
+    createBlock("divider"),
     createBlock("product"),
     createBlock("customer"),
     createBlock("address"),

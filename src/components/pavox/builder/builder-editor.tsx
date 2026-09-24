@@ -314,10 +314,12 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
-                  <MousePointerClick className="h-5 w-5 text-muted-foreground" />
-                  <p className="text-[13px] font-medium">Nenhum elemento selecionado</p>
-                  <p className="max-w-[210px] text-[12px] text-muted-foreground">
-                    Clique em um bloco do preview para editar suas configurações.
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                    <MousePointerClick className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <p className="text-[13.5px] font-semibold">Selecione um elemento</p>
+                  <p className="max-w-[220px] text-[12px] text-muted-foreground">
+                    Clique em qualquer bloco do checkout para editar suas configurações.
                   </p>
                 </div>
               )}
