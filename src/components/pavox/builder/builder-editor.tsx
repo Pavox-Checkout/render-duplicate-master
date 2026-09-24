@@ -8,6 +8,7 @@ import {
   Cloud,
   Copy,
   Eye,
+  FlaskConical,
   Loader2,
   Monitor,
   Package,
@@ -32,6 +33,8 @@ import {
 } from "@/components/ui/dialog";
 import { ConfigSidebar } from "@/components/pavox/builder/config-sidebar";
 import { CheckoutPreview } from "@/components/pavox/builder/checkout-preview";
+import { CheckoutRuntime } from "@/components/pavox/builder/checkout-runtime";
+import { CheckoutSimulator } from "@/components/pavox/builder/checkout-simulator";
 import {
   PRESETS,
   RECOMMENDATIONS,
@@ -73,6 +76,8 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [tipsOpen, setTipsOpen] = useState(false);
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"design" | "test">("design");
   const first = useRef(true);
 
   const config = state.config;
@@ -214,6 +219,9 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
           <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
             <Eye className="h-4 w-4" /> <span className="hidden sm:inline">Visualizar</span>
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setSimulatorOpen(true)}>
+            <FlaskConical className="h-4 w-4" /> <span className="hidden sm:inline">Testar checkout</span>
+          </Button>
           <Button size="sm" onClick={() => void publish()} disabled={publishing}>
             {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
             Publicar
@@ -272,6 +280,28 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
         <div className="surface flex min-h-0 flex-col overflow-hidden">
           <div className="flex items-center gap-3 border-b border-border px-3 py-2">
             <span className="text-[12px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">Preview</span>
+            <div className="flex items-center gap-1 rounded-lg bg-secondary p-1">
+              {(
+                [
+                  { key: "design", label: "Design" },
+                  { key: "test", label: "Teste" },
+                ] as { key: "design" | "test"; label: string }[]
+              ).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setPreviewMode(key)}
+                  aria-pressed={previewMode === key}
+                  title={key === "test" ? "Preencha e navegue pelo checkout" : "Visualização em tempo real"}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors",
+                    previewMode === key ? "bg-card text-foreground shadow-[var(--shadow-card)]" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label === "Teste" ? <FlaskConical className="h-3.5 w-3.5" /> : null}
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="ml-auto flex items-center gap-1 rounded-lg bg-secondary p-1">
               {PRODUCT_KINDS.map(({ key, label, icon: Icon }) => (
                 <button
@@ -317,7 +347,11 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
                 device === "desktop" && "max-w-full rounded-xl border border-border",
               )}
             >
-              <CheckoutPreview config={config} device={device} />
+              {previewMode === "test" ? (
+                <CheckoutRuntime config={config} device={device} />
+              ) : (
+                <CheckoutPreview config={config} device={device} />
+              )}
             </div>
           </div>
         </div>
@@ -395,6 +429,9 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* SIMULADOR DEDICADO */}
+      <CheckoutSimulator open={simulatorOpen} onOpenChange={setSimulatorOpen} config={config} name={state.name} />
     </div>
   );
 }
