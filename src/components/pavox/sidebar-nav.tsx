@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Users,
   UserCircle,
+  Globe,
 } from "lucide-react";
 import { PavoxLogo } from "./logo";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,6 +61,7 @@ const main = [
 const settings = [
   { to: "/conta", label: "Minha conta", icon: UserCircle },
   { to: "/equipe", label: "Equipe", icon: Building2 },
+  { to: "/dominios", label: "Domínios", icon: Globe },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
   { to: "/planos", label: "Planos", icon: CreditCard },
 ] as const;

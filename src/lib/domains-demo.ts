@@ -1,0 +1,90 @@
+/**
+ * Dados de DEMONSTRAÇÃO da seção de Domínios.
+ *
+ * ⚠️ Somente para renderização da interface. Nada aqui persiste, consulta o
+ * Supabase ou verifica DNS/SSL de verdade. Um DEV pode substituir este arquivo
+ * (ou o hook `useDomainsDemo`) por dados reais do backend mantendo os mesmos
+ * tipos/campos: `currentDomains`, `domainLimit`, `planName`, e a lista `domains`.
+ */
+
+export type DomainType = "pavox" | "custom";
+
+export type DomainStatus = "connected" | "awaiting_dns" | "verifying" | "error";
+
+export interface DemoDomain {
+  id: string;
+  /** Domínio completo exibido ao usuário. */
+  domain: string;
+  type: DomainType;
+  status: DomainStatus;
+  /** Nome do checkout associado (apenas visual nesta etapa). */
+  checkout: string;
+  isPrimary: boolean;
+  /** Data de conexão já formatada para exibição. */
+  connectedAt: string;
+}
+
+/** Rótulos e cores dos status — reutilizados pelo badge. */
+export const DOMAIN_STATUS: Record<
+  DomainStatus,
+  { label: string; tone: "success" | "warning" | "neutral" | "error"; pulse?: boolean }
+> = {
+  connected: { label: "Conectado", tone: "success" },
+  awaiting_dns: { label: "Aguardando configuração", tone: "neutral" },
+  verifying: { label: "Verificando", tone: "warning", pulse: true },
+  error: { label: "Erro na verificação", tone: "error" },
+};
+
+export const DOMAIN_TYPE_LABEL: Record<DomainType, string> = {
+  pavox: "Domínio PAVOX",
+  custom: "Domínio próprio",
+};
+
+/** Checkouts disponíveis para associar (demo). */
+export const DEMO_CHECKOUTS = [
+  "Checkout Principal",
+  "Checkout Black Friday",
+  "Checkout Oferta Especial",
+  "Checkout Produto X",
+] as const;
+
+/**
+ * Limites por plano — apenas para preparar a UI. A regra real de billing NÃO
+ * é consultada aqui.
+ */
+export const PLAN_DOMAIN_LIMITS: Record<string, number> = {
+  Free: 1,
+  Growth: 3,
+  Pro: 5,
+};
+
+/** Plano de demonstração usado para calcular limite/disponibilidade na UI. */
+export const DEMO_PLAN_NAME = "Growth";
+
+/** Sufixo dos domínios PAVOX (apenas visual). */
+export const PAVOX_DOMAIN_SUFFIX = "checkout.pavox.com.br";
+
+/** Alvo de CNAME exibido na etapa de DNS (apenas visual). */
+export const PAVOX_CNAME_TARGET = "domains.pavox.com.br";
+
+/** Lista inicial de domínios de demonstração. */
+export const INITIAL_DEMO_DOMAINS: DemoDomain[] = [
+  {
+    id: "dom-1",
+    domain: "checkout.pavox.com.br/loja-demo",
+    type: "pavox",
+    status: "connected",
+    checkout: "Checkout Principal",
+    isPrimary: true,
+    connectedAt: "12 mar 2025",
+  },
+  {
+    id: "dom-2",
+    domain: "checkout.minhaloja.com.br",
+    type: "custom",
+    status: "connected",
+    checkout: "Checkout Black Friday",
+    isPrimary: false,
+    connectedAt: "28 mar 2025",
+  },
+];
