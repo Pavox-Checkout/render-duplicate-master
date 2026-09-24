@@ -5,7 +5,6 @@ import {
   Check,
   Globe,
   Layers,
-  Link2,
   MoreHorizontal,
   Plus,
   RefreshCw,
@@ -17,6 +16,7 @@ import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { DomainStatusBadge } from "@/components/pavox/domain-status-badge";
 import { DomainAddDialog } from "@/components/pavox/domain-add-dialog";
+import { CheckoutSelect } from "@/components/pavox/checkout-select";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,13 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +37,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  DEMO_CHECKOUTS,
   DEMO_PLAN_NAME,
   DOMAIN_TYPE_LABEL,
   INITIAL_DEMO_DOMAINS,
@@ -104,8 +96,8 @@ function Dominios() {
     toast.success("Domínio principal atualizado");
   }
 
-  function updateCheckout(id: string, checkout: string) {
-    setDomains((prev) => prev.map((d) => (d.id === id ? { ...d, checkout } : d)));
+  function updateCheckout(id: string, checkoutId: string) {
+    setDomains((prev) => prev.map((d) => (d.id === id ? { ...d, checkoutId } : d)));
     toast.success("Checkout associado atualizado");
   }
 
@@ -295,25 +287,18 @@ function DomainRow({
 
         {/* Checkout associado + ações */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:shrink-0">
-          <div className="min-w-0 sm:w-56">
-            <label className="mb-1 block text-[11.5px] font-medium text-muted-foreground">
+          <div className="min-w-0 sm:w-64">
+            <label
+              htmlFor={`checkout-${domain.id}`}
+              className="mb-1 block text-[11.5px] font-medium text-muted-foreground"
+            >
               Checkout associado
             </label>
-            <Select value={domain.checkout} onValueChange={onUpdateCheckout}>
-              <SelectTrigger className="h-9">
-                <span className="flex items-center gap-1.5 truncate">
-                  <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <SelectValue placeholder="Selecionar checkout" />
-                </span>
-              </SelectTrigger>
-              <SelectContent>
-                {DEMO_CHECKOUTS.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CheckoutSelect
+              id={`checkout-${domain.id}`}
+              value={domain.checkoutId}
+              onChange={onUpdateCheckout}
+            />
           </div>
 
           <div className="flex items-center gap-2 sm:self-end">

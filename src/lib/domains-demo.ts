@@ -17,8 +17,11 @@ export interface DemoDomain {
   domain: string;
   type: DomainType;
   status: DomainStatus;
-  /** Nome do checkout associado (apenas visual nesta etapa). */
-  checkout: string;
+  /**
+   * ID do checkout real associado (vem de `useCheckouts`). `null` quando ainda
+   * não há checkout associado. Nenhum checkout fictício é usado aqui.
+   */
+  checkoutId: string | null;
   isPrimary: boolean;
   /** Data de conexão já formatada para exibição. */
   connectedAt: string;
@@ -39,14 +42,6 @@ export const DOMAIN_TYPE_LABEL: Record<DomainType, string> = {
   pavox: "Domínio PAVOX",
   custom: "Domínio próprio",
 };
-
-/** Checkouts disponíveis para associar (demo). */
-export const DEMO_CHECKOUTS = [
-  "Checkout Principal",
-  "Checkout Black Friday",
-  "Checkout Oferta Especial",
-  "Checkout Produto X",
-] as const;
 
 /**
  * Limites por plano — apenas para preparar a UI. A regra real de billing NÃO
@@ -74,7 +69,7 @@ export const INITIAL_DEMO_DOMAINS: DemoDomain[] = [
     domain: "checkout.pavox.com.br/loja-demo",
     type: "pavox",
     status: "connected",
-    checkout: "Checkout Principal",
+    checkoutId: null,
     isPrimary: true,
     connectedAt: "12 mar 2025",
   },
@@ -83,7 +78,7 @@ export const INITIAL_DEMO_DOMAINS: DemoDomain[] = [
     domain: "checkout.minhaloja.com.br",
     type: "custom",
     status: "connected",
-    checkout: "Checkout Black Friday",
+    checkoutId: null,
     isPrimary: false,
     connectedAt: "28 mar 2025",
   },
