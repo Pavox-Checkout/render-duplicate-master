@@ -281,3 +281,89 @@ export type Automation = {
 };
 
 export const AUTOMATIONS: Automation[] = [];
+
+/* -------------------------------------------------------------------------- */
+/* Tracking e atribuição                                                      */
+/*                                                                            */
+/* Catálogo de plataformas de rastreamento/atribuição disponíveis para        */
+/* conectar. NENHUMA inicia conectada — não existe integração real ativa no   */
+/* backend ainda. A UI permite configurar credenciais/eventos/checkouts       */
+/* (interface preparada), mas o envio automático de eventos só é habilitado   */
+/* quando a integração for concluída no backend. Nada aqui é fictício.        */
+/* -------------------------------------------------------------------------- */
+
+export type TrackingAvailability = "Disponível" | "Em breve";
+
+export type TrackingPlatform = {
+  id: string;
+  name: string;
+  /** Descrição curta exibida no card. */
+  description: string;
+  /** Descrição estendida usada no card de destaque. */
+  longDescription?: string;
+  /** Benefícios resumidos (somente no destaque). */
+  benefits?: string[];
+  /** Card em destaque (maior). */
+  featured?: boolean;
+  availability: TrackingAvailability;
+  /** Cor de destaque da marca (usada em detalhes da UI). */
+  accent: string;
+  /** Rótulo do campo principal de credencial no dialog de configuração. */
+  credentialLabel: string;
+  credentialPlaceholder: string;
+};
+
+export const TRACKING_PLATFORMS: TrackingPlatform[] = [
+  {
+    id: "utmify",
+    name: "UTMify",
+    description: "Rastreamento e atribuição das suas vendas.",
+    longDescription:
+      "Centralize suas UTMs, atribua cada venda à campanha de origem e acompanhe o ROI real dos seus anúncios diretamente a partir do checkout PAVOX.",
+    benefits: [
+      "Atribuição de vendas por UTM e campanha",
+      "ROI por criativo, conjunto e canal",
+      "Sincronização automática das conversões",
+    ],
+    featured: true,
+    availability: "Disponível",
+    accent: "#0B0B0F",
+    credentialLabel: "Token de API da UTMify",
+    credentialPlaceholder: "Cole o token gerado no painel da UTMify",
+  },
+  {
+    id: "otimizey",
+    name: "Otimizey",
+    description: "Ferramentas de tracking e análise de campanhas.",
+    availability: "Disponível",
+    accent: "#2563EB",
+    credentialLabel: "Chave de API da Otimizey",
+    credentialPlaceholder: "Cole sua chave de API",
+  },
+  {
+    id: "wetracked",
+    name: "Wetracked",
+    description: "Rastreamento avançado para campanhas de tráfego.",
+    availability: "Disponível",
+    accent: "#1D9BF0",
+    credentialLabel: "Chave de API da Wetracked",
+    credentialPlaceholder: "Cole sua chave de API",
+  },
+];
+
+/**
+ * Plataformas planejadas para a expansão da seção. Aparecem claramente como
+ * "Em breve" — não são integrações ativas nem fictícias.
+ */
+export const TRACKING_COMING_SOON = [
+  "Meta",
+  "Google Ads",
+  "TikTok Ads",
+  "Google Analytics",
+  "Pinterest",
+  "Kwai",
+  "Taboola",
+  "Microsoft Ads",
+  "Snap",
+  "GTM",
+] as const;

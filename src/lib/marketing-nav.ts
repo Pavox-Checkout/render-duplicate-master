@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Radar,
+  Crosshair,
   Ticket,
   Percent,
   Layers,
@@ -41,6 +42,12 @@ export const MARKETING_ITEMS: MarketingNavItem[] = [
     label: "Pixels e rastreamento",
     icon: Radar,
     description: "Conecte plataformas de anúncios e acompanhe eventos.",
+  },
+  {
+    to: "/marketing/tracking",
+    label: "Tracking e atribuição",
+    icon: Crosshair,
+    description: "Conecte UTMify, Otimizey e Wetracked para atribuir vendas.",
   },
   {
     to: "/marketing/cupons",

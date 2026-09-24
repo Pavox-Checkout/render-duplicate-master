@@ -43,6 +43,7 @@ import { Route as DashMarketingPixelsRouteImport } from './routes/_dash/marketin
 import { Route as DashMarketingProvasSociaisRouteImport } from './routes/_dash/marketing.provas-sociais'
 import { Route as DashMarketingRecuperacaoRouteImport } from './routes/_dash/marketing.recuperacao'
 import { Route as DashMarketingSugestoesPagamentoRouteImport } from './routes/_dash/marketing.sugestoes-pagamento'
+import { Route as DashMarketingTrackingRouteImport } from './routes/_dash/marketing.tracking'
 import { Route as DashMarketingUpsellRouteImport } from './routes/_dash/marketing.upsell'
 import { Route as DashPedidosIndexRouteImport } from './routes/_dash/pedidos.index'
 import { Route as DashPedidosIdRouteImport } from './routes/_dash/pedidos.$id'
@@ -224,6 +225,11 @@ const DashMarketingSugestoesPagamentoRoute =
     path: '/marketing/sugestoes-pagamento',
     getParentRoute: () => DashRoute,
   } as any)
+const DashMarketingTrackingRoute = DashMarketingTrackingRouteImport.update({
+  id: '/marketing/tracking',
+  path: '/marketing/tracking',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashMarketingUpsellRoute = DashMarketingUpsellRouteImport.update({
   id: '/marketing/upsell',
   path: '/marketing/upsell',
@@ -287,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/marketing/provas-sociais': typeof DashMarketingProvasSociaisRoute
   '/marketing/recuperacao': typeof DashMarketingRecuperacaoRoute
   '/marketing/sugestoes-pagamento': typeof DashMarketingSugestoesPagamentoRoute
+  '/marketing/tracking': typeof DashMarketingTrackingRoute
   '/marketing/upsell': typeof DashMarketingUpsellRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
   '/produtos/$id': typeof DashProdutosIdRoute
@@ -328,6 +335,7 @@ export interface FileRoutesByTo {
   '/marketing/provas-sociais': typeof DashMarketingProvasSociaisRoute
   '/marketing/recuperacao': typeof DashMarketingRecuperacaoRoute
   '/marketing/sugestoes-pagamento': typeof DashMarketingSugestoesPagamentoRoute
+  '/marketing/tracking': typeof DashMarketingTrackingRoute
   '/marketing/upsell': typeof DashMarketingUpsellRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
   '/produtos/$id': typeof DashProdutosIdRoute
@@ -371,6 +379,7 @@ export interface FileRoutesById {
   '/_dash/marketing/provas-sociais': typeof DashMarketingProvasSociaisRoute
   '/_dash/marketing/recuperacao': typeof DashMarketingRecuperacaoRoute
   '/_dash/marketing/sugestoes-pagamento': typeof DashMarketingSugestoesPagamentoRoute
+  '/_dash/marketing/tracking': typeof DashMarketingTrackingRoute
   '/_dash/marketing/upsell': typeof DashMarketingUpsellRoute
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
   '/_dash/produtos/$id': typeof DashProdutosIdRoute
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
     | '/marketing/provas-sociais'
     | '/marketing/recuperacao'
     | '/marketing/sugestoes-pagamento'
+    | '/marketing/tracking'
     | '/marketing/upsell'
     | '/pedidos/$id'
     | '/produtos/$id'
@@ -455,6 +465,7 @@ export interface FileRouteTypes {
     | '/marketing/provas-sociais'
     | '/marketing/recuperacao'
     | '/marketing/sugestoes-pagamento'
+    | '/marketing/tracking'
     | '/marketing/upsell'
     | '/pedidos/$id'
     | '/produtos/$id'
@@ -497,6 +508,7 @@ export interface FileRouteTypes {
     | '/_dash/marketing/provas-sociais'
     | '/_dash/marketing/recuperacao'
     | '/_dash/marketing/sugestoes-pagamento'
+    | '/_dash/marketing/tracking'
     | '/_dash/marketing/upsell'
     | '/_dash/pedidos/$id'
     | '/_dash/produtos/$id'
@@ -756,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashMarketingSugestoesPagamentoRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/marketing/tracking': {
+      id: '/_dash/marketing/tracking'
+      path: '/marketing/tracking'
+      fullPath: '/marketing/tracking'
+      preLoaderRoute: typeof DashMarketingTrackingRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/marketing/upsell': {
       id: '/_dash/marketing/upsell'
       path: '/marketing/upsell'
@@ -828,6 +847,7 @@ interface DashRouteChildren {
   DashMarketingProvasSociaisRoute: typeof DashMarketingProvasSociaisRoute
   DashMarketingRecuperacaoRoute: typeof DashMarketingRecuperacaoRoute
   DashMarketingSugestoesPagamentoRoute: typeof DashMarketingSugestoesPagamentoRoute
+  DashMarketingTrackingRoute: typeof DashMarketingTrackingRoute
   DashMarketingUpsellRoute: typeof DashMarketingUpsellRoute
   DashPedidosIdRoute: typeof DashPedidosIdRoute
   DashProdutosIdRoute: typeof DashProdutosIdRoute
@@ -865,6 +885,7 @@ const DashRouteChildren: DashRouteChildren = {
   DashMarketingProvasSociaisRoute: DashMarketingProvasSociaisRoute,
   DashMarketingRecuperacaoRoute: DashMarketingRecuperacaoRoute,
   DashMarketingSugestoesPagamentoRoute: DashMarketingSugestoesPagamentoRoute,
+  DashMarketingTrackingRoute: DashMarketingTrackingRoute,
   DashMarketingUpsellRoute: DashMarketingUpsellRoute,
   DashPedidosIdRoute: DashPedidosIdRoute,
   DashProdutosIdRoute: DashProdutosIdRoute,
