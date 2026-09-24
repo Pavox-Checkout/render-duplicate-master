@@ -1,23 +1,19 @@
 /**
- * Fonte dos checkouts reais da conta logada.
+ * Fonte dos checkouts REAIS da conta logada.
  *
- * ⚠️ Ainda NÃO busca dados. Este hook está preparado para o DEV plugar a busca
- * real (ex.: SWR + Supabase / API) mantendo exatamente este contrato:
+ * Busca os checkouts do usuário autenticado no Supabase (RLS já restringe as
+ * linhas à conta da sessão). Nenhum dado fictício é usado como fallback: quando
+ * a conta não possui checkouts, a lista volta vazia e a UI renderiza o estado
+ * vazio ("Nenhum checkout criado").
  *
- *   { checkouts, isLoading, error, refetch }
- *
- * Regras desta etapa (frontend/UI):
- * - Não usar dados fictícios/mockados como fallback.
- * - Enquanto a busca real não é implementada, o estado padrão é "sem checkouts"
- *   (lista vazia, sem loading, sem erro) — a interface renderiza o estado vazio.
- *
- * Para o DEV: basta substituir o corpo desta função pela busca real. A UI já
- * trata os 4 estados: carregando, erro (com "tentar novamente"), vazio e com
- * checkouts.
+ * Contrato consumido pela UI: { checkouts, isLoading, error, refetch }.
  */
 
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 export interface CheckoutOption {
-  /** Identificador único do checkout (vindo do backend). */
+  /** Identificador único do checkout. */
   id: string;
   /** Nome do checkout exibido ao usuário. */
   name: string;
@@ -34,12 +30,26 @@ export interface UseCheckoutsResult {
 }
 
 export function useCheckouts(): UseCheckoutsResult {
-  // TODO(DEV): substituir por busca real dos checkouts da conta logada.
-  // Não retornar dados fictícios aqui.
+  const query = useQuery({
+    queryKey: ["checkouts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checkouts")
+        .select("id, name, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string }[];
+    },
+  });
+
   return {
-    checkouts: [],
-    isLoading: false,
-    error: null,
-    refetch: () => {},
+    checkouts: (query.data ?? []).map((c) => ({ id: c.id, name: c.name })),
+    isLoading: query.isLoading,
+    error: query.isError
+      ? ((query.error as Error)?.message ?? "Falha ao carregar checkouts")
+      : null,
+    refetch: () => {
+      void query.refetch();
+    },
   };
 }
