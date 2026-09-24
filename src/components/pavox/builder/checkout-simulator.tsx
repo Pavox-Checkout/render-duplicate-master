@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FlaskConical, Monitor, RotateCcw, Smartphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckoutRuntime } from "@/components/pavox/builder/checkout-runtime";
+import { CheckoutPreview } from "@/components/pavox/builder/checkout-preview";
 import { type CheckoutConfig } from "@/lib/checkout-builder";
 import { cn } from "@/lib/utils";
 
@@ -81,7 +81,7 @@ export function CheckoutSimulator({ open, onOpenChange, config, name }: Props) {
                 : "max-w-[720px] rounded-xl border border-border shadow-[var(--shadow-card)]",
             )}
           >
-            <CheckoutRuntime key={resetKey} config={config} device={device} />
+            <CheckoutPreview key={resetKey} config={config} device={device} mode="test" />
           </div>
         </div>
       </DialogContent>

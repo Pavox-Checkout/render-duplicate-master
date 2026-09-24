@@ -1,9 +1,13 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
+  ArrowLeft,
   BadgeCheck,
+  Building2,
   Check,
+  CheckCircle2,
   CreditCard,
   Database,
+  FlaskConical,
   Lock,
   MapPin,
   ShieldCheck,
@@ -18,8 +22,19 @@ import { brl } from "@/lib/mock";
 import { cn } from "@/lib/utils";
 import { PixIcon } from "@/components/pavox/builder/pix-icon";
 import {
+  ADDRESS_FIELDS,
+  CUSTOMER_FIELDS,
   FIELD_LABELS,
   FONT_STACKS,
+  isValidCEP,
+  isValidCNPJ,
+  isValidCPF,
+  isValidEmail,
+  isValidPhone,
+  maskCEP,
+  maskCNPJ,
+  maskCPF,
+  maskPhone,
   resolveSteps,
   type Align,
   type CheckoutConfig,
@@ -27,7 +42,27 @@ import {
   type FieldKey,
   type SecurityItem,
   type StepItem,
+  type StepKey,
 } from "@/lib/checkout-builder";
+
+/**
+ * Renderizador único do checkout — a fonte de verdade visual e funcional.
+ *
+ * As três superfícies (Preview do Builder, Simulador/"Testar checkout" e o
+ * checkout publicado/"Abrir checkout") usam ESTE componente com a MESMA
+ * configuração (CheckoutConfig). Não existe lógica paralela nem estrutura
+ * antiga: tudo é derivado de `config`.
+ *
+ * `mode`:
+ *  - "design"    → preview em tempo real dentro do Builder (interativo).
+ *  - "test"      → simulação (exibe faixa de modo de teste + reinício).
+ *  - "published" → representação do checkout publicado (interativo).
+ *
+ * Nenhum modo cria cliente, pedido, venda, pagamento, webhook ou analytics.
+ */
+
+type PreviewMode = "design" | "test" | "published";
+type Identity = "pf" | "pj";
 
 const SECURITY_ICONS: Record<string, typeof ShieldCheck> = {
   shield: ShieldCheck,
@@ -36,11 +71,17 @@ const SECURITY_ICONS: Record<string, typeof ShieldCheck> = {
   badge: BadgeCheck,
 };
 
-const STEP_ICONS: Record<string, typeof User> = {
+const STEP_CHIP_ICONS: Record<string, typeof User> = {
   user: User,
   truck: Truck,
   card: CreditCard,
   circle: Check,
+};
+
+const STEP_ICONS: Record<StepKey, typeof User> = {
+  identificacao: User,
+  entrega: Truck,
+  pagamento: CreditCard,
 };
 
 function alignItems(a: Align) {
@@ -50,16 +91,88 @@ function textAlign(a: Align): CSSProperties["textAlign"] {
   return a;
 }
 
+/* ── validações de campo ── */
+const vEmail = (v: string) => (isValidEmail(v) ? null : "E-mail inválido");
+const vPhone = (v: string) => (isValidPhone(v) ? null : "Telefone inválido");
+const vCPF = (v: string) => (isValidCPF(v) ? null : "CPF inválido");
+const vCNPJ = (v: string) => (isValidCNPJ(v) ? null : "CNPJ inválido");
+const vCEP = (v: string) => (isValidCEP(v) ? null : "CEP inválido");
+
+type RuntimeField = {
+  id: string;
+  label: string;
+  placeholder: string;
+  type?: "text" | "email" | "tel";
+  mask?: (v: string) => string;
+  validate?: (v: string) => string | null;
+  required: boolean;
+  half?: boolean;
+};
+
+const PF_META: Record<FieldKey, Omit<RuntimeField, "required">> = {
+  name: { id: "name", label: "Nome completo", placeholder: "Digite seu nome completo" },
+  email: { id: "email", label: "E-mail", placeholder: "Digite seu e-mail", type: "email", validate: vEmail },
+  phone: { id: "phone", label: "Celular/WhatsApp", placeholder: "(00) 00000-0000", type: "tel", mask: maskPhone, validate: vPhone },
+  doc: { id: "doc", label: "CPF", placeholder: "000.000.000-00", mask: maskCPF, validate: vCPF },
+  zip: { id: "zip", label: "CEP", placeholder: "00000-000", mask: maskCEP, validate: vCEP },
+  street: { id: "street", label: "Endereço", placeholder: "Rua, avenida..." },
+  number: { id: "number", label: "Número", placeholder: "Nº", half: true },
+  complement: { id: "complement", label: "Complemento", placeholder: "Apto, bloco (opcional)", half: true },
+  city: { id: "city", label: "Cidade", placeholder: "Sua cidade", half: true },
+  state: { id: "state", label: "Estado", placeholder: "UF", half: true },
+};
+
+const SHIPPING = [
+  { id: "standard", label: "Entrega padrão", eta: "5 a 8 dias úteis", price: 0 },
+  { id: "express", label: "Entrega expressa", eta: "1 a 2 dias úteis", price: 24.9 },
+];
+
+const CARD_FIELDS: RuntimeField[] = [
+  { id: "card_number", label: "Número do cartão", placeholder: "0000 0000 0000 0000", required: true, validate: (v) => (v.replace(/\D/g, "").length >= 13 ? null : "Número inválido") },
+  { id: "card_name", label: "Nome impresso no cartão", placeholder: "Como está no cartão", required: true },
+  { id: "card_exp", label: "Validade", placeholder: "MM/AA", required: true, half: true, validate: (v) => (/^\d{2}\/?\d{2}$/.test(v.replace(/\s/g, "")) ? null : "Validade inválida") },
+  { id: "card_cvv", label: "CVV", placeholder: "000", required: true, half: true, validate: (v) => (v.replace(/\D/g, "").length >= 3 ? null : "CVV inválido") },
+];
+
 type Props = {
   config: CheckoutConfig;
   device: Device;
-  interactive?: boolean;
+  mode?: PreviewMode;
 };
 
-export function CheckoutPreview({ config, device }: Props) {
+export function CheckoutPreview({ config, device, mode = "design" }: Props) {
   const c = config;
   const col = c.colors;
   const mobile = device === "mobile";
+  const testMode = mode === "test";
+
+  const steps = useMemo(() => resolveSteps(c), [c]);
+  const stepped = c.steps.enabled && steps.length > 1;
+
+  const [identity, setIdentity] = useState<Identity>("pf");
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [stepIndex, setStepIndex] = useState(0);
+  const [method, setMethod] = useState<string>(c.payment.pix ? "pix" : c.payment.card ? "card" : "boleto");
+  const [shipping, setShipping] = useState(SHIPPING[0]!.id);
+  const [finished, setFinished] = useState(false);
+
+  // Se a configuração de PJ for desativada enquanto o comprador estava em PJ,
+  // volta imediatamente para PF (mantém o preview coerente em tempo real).
+  useEffect(() => {
+    if (!c.identification.allowCNPJ && identity === "pj") setIdentity("pf");
+  }, [c.identification.allowCNPJ, identity]);
+
+  // Mantém o método de pagamento válido conforme os métodos ativos mudam.
+  useEffect(() => {
+    const active = [c.payment.pix && "pix", c.payment.card && "card", c.payment.boleto && "boleto"].filter(Boolean) as string[];
+    if (active.length > 0 && !active.includes(method)) setMethod(active[0]!);
+  }, [c.payment.pix, c.payment.card, c.payment.boleto, method]);
+
+  // Ajusta o índice de etapa caso o número de etapas mude (ex.: físico↔digital).
+  useEffect(() => {
+    if (stepIndex > steps.length - 1) setStepIndex(Math.max(0, steps.length - 1));
+  }, [steps.length, stepIndex]);
 
   const rootStyle: CSSProperties = {
     background: col.background,
@@ -67,7 +180,6 @@ export function CheckoutPreview({ config, device }: Props) {
     color: col.text,
     lineHeight: c.typography.lineHeight,
   };
-
   const cardStyle: CSSProperties = {
     background: col.surface,
     border: `1px solid ${col.border}`,
@@ -75,11 +187,130 @@ export function CheckoutPreview({ config, device }: Props) {
     color: col.text,
   };
 
+  const identityFields = useMemo<RuntimeField[]>(() => {
+    if (identity === "pj") {
+      return [
+        { id: "razao", label: "Razão social", placeholder: "Nome registrado da empresa", required: true },
+        { id: "fantasia", label: "Nome fantasia (opcional)", placeholder: "Nome comercial", required: false },
+        { id: "cnpj", label: "CNPJ", placeholder: "00.000.000/0000-00", mask: maskCNPJ, validate: vCNPJ, required: true },
+        { id: "email", label: "E-mail", placeholder: "Digite seu e-mail", type: "email", validate: vEmail, required: true },
+        { id: "phone", label: "Celular/WhatsApp", placeholder: "(00) 00000-0000", type: "tel", mask: maskPhone, validate: vPhone, required: c.fields.required.includes("phone") },
+      ];
+    }
+    return CUSTOMER_FIELDS.filter((f) => c.fields.customer.includes(f)).map((f) => ({
+      ...PF_META[f],
+      required: c.fields.required.includes(f),
+    }));
+  }, [identity, c.fields.customer, c.fields.required]);
+
+  const addressFields = useMemo<RuntimeField[]>(
+    () =>
+      ADDRESS_FIELDS.filter((f) => c.fields.address.includes(f)).map((f) => ({
+        ...PF_META[f],
+        required: c.fields.required.includes(f),
+      })),
+    [c.fields.address, c.fields.required],
+  );
+
+  const cardFields = method === "card" ? CARD_FIELDS : [];
+
+  function fieldsForStep(key: StepKey): RuntimeField[] {
+    if (key === "identificacao") return identityFields;
+    if (key === "entrega") return addressFields;
+    if (key === "pagamento") return cardFields;
+    return [];
+  }
+
+  const allFields = useMemo(
+    () => steps.flatMap((s) => fieldsForStep(s.key)),
+    [steps, identityFields, addressFields, cardFields],
+  );
+
+  function setValue(id: string, v: string) {
+    setValues((prev) => ({ ...prev, [id]: v }));
+    if (errors[id]) setErrors((prev) => ({ ...prev, [id]: "" }));
+  }
+
+  function validate(fields: RuntimeField[]) {
+    const next: Record<string, string> = {};
+    for (const f of fields) {
+      const raw = (values[f.id] ?? "").trim();
+      if (f.required && !raw) {
+        next[f.id] = "Campo obrigatório";
+        continue;
+      }
+      if (raw && f.validate) {
+        const err = f.validate(raw);
+        if (err) next[f.id] = err;
+      }
+    }
+    return next;
+  }
+
+  function goPrimary() {
+    const toCheck = stepped ? fieldsForStep(steps[stepIndex]!.key) : allFields;
+    const next = validate(toCheck);
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+    if (!stepped || stepIndex >= steps.length - 1) {
+      setFinished(true);
+      return;
+    }
+    setStepIndex((i) => i + 1);
+  }
+
+  function reset() {
+    setValues({});
+    setErrors({});
+    setStepIndex(0);
+    setIdentity("pf");
+    setFinished(false);
+  }
+
+  function primaryLabel() {
+    if (!stepped || stepIndex >= steps.length - 1) return c.button.label;
+    const next = steps[stepIndex + 1];
+    return `Continuar para ${(next?.label ?? "").toLowerCase()}`;
+  }
+
+  /* ───────────── tela de conclusão ───────────── */
+  if (finished) {
+    return (
+      <div className="relative min-h-[420px] w-full" style={rootStyle}>
+        {testMode ? <TestBanner col={col} /> : null}
+        <div className="flex min-h-[380px] items-center justify-center px-4 py-10">
+          <div className="w-full max-w-[420px] p-6 text-center" style={cardStyle}>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full" style={{ background: `${col.success}1f`, color: col.success }}>
+              <CheckCircle2 className="h-7 w-7" />
+            </div>
+            <p className="mt-4 text-[16px] font-bold">{testMode ? "Compra simulada com sucesso" : "Tudo certo!"}</p>
+            <p className="mt-1.5 text-[13px]" style={{ color: col.textMuted }}>
+              {testMode
+                ? "Este é apenas um teste — nenhum pedido, pagamento ou cliente foi criado."
+                : "Pré-visualização do fluxo concluída. É exatamente assim que o cliente avança pelo checkout."}
+            </p>
+            <button
+              type="button"
+              onClick={reset}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg text-[14px] font-semibold text-white transition-transform active:scale-[0.99]"
+              style={{ background: col.button, borderRadius: c.button.radius }}
+            >
+              Recomeçar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const current = steps[stepIndex];
   const bodySize = c.typography.bodySize;
   const labelSize = c.typography.labelSize;
 
   return (
     <div className="relative min-h-[420px] w-full" style={rootStyle}>
+      {testMode ? <TestBanner col={col} /> : null}
+
       {/* barra de avisos */}
       <NoticeBar config={c} />
 
@@ -87,10 +318,7 @@ export function CheckoutPreview({ config, device }: Props) {
       <Banner config={c} device={device} />
 
       <div className="px-4 py-4" style={{ fontSize: bodySize }}>
-        <div
-          className="mx-auto flex flex-col gap-4"
-          style={{ maxWidth: mobile ? "100%" : c.layout.width }}
-        >
+        <div className="mx-auto flex flex-col gap-4" style={{ maxWidth: mobile ? "100%" : c.layout.width }}>
           {/* cabeçalho */}
           <Header config={c} device={device} />
 
@@ -99,10 +327,10 @@ export function CheckoutPreview({ config, device }: Props) {
           {/* escassez topo */}
           {c.scarcity.enabled && c.scarcity.position === "top" ? <Scarcity config={c} /> : null}
 
-          {/* etapas */}
-          {c.steps.enabled ? <Steps config={c} device={device} /> : null}
+          {/* stepper — apenas em modo etapas */}
+          {stepped ? <Steps config={c} device={device} current={stepIndex} /> : null}
 
-          {/* card principal */}
+          {/* card do produto */}
           <div className="p-4" style={cardStyle}>
             <Product config={c} />
           </div>
@@ -114,17 +342,60 @@ export function CheckoutPreview({ config, device }: Props) {
             </div>
           ) : null}
 
-          {/* formulário */}
+          {/* formulário — etapas ou página única */}
           <div className="space-y-4 p-4" style={cardStyle}>
-            {c.summary.couponEnabled && c.summary.couponFirst ? <Coupon config={c} /> : null}
-            <FormBlock title="Seus dados" fields={c.fields.customer} required={c.fields.required} config={c} labelSize={labelSize} />
-            {c.product.kind === "physical" ? (
+            {stepped && current ? (
+              <StepSection numbered index={stepIndex} total={steps.length} label={current.label}>
+                {current.key === "identificacao" ? <Identification /> : null}
+                {current.key === "entrega" ? <Delivery /> : null}
+                {current.key === "pagamento" ? <Payment /> : null}
+              </StepSection>
+            ) : (
               <>
-                <FormBlock title="Endereço de entrega" fields={c.fields.address} required={c.fields.required} config={c} labelSize={labelSize} />
-                <Shipping config={c} labelSize={labelSize} />
+                {c.summary.couponEnabled && c.summary.couponFirst ? <Coupon config={c} /> : null}
+                <StepSection label="Identificação">
+                  <Identification />
+                </StepSection>
+                {c.product.kind === "physical" ? (
+                  <StepSection label="Entrega">
+                    <Delivery />
+                  </StepSection>
+                ) : null}
+                <StepSection label="Pagamento">
+                  <Payment />
+                </StepSection>
               </>
-            ) : null}
-            <Payment config={c} />
+            )}
+
+            {/* navegação / CTA */}
+            <div className="flex items-center gap-2 pt-1">
+              {stepped && stepIndex > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
+                  className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
+                  style={{ borderColor: col.border, color: col.text }}
+                >
+                  <ArrowLeft className="h-4 w-4" /> Voltar
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={goPrimary}
+                className={cn("inline-flex items-center justify-center gap-2 px-6 text-white transition-transform active:scale-[0.99]", c.button.full && "flex-1")}
+                style={{
+                  height: c.button.height,
+                  borderRadius: c.button.radius,
+                  background: col.button,
+                  fontSize: c.typography.buttonSize,
+                  fontWeight: c.typography.buttonWeight,
+                  boxShadow: `0 10px 24px -12px ${col.button}`,
+                }}
+              >
+                {c.button.icon ? <Lock className="h-4 w-4" /> : null}
+                {primaryLabel()}
+              </button>
+            </div>
           </div>
 
           {/* resumo */}
@@ -136,9 +407,6 @@ export function CheckoutPreview({ config, device }: Props) {
 
           {/* escassez acima do botão */}
           {c.scarcity.enabled && c.scarcity.position === "above-button" ? <Scarcity config={c} /> : null}
-
-          {/* botão */}
-          <CTA config={c} />
 
           {/* segurança */}
           {c.security.enabled ? <Security config={c} /> : null}
@@ -152,9 +420,255 @@ export function CheckoutPreview({ config, device }: Props) {
       {c.live.enabled ? <LiveToast config={c} /> : null}
     </div>
   );
+
+  /* ───────────── seções interativas (fecham sobre o estado) ───────────── */
+
+  function StepSection({
+    label,
+    numbered,
+    index,
+    total,
+    children,
+  }: {
+    label: string;
+    numbered?: boolean;
+    index?: number;
+    total?: number;
+    children: ReactNode;
+  }) {
+    return (
+      <div className="space-y-3">
+        {numbered ? (
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: col.primary }}>
+                {(index ?? 0) + 1}
+              </span>
+              <p className="text-[15px] font-bold leading-tight">{label}</p>
+            </div>
+            <span className="text-[12px] font-medium" style={{ color: col.textMuted }}>
+              {(index ?? 0) + 1} de {total}
+            </span>
+          </div>
+        ) : (
+          <p className="font-semibold uppercase tracking-[0.08em]" style={{ color: col.textMuted, fontSize: labelSize - 1 }}>
+            {label}
+          </p>
+        )}
+        {children}
+      </div>
+    );
+  }
+
+  function Identification() {
+    return (
+      <div className="space-y-3">
+        {c.identification.allowCNPJ ? (
+          <div className="grid grid-cols-2 gap-1 rounded-lg p-1" style={{ background: `${col.text}0a`, borderRadius: c.layout.radius * 0.6 }}>
+            {(["pf", "pj"] as Identity[]).map((m) => {
+              const active = identity === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => {
+                    setIdentity(m);
+                    setErrors({});
+                  }}
+                  aria-pressed={active}
+                  className="flex items-center justify-center gap-1.5 rounded-md py-2 text-[12.5px] font-semibold transition-colors"
+                  style={{
+                    background: active ? col.surface : "transparent",
+                    color: active ? col.text : col.textMuted,
+                    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
+                  }}
+                >
+                  {m === "pf" ? <User className="h-3.5 w-3.5" /> : <Building2 className="h-3.5 w-3.5" />}
+                  {m === "pf" ? "Pessoa física" : "Pessoa jurídica"}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        <FieldGrid fields={identityFields} />
+
+        {c.payment.pix ? (
+          <div className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[12.5px]" style={{ background: `${col.text}08`, borderRadius: c.layout.radius * 0.6 }}>
+            <PixIcon className="h-4 w-4 shrink-0" />
+            <span>
+              Você ganhou <strong style={{ color: col.success }}>1% de desconto</strong> pagando com Pix
+            </span>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  function Delivery() {
+    return (
+      <div className="space-y-3">
+        <FieldGrid fields={addressFields} />
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: col.textMuted }}>
+            Opções de frete
+          </p>
+          {SHIPPING.map((o) => {
+            const active = shipping === o.id;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => setShipping(o.id)}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+                style={{
+                  borderRadius: c.layout.radius * 0.6,
+                  border: `1.5px solid ${active ? col.primary : col.border}`,
+                  background: active ? `${col.primary}0d` : "transparent",
+                }}
+              >
+                <span className="flex h-4 w-4 items-center justify-center rounded-full" style={{ border: `1.5px solid ${active ? col.primary : col.border}` }}>
+                  {active ? <span className="h-2 w-2 rounded-full" style={{ background: col.primary }} /> : null}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] font-semibold" style={{ color: active ? col.primary : col.text }}>
+                    {o.label}
+                  </span>
+                  <span className="block text-[11px]" style={{ color: col.textMuted }}>
+                    {o.eta}
+                  </span>
+                </span>
+                <span className="text-[12.5px] font-semibold" style={{ color: o.price === 0 ? col.success : col.text }}>
+                  {o.price === 0 ? "Grátis" : brl(o.price)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function Payment() {
+    const methods: { key: string; label: string; sub: string; icon: ReactNode }[] = [];
+    if (c.payment.pix) methods.push({ key: "pix", label: "PIX", sub: "Pagamento instantâneo", icon: <PixIcon className="h-5 w-5" /> });
+    if (c.payment.card) methods.push({ key: "card", label: "Cartão de crédito", sub: "Em até 12x", icon: <CreditCard className="h-5 w-5" /> });
+    if (c.payment.boleto) methods.push({ key: "boleto", label: "Boleto", sub: "Compensa em 1 dia útil", icon: <Ticket className="h-5 w-5" /> });
+
+    return (
+      <div className="space-y-3">
+        <div className="space-y-2">
+          {methods.map((m) => {
+            const active = method === m.key;
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => {
+                  setMethod(m.key);
+                  setErrors({});
+                }}
+                aria-pressed={active}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+                style={{
+                  borderRadius: c.layout.radius * 0.6,
+                  border: `1.5px solid ${active ? col.primary : col.border}`,
+                  background: active ? `${col.primary}0d` : "transparent",
+                }}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: active ? col.primary : `${col.primary}14`, color: active ? "#fff" : col.primary }}>
+                  {m.icon}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] font-semibold" style={{ color: active ? col.primary : col.text }}>
+                    {m.label}
+                  </span>
+                  <span className="block text-[11px]" style={{ color: col.textMuted }}>
+                    {m.sub}
+                  </span>
+                </span>
+                <span className="flex h-4 w-4 items-center justify-center rounded-full" style={{ border: `1.5px solid ${active ? col.primary : col.border}` }}>
+                  {active ? <span className="h-2 w-2 rounded-full" style={{ background: col.primary }} /> : null}
+                </span>
+              </button>
+            );
+          })}
+          {methods.length === 0 ? (
+            <p className="text-[12px]" style={{ color: col.textMuted }}>
+              Nenhum método ativo. Ative ao menos um na seção Pagamento.
+            </p>
+          ) : null}
+        </div>
+
+        {method === "card" ? <FieldGrid fields={cardFields} /> : null}
+        {method === "pix" ? (
+          <div className="flex flex-col items-center gap-2 rounded-lg py-4" style={{ border: `1px dashed ${col.border}`, borderRadius: c.layout.radius * 0.6 }}>
+            <div className="grid h-24 w-24 place-items-center rounded-md" style={{ background: `${col.text}0d` }}>
+              <PixIcon className="h-10 w-10" />
+            </div>
+            <p className="text-[11.5px]" style={{ color: col.textMuted }}>
+              QR Code de demonstração — não gera cobrança real.
+            </p>
+          </div>
+        ) : null}
+        {method === "boleto" ? (
+          <p className="rounded-lg px-3 py-2.5 text-[12px]" style={{ background: `${col.text}08`, color: col.textMuted, borderRadius: c.layout.radius * 0.6 }}>
+            O boleto seria gerado após a confirmação. Demonstração — sem cobrança real.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  function FieldGrid({ fields }: { fields: RuntimeField[] }) {
+    if (fields.length === 0) return null;
+    return (
+      <div className="grid grid-cols-2 gap-2.5">
+        {fields.map((f) => {
+          const err = errors[f.id];
+          return (
+            <div key={f.id} className={cn("space-y-1", !f.half && "col-span-2")}>
+              <label className="block text-[12px] font-semibold" style={{ color: col.text }}>
+                {f.label}
+                {f.required ? " *" : ""}
+              </label>
+              <input
+                value={values[f.id] ?? ""}
+                type={f.type ?? "text"}
+                inputMode={f.type === "tel" ? "numeric" : f.type === "email" ? "email" : undefined}
+                placeholder={f.placeholder}
+                onChange={(e) => setValue(f.id, f.mask ? f.mask(e.target.value) : e.target.value)}
+                className="h-10 w-full px-3 text-[13px] outline-none"
+                style={{
+                  borderRadius: c.layout.radius * 0.6,
+                  border: `1.5px solid ${err ? col.error : col.border}`,
+                  background: col.surface,
+                  color: col.text,
+                }}
+              />
+              {err ? (
+                <p className="text-[11px] font-medium" style={{ color: col.error }}>
+                  {err}
+                </p>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 }
 
-/* ───────────────────────── seções ───────────────────────── */
+/* ───────────────────────── seções decorativas ───────────────────────── */
+
+function TestBanner({ col }: { col: CheckoutConfig["colors"] }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 px-4 py-1.5 text-[11.5px] font-medium" style={{ background: `${col.warning}1f`, color: col.warning }}>
+      <FlaskConical className="h-3.5 w-3.5" />
+      Modo de teste — os dados preenchidos aqui são apenas para simulação.
+    </div>
+  );
+}
 
 function NoticeBar({ config: c }: { config: CheckoutConfig }) {
   const [i, setI] = useState(0);
@@ -169,10 +683,7 @@ function NoticeBar({ config: c }: { config: CheckoutConfig }) {
   const size = c.notice.size === "lg" ? 13.5 : c.notice.size === "md" ? 12.5 : 11.5;
   const msg = messages[i % messages.length];
   return (
-    <div
-      className={cn("flex items-center gap-1.5 px-4 py-2", alignItems(c.notice.align))}
-      style={{ background: c.notice.background, color: c.notice.textColor, fontSize: size }}
-    >
+    <div className={cn("flex items-center gap-1.5 px-4 py-2", alignItems(c.notice.align))} style={{ background: c.notice.background, color: c.notice.textColor, fontSize: size }}>
       {c.notice.icon ? <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-80" /> : null}
       <span className="font-medium">{msg?.text}</span>
     </div>
@@ -182,26 +693,15 @@ function NoticeBar({ config: c }: { config: CheckoutConfig }) {
 function Banner({ config: c, device }: { config: CheckoutConfig; device: Device }) {
   if (!c.banner.enabled) return null;
   const url = device === "mobile" && c.banner.mobileUrl ? c.banner.mobileUrl : c.banner.desktopUrl;
-  const objectFit: CSSProperties["objectFit"] =
-    c.banner.fit === "contain" ? "contain" : c.banner.fit === "original" ? "none" : "cover";
+  const objectFit: CSSProperties["objectFit"] = c.banner.fit === "contain" ? "contain" : c.banner.fit === "original" ? "none" : "cover";
   return (
     <div style={{ paddingLeft: 16, paddingRight: 16, paddingTop: c.banner.spacing, paddingBottom: 0 }}>
       <div
         className="mx-auto flex items-center justify-center overflow-hidden"
-        style={{
-          maxWidth: device === "mobile" ? "100%" : c.layout.width,
-          height: c.banner.height,
-          borderRadius: c.banner.radius,
-          background: `${c.colors.primary}12`,
-        }}
+        style={{ maxWidth: device === "mobile" ? "100%" : c.layout.width, height: c.banner.height, borderRadius: c.banner.radius, background: `${c.colors.primary}12` }}
       >
         {url ? (
-          <img
-            src={url || "/placeholder.svg"}
-            alt="Banner"
-            className="h-full w-full"
-            style={{ objectFit, objectPosition: c.banner.position }}
-          />
+          <img src={url || "/placeholder.svg"} alt="Banner" className="h-full w-full" style={{ objectFit, objectPosition: c.banner.position }} />
         ) : (
           <span className="text-[12px]" style={{ color: c.colors.textMuted }}>
             Banner ({device === "mobile" ? "mobile" : "desktop"})
@@ -216,10 +716,7 @@ function Header({ config: c, device }: { config: CheckoutConfig; device: Device 
   const h = c.header;
   const width = device === "mobile" ? h.logoWidthMobile : h.logoWidthDesktop;
   return (
-    <div
-      className="space-y-2 rounded-xl px-4 py-3"
-      style={{ background: h.background, color: h.textColor, borderRadius: c.layout.radius }}
-    >
+    <div className="space-y-2 rounded-xl px-4 py-3" style={{ background: h.background, color: h.textColor, borderRadius: c.layout.radius }}>
       <div className={cn("flex items-center gap-2", alignItems(h.logoAlign))}>
         {h.logoUrl ? (
           <img src={h.logoUrl || "/placeholder.svg"} alt={h.storeName} className="h-auto object-contain" style={{ maxWidth: width, maxHeight: 56 }} />
@@ -264,29 +761,22 @@ function Scarcity({ config: c }: { config: CheckoutConfig }) {
   if (c.scarcity.style === "badge") {
     return (
       <div className="flex justify-center">
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold"
-          style={{ background: `${tint}1f`, color: tint }}
-        >
+        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold" style={{ background: `${tint}1f`, color: tint }}>
           <Timer className="h-3.5 w-3.5" /> {c.scarcity.text} {mm}:{ss}
         </span>
       </div>
     );
   }
   return (
-    <div
-      className="flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-[12.5px] font-semibold"
-      style={{ background: `${tint}1f`, color: tint, borderRadius: c.layout.radius * 0.6 }}
-    >
+    <div className="flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ background: `${tint}1f`, color: tint, borderRadius: c.layout.radius * 0.6 }}>
       <Timer className="h-4 w-4" /> {c.scarcity.text} <span className="tabular-nums">{mm}:{ss}</span>
     </div>
   );
 }
 
-function Steps({ config: c, device }: { config: CheckoutConfig; device: Device }) {
+function Steps({ config: c, device, current }: { config: CheckoutConfig; device: Device; current: number }) {
   const items = resolveSteps(c);
   if (items.length === 0) return null;
-  const current = 0;
   const primary = c.colors.primary;
   const muted = c.colors.textMuted;
   const line = c.colors.border;
@@ -324,17 +814,7 @@ function Steps({ config: c, device }: { config: CheckoutConfig; device: Device }
   return <StepChips items={items} current={current} config={c} mobile={mobile} />;
 }
 
-function StepChips({
-  items,
-  current,
-  config: c,
-  mobile,
-}: {
-  items: StepItem[];
-  current: number;
-  config: CheckoutConfig;
-  mobile: boolean;
-}) {
+function StepChips({ items, current, config: c, mobile }: { items: StepItem[]; current: number; config: CheckoutConfig; mobile: boolean }) {
   const primary = c.colors.primary;
   const muted = c.colors.textMuted;
   const line = c.colors.border;
@@ -345,17 +825,13 @@ function StepChips({
       {items.map((s, i) => {
         const active = i === current;
         const done = i < current;
-        const Icon = STEP_ICONS[s.icon] ?? Check;
+        const Icon = STEP_CHIP_ICONS[s.icon] ?? Check;
         return (
           <div key={s.key} className="flex items-center gap-1.5">
             <div className="flex items-center gap-1.5">
               <span
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-bold"
-                style={{
-                  background: active || done ? primary : "transparent",
-                  color: active || done ? "#fff" : muted,
-                  border: active || done ? "none" : `1.5px solid ${line}`,
-                }}
+                style={{ background: active || done ? primary : "transparent", color: active || done ? "#fff" : muted, border: active || done ? "none" : `1.5px solid ${line}` }}
               >
                 {done ? <Check className="h-3 w-3" /> : numbered ? i + 1 : <Icon className="h-3 w-3" />}
               </span>
@@ -383,15 +859,8 @@ function Product({ config: c }: { config: CheckoutConfig }) {
   const discount = p.showDiscount && p.compareAt && p.price ? Math.round((1 - p.price / p.compareAt) * 100) : 0;
   return (
     <div className="flex gap-3">
-      <div
-        className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden"
-        style={{ borderRadius: c.layout.radius * 0.7, background: `${col.primary}1a`, color: col.primary }}
-      >
-        {p.image ? (
-          <img src={p.image || "/placeholder.svg"} alt={p.title} className="h-full w-full object-cover" />
-        ) : (
-          <Sparkles className="h-6 w-6" />
-        )}
+      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden" style={{ borderRadius: c.layout.radius * 0.7, background: `${col.primary}1a`, color: col.primary }}>
+        {p.image ? <img src={p.image || "/placeholder.svg"} alt={p.title} className="h-full w-full object-cover" /> : <Sparkles className="h-6 w-6" />}
       </div>
       <div className="min-w-0 flex-1">
         <p style={{ fontSize: c.typography.bodySize + 1, fontWeight: 600 }}>{p.title}</p>
@@ -412,10 +881,7 @@ function Product({ config: c }: { config: CheckoutConfig }) {
           ) : null}
         </div>
         {p.showQuantity ? (
-          <div
-            className="mt-2 inline-flex items-center gap-3 px-2 py-1 text-[12px]"
-            style={{ border: `1px solid ${col.border}`, borderRadius: c.layout.radius * 0.5 }}
-          >
+          <div className="mt-2 inline-flex items-center gap-3 px-2 py-1 text-[12px]" style={{ border: `1px solid ${col.border}`, borderRadius: c.layout.radius * 0.5 }}>
             <span style={{ color: col.textMuted }}>−</span>
             <span className="font-medium">1</span>
             <span style={{ color: col.textMuted }}>+</span>
@@ -473,7 +939,6 @@ function SocialProof({ config: c }: { config: CheckoutConfig }) {
     );
   }
 
-  // card
   return (
     <div className="grid gap-2">
       {items.map((t) => (
@@ -496,171 +961,25 @@ function SocialProof({ config: c }: { config: CheckoutConfig }) {
 
 function Avatar({ name, primary }: { name: string; primary: string }) {
   return (
-    <div
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
-      style={{ background: `${primary}1f`, color: primary }}
-    >
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold" style={{ background: `${primary}1f`, color: primary }}>
       {(name?.[0] ?? "?").toUpperCase()}
     </div>
   );
 }
 
-function FormBlock({
-  title,
-  fields,
-  required,
-  config: c,
-  labelSize,
-}: {
-  title: string;
-  fields: FieldKey[];
-  required: FieldKey[];
-  config: CheckoutConfig;
-  labelSize: number;
-}) {
-  if (fields.length === 0) return null;
-  return (
-    <div className="space-y-2">
-      <p className="font-semibold uppercase tracking-[0.08em]" style={{ color: c.colors.textMuted, fontSize: labelSize - 1 }}>
-        {title}
-      </p>
-      <div className="grid gap-2">
-        {fields.map((f) => (
-          <Field key={f} label={FIELD_LABELS[f] + (required.includes(f) ? " *" : "")} config={c} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, config: c }: { label: string; config: CheckoutConfig }) {
-  return (
-    <div
-      className="flex h-10 items-center px-3"
-      style={{
-        borderRadius: c.layout.radius * 0.6,
-        border: `1px solid ${c.colors.border}`,
-        background: `${c.colors.text}05`,
-        color: `${c.colors.textMuted}`,
-        fontSize: c.typography.labelSize,
-      }}
-    >
-      {label}
-    </div>
-  );
-}
-
-function Payment({ config: c }: { config: CheckoutConfig }) {
-  const col = c.colors;
-  const methods: { key: string; label: string; sub: string; icon: ReactNode }[] = [];
-  if (c.payment.pix) methods.push({ key: "pix", label: "PIX", sub: "Pagamento instantâneo", icon: <PixIcon className="h-5 w-5" /> });
-  if (c.payment.card) methods.push({ key: "card", label: "Cartão de crédito", sub: "Em até 12x", icon: <CreditCard className="h-5 w-5" /> });
-  if (c.payment.boleto) methods.push({ key: "boleto", label: "Boleto", sub: "Compensa em 1 dia útil", icon: <Ticket className="h-5 w-5" /> });
-
-  return (
-    <div className="space-y-2">
-      <p className="font-semibold uppercase tracking-[0.08em]" style={{ color: col.textMuted, fontSize: c.typography.labelSize - 1 }}>
-        Pagamento
-      </p>
-      <div className="grid gap-2">
-        {methods.map((m, i) => {
-          const active = i === 0;
-          return (
-            <div
-              key={m.key}
-              className="flex items-center gap-3 px-3 py-2.5"
-              style={{
-                borderRadius: c.layout.radius * 0.6,
-                border: `1.5px solid ${active ? col.primary : col.border}`,
-                background: active ? `${col.primary}0d` : undefined,
-              }}
-            >
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                style={{ background: active ? col.primary : `${col.primary}14`, color: active ? "#fff" : col.primary }}
-              >
-                {m.icon}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[12.5px] font-semibold" style={{ color: active ? col.primary : col.text }}>
-                  {m.label}
-                </p>
-                <p className="text-[11px]" style={{ color: col.textMuted }}>
-                  {m.sub}
-                </p>
-              </div>
-              <span className="flex h-4 w-4 items-center justify-center rounded-full" style={{ border: `1.5px solid ${active ? col.primary : col.border}` }}>
-                {active ? <span className="h-2 w-2 rounded-full" style={{ background: col.primary }} /> : null}
-              </span>
-            </div>
-          );
-        })}
-        {methods.length === 0 ? (
-          <p className="text-[12px]" style={{ color: col.textMuted }}>
-            Nenhum método ativo. Ative ao menos um na seção Pagamento.
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function Shipping({ config: c, labelSize }: { config: CheckoutConfig; labelSize: number }) {
-  const col = c.colors;
-  const options = [
-    { label: "Entrega padrão", eta: "5 a 8 dias úteis", price: "Grátis" },
-    { label: "Entrega expressa", eta: "1 a 2 dias úteis", price: brl(24.9) },
-  ];
-  return (
-    <div className="space-y-2">
-      <p className="font-semibold uppercase tracking-[0.08em]" style={{ color: col.textMuted, fontSize: labelSize - 1 }}>
-        Opções de frete
-      </p>
-      <div className="grid gap-2">
-        {options.map((o, i) => {
-          const active = i === 0;
-          return (
-            <div
-              key={o.label}
-              className="flex items-center gap-3 px-3 py-2.5"
-              style={{
-                borderRadius: c.layout.radius * 0.6,
-                border: `1.5px solid ${active ? col.primary : col.border}`,
-                background: active ? `${col.primary}0d` : undefined,
-              }}
-            >
-              <span className="flex h-4 w-4 items-center justify-center rounded-full" style={{ border: `1.5px solid ${active ? col.primary : col.border}` }}>
-                {active ? <span className="h-2 w-2 rounded-full" style={{ background: col.primary }} /> : null}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[12.5px] font-semibold" style={{ color: active ? col.primary : col.text }}>
-                  {o.label}
-                </p>
-                <p className="text-[11px]" style={{ color: col.textMuted }}>
-                  {o.eta}
-                </p>
-              </div>
-              <span className="text-[12.5px] font-semibold" style={{ color: o.price === "Grátis" ? col.success : col.text }}>
-                {o.price}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function Coupon({ config: c }: { config: CheckoutConfig }) {
+  const col = c.colors;
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1">
-        <Field label="Tem um cupom de desconto?" config={c} />
+        <div
+          className="flex h-10 items-center px-3"
+          style={{ borderRadius: c.layout.radius * 0.6, border: `1px solid ${col.border}`, background: `${col.text}05`, color: col.textMuted, fontSize: c.typography.labelSize }}
+        >
+          Tem um cupom de desconto?
+        </div>
       </div>
-      <div
-        className="flex h-10 items-center gap-1.5 px-3 text-[12.5px] font-medium"
-        style={{ borderRadius: c.layout.radius * 0.6, border: `1px solid ${c.colors.border}` }}
-      >
+      <div className="flex h-10 items-center gap-1.5 px-3 text-[12.5px] font-medium" style={{ borderRadius: c.layout.radius * 0.6, border: `1px solid ${col.border}` }}>
         <Ticket className="h-3.5 w-3.5" /> Aplicar
       </div>
     </div>
@@ -701,28 +1020,6 @@ function Summary({ config: c }: { config: CheckoutConfig }) {
   );
 }
 
-function CTA({ config: c }: { config: CheckoutConfig }) {
-  return (
-    <div className={cn("flex", c.button.full ? "" : "justify-center")}>
-      <button
-        type="button"
-        className={cn("inline-flex items-center justify-center gap-2 px-6 text-white transition-transform active:scale-[0.99]", c.button.full && "w-full")}
-        style={{
-          height: c.button.height,
-          borderRadius: c.button.radius,
-          background: c.colors.button,
-          fontSize: c.typography.buttonSize,
-          fontWeight: c.typography.buttonWeight,
-          boxShadow: `0 10px 24px -12px ${c.colors.button}`,
-        }}
-      >
-        {c.button.icon ? <Lock className="h-4 w-4" /> : null}
-        {c.button.label}
-      </button>
-    </div>
-  );
-}
-
 function Security({ config: c }: { config: CheckoutConfig }) {
   const items = c.security.items.filter((i) => i.enabled);
   if (items.length === 0) return null;
@@ -746,11 +1043,7 @@ function Security({ config: c }: { config: CheckoutConfig }) {
   return (
     <div className={cn("flex flex-wrap gap-2", alignItems(c.security.align))}>
       {items.map((it) => (
-        <span
-          key={it.id}
-          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium"
-          style={{ background: `${color}14`, color, fontSize }}
-        >
+        <span key={it.id} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium" style={{ background: `${color}14`, color, fontSize }}>
           <SecurityGlyph item={it} color={color} />
           {it.label}
         </span>
@@ -802,15 +1095,11 @@ function LiveToast({ config: c }: { config: CheckoutConfig }) {
         visible ? "translate-y-0 opacity-100" : (pos.includes("bottom") ? "translate-y-2" : "-translate-y-2") + " opacity-0",
       )}
     >
-      <div
-        className="flex items-center gap-2.5 rounded-xl p-2.5 shadow-[var(--shadow-lift)]"
-        style={{ background: c.colors.surface, border: `1px solid ${c.colors.border}`, color: c.colors.text }}
-      >
+      <div className="flex items-center gap-2.5 rounded-xl p-2.5 shadow-[var(--shadow-lift)]" style={{ background: c.colors.surface, border: `1px solid ${c.colors.border}`, color: c.colors.text }}>
         {c.live.showAvatar ? <Avatar name={c.live.name} primary={c.colors.primary} /> : null}
         <div className="min-w-0">
           <p className="text-[11.5px] leading-tight">
-            <span className="font-semibold">{c.live.name}</span> {phrase}{" "}
-            <span className="font-semibold">{c.live.product}</span>
+            <span className="font-semibold">{c.live.name}</span> {phrase} <span className="font-semibold">{c.live.product}</span>
           </p>
           <p className="mt-0.5 flex items-center gap-1 text-[10.5px]" style={{ color: c.colors.textMuted }}>
             {c.live.showLocation ? (
