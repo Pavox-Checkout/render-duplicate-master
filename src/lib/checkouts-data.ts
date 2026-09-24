@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { INITIAL_STATE, type BuilderState } from "@/lib/checkout-builder";
+import { defaultConfig, normalizeConfig, type BuilderState } from "@/lib/checkout-builder";
 
 export type CheckoutRecord = {
   id: string;
@@ -28,12 +28,10 @@ export function slugify(value: string) {
 }
 
 export function stateFromConfig(row: CheckoutRecord): BuilderState {
-  const config = (row.config ?? {}) as Partial<BuilderState>;
   return {
     name: row.name,
     status: row.published ? "Publicado" : "Rascunho",
-    blocks: Array.isArray(config.blocks) && config.blocks.length ? config.blocks : INITIAL_STATE.blocks,
-    appearance: config.appearance ?? INITIAL_STATE.appearance,
+    config: normalizeConfig(row.config),
   };
 }
 
@@ -64,7 +62,7 @@ export function useCheckout(id: string) {
 
 export class CheckoutLimitError extends Error {}
 
-export async function createCheckout(userId: string, name = INITIAL_STATE.name) {
+export async function createCheckout(userId: string, name = "Checkout Principal") {
   const { data, error } = await supabase
     .from("checkouts")
     .insert({
@@ -73,7 +71,7 @@ export async function createCheckout(userId: string, name = INITIAL_STATE.name) 
       slug: slugify(name),
       status: "Rascunho",
       published: false,
-      config: { blocks: INITIAL_STATE.blocks, appearance: INITIAL_STATE.appearance } as never,
+      config: defaultConfig() as never,
     })
     .select(FIELDS)
     .single();
@@ -90,7 +88,7 @@ export async function saveCheckout(id: string, state: BuilderState) {
     .update({
       name: state.name,
       slug: slugify(state.name),
-      config: { blocks: state.blocks, appearance: state.appearance } as never,
+      config: state.config as never,
     })
     .eq("id", id);
   if (error) throw error;
@@ -105,7 +103,7 @@ export async function publishCheckout(id: string, state: BuilderState) {
       status: "Publicado",
       published: true,
       published_at: new Date().toISOString(),
-      config: { blocks: state.blocks, appearance: state.appearance } as never,
+      config: state.config as never,
     })
     .eq("id", id);
   if (error) throw error;
