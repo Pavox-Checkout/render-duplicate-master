@@ -22,10 +22,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CheckoutSelect } from "@/components/pavox/checkout-select";
 import { cn } from "@/lib/utils";
 import {
-  DEMO_CHECKOUTS,
   PAVOX_CNAME_TARGET,
   PAVOX_DOMAIN_SUFFIX,
   type DemoDomain,
@@ -47,14 +46,14 @@ export function DomainAddDialog({
   const [type, setType] = useState<DomainType>("custom");
   const [subdomain, setSubdomain] = useState("");
   const [customDomain, setCustomDomain] = useState("");
-  const [checkout, setCheckout] = useState<string>(DEMO_CHECKOUTS[0]);
+  const [checkoutId, setCheckoutId] = useState<string | null>(null);
 
   function reset() {
     setStep("choose");
     setType("custom");
     setSubdomain("");
     setCustomDomain("");
-    setCheckout(DEMO_CHECKOUTS[0]);
+    setCheckoutId(null);
   }
 
   function handleOpenChange(next: boolean) {
@@ -76,7 +75,7 @@ export function DomainAddDialog({
       domain: domainLabel,
       type,
       status: isPavox ? "connected" : "awaiting_dns",
-      checkout,
+      checkoutId,
       isPrimary: false,
       connectedAt: new Date().toLocaleDateString("pt-BR", {
         day: "2-digit",
@@ -246,18 +245,7 @@ export function DomainAddDialog({
           {step === "checkout" ? (
             <div className="space-y-2">
               <Label>Selecionar checkout</Label>
-              <Select value={checkout} onValueChange={setCheckout}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar checkout" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEMO_CHECKOUTS.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CheckoutSelect value={checkoutId} onChange={setCheckoutId} triggerClassName="w-full" />
               <p className="text-[12px] text-muted-foreground">
                 Você poderá trocar o checkout associado a qualquer momento.
               </p>
