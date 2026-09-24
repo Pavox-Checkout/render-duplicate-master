@@ -3,7 +3,6 @@ import {
   AlignStartVertical,
   Bell,
   CreditCard,
-  GripVertical,
   Image as ImageIcon,
   LayoutPanelTop,
   ListChecks,
@@ -19,6 +18,7 @@ import {
   Sparkles,
   Timer,
   Trash2,
+  Truck,
   Type,
   X,
   type LucideIcon,
@@ -44,12 +44,14 @@ import {
 } from "@/components/pavox/builder/controls";
 import {
   ADDRESS_FIELDS,
+  CANONICAL_STEPS,
   CUSTOMER_FIELDS,
   FIELD_LABELS,
   FONT_LABELS,
   LIVE_PHRASES,
   PALETTES,
   PALETTE_SWATCHES,
+  STEP_DESCRIPTIONS,
   newId,
   type CheckoutConfig,
   type FieldKey,
@@ -351,38 +353,42 @@ export function ConfigSidebar({ config, update }: Props) {
             <SwitchRow label="Mostrar números" checked={config.steps.showNumbers} onChange={(v) => set("steps", { showNumbers: v })} />
             <SwitchRow label="Mostrar progresso" checked={config.steps.showProgress} onChange={(v) => set("steps", { showProgress: v })} />
             <Divider />
-            <Group title="Etapas">
+            <Group title="Estrutura das etapas">
+              <p className="rounded-md bg-secondary/60 px-2.5 py-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+                A estrutura é fixa: <strong className="font-semibold text-foreground">Identificação → Entrega → Pagamento</strong>. A
+                etapa de <strong className="font-semibold text-foreground">Entrega</strong> aparece automaticamente apenas em produtos
+                físicos — não é possível criá-la manualmente. Use o seletor no Preview para visualizar os dois cenários.
+              </p>
               <div className="space-y-2">
-                {config.steps.items.map((s, i) => (
-                  <div key={s.id} className="flex items-center gap-2 rounded-lg border border-border p-2">
-                    <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <Input
-                      value={s.label}
-                      onChange={(e) => set("steps", { items: config.steps.items.map((x) => (x.id === s.id ? { ...x, label: e.target.value } : x)) })}
-                      className="h-8 text-[12.5px]"
-                    />
-                    <MiniSwitch
-                      checked={s.enabled}
-                      onChange={(v) => set("steps", { items: config.steps.items.map((x) => (x.id === s.id ? { ...x, enabled: v } : x)) })}
-                    />
-                    {config.steps.items.length > 1 ? (
-                      <button
-                        type="button"
-                        onClick={() => set("steps", { items: config.steps.items.filter((x) => x.id !== s.id) })}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-destructive"
-                        aria-label={`Remover etapa ${i + 1}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    ) : null}
-                  </div>
-                ))}
-                {config.steps.items.length < 5 ? (
-                  <AddButton
-                    label="Adicionar etapa"
-                    onClick={() => set("steps", { items: [...config.steps.items, { id: newId("step"), label: "Nova etapa", icon: "circle", enabled: true }] })}
-                  />
-                ) : null}
+                {CANONICAL_STEPS.map((s, i) => {
+                  const hidden = s.physicalOnly && config.product.kind !== "physical";
+                  return (
+                    <div
+                      key={s.key}
+                      className={cn("rounded-lg border border-border p-2.5 transition-opacity", hidden && "opacity-55")}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10.5px] font-bold text-muted-foreground">
+                          {i + 1}
+                        </span>
+                        <Input
+                          value={config.steps.labels[s.key]}
+                          onChange={(e) => set("steps", { labels: { ...config.steps.labels, [s.key]: e.target.value } })}
+                          className="h-8 text-[12.5px]"
+                          aria-label={`Rótulo da etapa ${s.label}`}
+                        />
+                      </div>
+                      {s.physicalOnly ? (
+                        <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-primary">
+                          <Truck className="h-3 w-3 shrink-0" />
+                          {hidden ? "Oculta neste produto (digital)" : "Somente produto físico"}
+                        </p>
+                      ) : (
+                        <p className="mt-1.5 text-[11px] text-muted-foreground">{STEP_DESCRIPTIONS[s.key]}</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </Group>
           </>

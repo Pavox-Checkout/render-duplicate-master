@@ -20,11 +20,13 @@ import { PixIcon } from "@/components/pavox/builder/pix-icon";
 import {
   FIELD_LABELS,
   FONT_STACKS,
+  resolveSteps,
   type Align,
   type CheckoutConfig,
   type Device,
   type FieldKey,
   type SecurityItem,
+  type StepItem,
 } from "@/lib/checkout-builder";
 
 const SECURITY_ICONS: Record<string, typeof ShieldCheck> = {
@@ -116,7 +118,12 @@ export function CheckoutPreview({ config, device }: Props) {
           <div className="space-y-4 p-4" style={cardStyle}>
             {c.summary.couponEnabled && c.summary.couponFirst ? <Coupon config={c} /> : null}
             <FormBlock title="Seus dados" fields={c.fields.customer} required={c.fields.required} config={c} labelSize={labelSize} />
-            <FormBlock title="Endereço de entrega" fields={c.fields.address} required={c.fields.required} config={c} labelSize={labelSize} />
+            {c.product.kind === "physical" ? (
+              <>
+                <FormBlock title="Endereço de entrega" fields={c.fields.address} required={c.fields.required} config={c} labelSize={labelSize} />
+                <Shipping config={c} labelSize={labelSize} />
+              </>
+            ) : null}
             <Payment config={c} />
           </div>
 
@@ -277,7 +284,7 @@ function Scarcity({ config: c }: { config: CheckoutConfig }) {
 }
 
 function Steps({ config: c, device }: { config: CheckoutConfig; device: Device }) {
-  const items = c.steps.items.filter((s) => s.enabled);
+  const items = resolveSteps(c);
   if (items.length === 0) return null;
   const current = 0;
   const primary = c.colors.primary;
@@ -291,7 +298,7 @@ function Steps({ config: c, device }: { config: CheckoutConfig; device: Device }
         {c.steps.showProgress ? (
           <div className="flex items-center gap-1.5">
             {items.map((s, i) => (
-              <div key={s.id} className="flex flex-1 flex-col gap-1.5">
+              <div key={s.key} className="flex flex-1 flex-col gap-1.5">
                 <span className="h-1.5 w-full rounded-full" style={{ background: i <= current ? primary : line }} />
                 {!mobile ? (
                   <span className="text-[11px] font-medium" style={{ color: i === current ? primary : muted }}>
@@ -323,7 +330,7 @@ function StepChips({
   config: c,
   mobile,
 }: {
-  items: CheckoutConfig["steps"]["items"];
+  items: StepItem[];
   current: number;
   config: CheckoutConfig;
   mobile: boolean;
@@ -340,7 +347,7 @@ function StepChips({
         const done = i < current;
         const Icon = STEP_ICONS[s.icon] ?? Check;
         return (
-          <div key={s.id} className="flex items-center gap-1.5">
+          <div key={s.key} className="flex items-center gap-1.5">
             <div className="flex items-center gap-1.5">
               <span
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-bold"
@@ -593,6 +600,52 @@ function Payment({ config: c }: { config: CheckoutConfig }) {
             Nenhum método ativo. Ative ao menos um na seção Pagamento.
           </p>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Shipping({ config: c, labelSize }: { config: CheckoutConfig; labelSize: number }) {
+  const col = c.colors;
+  const options = [
+    { label: "Entrega padrão", eta: "5 a 8 dias úteis", price: "Grátis" },
+    { label: "Entrega expressa", eta: "1 a 2 dias úteis", price: brl(24.9) },
+  ];
+  return (
+    <div className="space-y-2">
+      <p className="font-semibold uppercase tracking-[0.08em]" style={{ color: col.textMuted, fontSize: labelSize - 1 }}>
+        Opções de frete
+      </p>
+      <div className="grid gap-2">
+        {options.map((o, i) => {
+          const active = i === 0;
+          return (
+            <div
+              key={o.label}
+              className="flex items-center gap-3 px-3 py-2.5"
+              style={{
+                borderRadius: c.layout.radius * 0.6,
+                border: `1.5px solid ${active ? col.primary : col.border}`,
+                background: active ? `${col.primary}0d` : undefined,
+              }}
+            >
+              <span className="flex h-4 w-4 items-center justify-center rounded-full" style={{ border: `1.5px solid ${active ? col.primary : col.border}` }}>
+                {active ? <span className="h-2 w-2 rounded-full" style={{ background: col.primary }} /> : null}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[12.5px] font-semibold" style={{ color: active ? col.primary : col.text }}>
+                  {o.label}
+                </p>
+                <p className="text-[11px]" style={{ color: col.textMuted }}>
+                  {o.eta}
+                </p>
+              </div>
+              <span className="text-[12.5px] font-semibold" style={{ color: o.price === "Grátis" ? col.success : col.text }}>
+                {o.price}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

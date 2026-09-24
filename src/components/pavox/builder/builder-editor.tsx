@@ -5,10 +5,12 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  Cloud,
   Copy,
   Eye,
   Loader2,
   Monitor,
+  Package,
   Rocket,
   Save,
   Smartphone,
@@ -37,6 +39,7 @@ import {
   type CheckoutConfig,
   type Device,
   type PresetKey,
+  type ProductKind,
 } from "@/lib/checkout-builder";
 import {
   publishCheckout,
@@ -54,6 +57,11 @@ const DEVICES: { key: Device; label: string; icon: typeof Monitor }[] = [
   { key: "desktop", label: "Desktop", icon: Monitor },
   { key: "tablet", label: "Tablet", icon: Tablet },
   { key: "mobile", label: "Mobile", icon: Smartphone },
+];
+
+const PRODUCT_KINDS: { key: ProductKind; label: string; icon: typeof Package }[] = [
+  { key: "digital", label: "Digital", icon: Cloud },
+  { key: "physical", label: "Físico", icon: Package },
 ];
 
 export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
@@ -108,6 +116,9 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
   };
 
   const toggleMode = () => updateConfig({ mode: config.mode === "quick" ? "advanced" : "quick" });
+
+  const setProductKind = (kind: ProductKind) =>
+    updateConfig({ product: { ...config.product, kind } });
 
   const saveNow = async () => {
     setSaveState("saving");
@@ -262,6 +273,24 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
           <div className="flex items-center gap-3 border-b border-border px-3 py-2">
             <span className="text-[12px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">Preview</span>
             <div className="ml-auto flex items-center gap-1 rounded-lg bg-secondary p-1">
+              {PRODUCT_KINDS.map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setProductKind(key)}
+                  aria-label={`Produto ${label}`}
+                  aria-pressed={config.product.kind === key}
+                  title={key === "physical" ? "Inclui etapa de entrega" : "Sem etapa de entrega"}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors",
+                    config.product.kind === key ? "bg-card text-foreground shadow-[var(--shadow-card)]" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 rounded-lg bg-secondary p-1">
               {DEVICES.map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}

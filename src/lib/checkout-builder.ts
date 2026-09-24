@@ -34,7 +34,17 @@ export type LivePosition = "bottom-left" | "bottom-right" | "top-left" | "top-ri
 export type SummaryBehavior = "open" | "closed" | "mobile-toggle";
 
 export type NoticeMessage = { id: string; text: string };
-export type StepItem = { id: string; label: string; icon: string; enabled: boolean };
+
+/**
+ * Tipo do produto associado ao checkout. Por enquanto é apenas um valor de
+ * demonstração controlado no Preview do Builder — o DEV fornecerá o tipo real
+ * do produto depois, e as etapas se ajustarão automaticamente.
+ */
+export type ProductKind = "physical" | "digital";
+
+/** Etapas canônicas do checkout (estrutura fixa). */
+export type StepKey = "identificacao" | "entrega" | "pagamento";
+export type StepItem = { key: StepKey; label: string; icon: string; physicalOnly: boolean };
 export type Testimonial = { id: string; name: string; text: string; rating: number; avatar?: string | undefined };
 export type SecurityItem = { id: string; label: string; icon: string; enabled: boolean };
 
@@ -96,9 +106,10 @@ export type SummaryConfig = {
 export type StepsConfig = {
   enabled: boolean;
   style: StepsStyle;
-  items: StepItem[];
   showNumbers: boolean;
   showProgress: boolean;
+  /** Rótulos personalizáveis das etapas canônicas. */
+  labels: Record<StepKey, string>;
 };
 
 export type ScarcityConfig = {
@@ -184,6 +195,8 @@ export type SecurityConfig = {
 };
 
 export type ProductConfig = {
+  /** Determina automaticamente quais etapas aparecem (ex.: Entrega só existe em físico). */
+  kind: ProductKind;
   title: string;
   description: string;
   price: number;
@@ -257,6 +270,37 @@ export const FIELD_LABELS: Record<FieldKey, string> = {
 
 export const CUSTOMER_FIELDS: FieldKey[] = ["name", "email", "phone", "doc"];
 export const ADDRESS_FIELDS: FieldKey[] = ["zip", "street", "number", "complement", "city", "state"];
+
+/**
+ * Estrutura fixa de etapas do checkout. A ordem é sempre a mesma; a etapa de
+ * Entrega só é considerada quando o produto é físico. O lojista não cria etapas
+ * manualmente — apenas personaliza os rótulos.
+ */
+export const CANONICAL_STEPS: { key: StepKey; icon: string; label: string; physicalOnly: boolean }[] = [
+  { key: "identificacao", icon: "user", label: "Identificação", physicalOnly: false },
+  { key: "entrega", icon: "truck", label: "Entrega", physicalOnly: true },
+  { key: "pagamento", icon: "card", label: "Pagamento", physicalOnly: false },
+];
+
+export const STEP_DESCRIPTIONS: Record<StepKey, string> = {
+  identificacao: "Nome, e-mail, CPF e celular do comprador.",
+  entrega: "Endereço, CEP e opções de frete. Aparece apenas em produtos físicos.",
+  pagamento: "PIX, cartão e boleto. Sempre a etapa final.",
+};
+
+/**
+ * Retorna as etapas visíveis de acordo com o tipo do produto.
+ * Produto físico → Identificação, Entrega, Pagamento.
+ * Produto digital → Identificação, Pagamento.
+ */
+export function resolveSteps(config: CheckoutConfig): StepItem[] {
+  return CANONICAL_STEPS.filter((s) => !s.physicalOnly || config.product.kind === "physical").map((s) => ({
+    key: s.key,
+    icon: s.icon,
+    label: config.steps.labels[s.key] || s.label,
+    physicalOnly: s.physicalOnly,
+  }));
+}
 
 export const LIVE_PHRASES = [
   "acabou de comprar",
@@ -433,11 +477,11 @@ function baseConfig(): CheckoutConfig {
       style: "line",
       showNumbers: true,
       showProgress: true,
-      items: [
-        { id: newId("step"), label: "Identificação", icon: "user", enabled: true },
-        { id: newId("step"), label: "Entrega", icon: "truck", enabled: true },
-        { id: newId("step"), label: "Pagamento", icon: "card", enabled: true },
-      ],
+      labels: {
+        identificacao: "Identificação",
+        entrega: "Entrega",
+        pagamento: "Pagamento",
+      },
     },
     scarcity: {
       enabled: true,
@@ -516,6 +560,7 @@ function baseConfig(): CheckoutConfig {
       ],
     },
     product: {
+      kind: "digital",
       title: "Kit Premium",
       description: "Acesso completo + bônus exclusivos e suporte por 12 meses.",
       price: 197,
@@ -624,7 +669,16 @@ export function normalizeConfig(raw: unknown): CheckoutConfig {
     notice: { ...base.notice, ...obj("notice"), messages: arr("notice", "messages", base.notice.messages) },
     banner: { ...base.banner, ...obj("banner") },
     summary: { ...base.summary, ...obj("summary") },
-    steps: { ...base.steps, ...obj("steps"), items: arr("steps", "items", base.steps.items) },
+    steps: {
+      ...base.steps,
+      ...obj("steps"),
+      labels: {
+        ...base.steps.labels,
+        ...((obj("steps")["labels"] && typeof obj("steps")["labels"] === "object"
+          ? (obj("steps")["labels"] as Partial<Record<StepKey, string>>)
+          : {}) as Partial<Record<StepKey, string>>),
+      },
+    },
     scarcity: { ...base.scarcity, ...obj("scarcity") },
     social: { ...base.social, ...obj("social"), testimonials: arr("social", "testimonials", base.social.testimonials) },
     live: { ...base.live, ...obj("live") },
