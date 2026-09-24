@@ -2,11 +2,14 @@ import { useState } from "react";
 import {
   AlignLeft,
   BadgePercent,
+  Bell,
   Check,
   CreditCard,
   GripVertical,
   LayoutPanelTop,
+  ListOrdered,
   MapPin,
+  Minus,
   Package,
   Plus,
   Receipt,
@@ -27,10 +30,12 @@ import { BLOCK_LABELS, SINGLETON_BLOCKS, type Block, type BlockType } from "@/li
 
 export const BLOCK_ICONS: Record<BlockType, LucideIcon> = {
   header: LayoutPanelTop,
+  divider: Minus,
   product: Package,
   offer: BadgePercent,
   customer: User,
   address: MapPin,
+  steps: ListOrdered,
   payment: CreditCard,
   summary: Receipt,
   footer: AlignLeft,
@@ -39,6 +44,7 @@ export const BLOCK_ICONS: Record<BlockType, LucideIcon> = {
   coupon: Ticket,
   countdown: Timer,
   social: Star,
+  live: Bell,
   guarantee: ShieldCheck,
   security: Check,
 };
@@ -46,11 +52,11 @@ export const BLOCK_ICONS: Record<BlockType, LucideIcon> = {
 const GROUPS: { label: string; items: BlockType[] }[] = [
   {
     label: "Estrutura",
-    items: ["header", "product", "offer", "customer", "address", "payment", "summary", "footer"],
+    items: ["header", "divider", "product", "offer", "customer", "address", "steps", "payment", "summary", "footer"],
   },
   {
     label: "Conversão",
-    items: ["bump", "upsell", "coupon", "countdown", "social", "guarantee", "security"],
+    items: ["bump", "upsell", "coupon", "countdown", "social", "live", "guarantee", "security"],
   },
 ];
 
