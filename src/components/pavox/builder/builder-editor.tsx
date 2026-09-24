@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/dialog";
 import { ConfigSidebar } from "@/components/pavox/builder/config-sidebar";
 import { CheckoutPreview } from "@/components/pavox/builder/checkout-preview";
-import { CheckoutRuntime } from "@/components/pavox/builder/checkout-runtime";
 import { CheckoutSimulator } from "@/components/pavox/builder/checkout-simulator";
 import {
   PRESETS,
@@ -347,11 +346,7 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
                 device === "desktop" && "max-w-full rounded-xl border border-border",
               )}
             >
-              {previewMode === "test" ? (
-                <CheckoutRuntime config={config} device={device} />
-              ) : (
-                <CheckoutPreview config={config} device={device} />
-              )}
+              <CheckoutPreview config={config} device={device} mode={previewMode === "test" ? "test" : "design"} />
             </div>
           </div>
         </div>
@@ -368,7 +363,7 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
             </Button>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <CheckoutPreview config={config} device="desktop" interactive={false} />
+            <CheckoutPreview config={config} device="desktop" mode="published" />
           </div>
         </DialogContent>
       </Dialog>
