@@ -94,11 +94,10 @@ function OrderBumpPage() {
                 />
                 <span className="min-w-0">
                   <span className="block text-[12.5px] font-semibold">
-                    Sim, quero adicionar Mentoria Individual!
+                    Sim, quero adicionar a oferta complementar!
                   </span>
                   <span className="mt-0.5 block text-[11.5px] text-muted-foreground">
-                    Oferta exclusiva com 40% OFF —{" "}
-                    <span className="font-semibold text-foreground">R$ 97,00</span>
+                    Exemplo de como o order bump aparece dentro do seu checkout.
                   </span>
                 </span>
               </label>

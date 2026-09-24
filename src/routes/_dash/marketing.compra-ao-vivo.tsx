@@ -15,7 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LIVE_PURCHASES } from "@/lib/marketing-data";
+/**
+ * Exemplo ilustrativo da notificação (não são dados reais de compra). Serve
+ * apenas para demonstrar o layout do widget na pré-visualização.
+ */
+const PREVIEW_SAMPLE = {
+  name: "Cliente",
+  city: "sua cidade",
+  product: "seu produto",
+  time: "agora mesmo",
+} as const;
 
 export const Route = createFileRoute("/_dash/marketing/compra-ao-vivo")({
   component: CompraAoVivoPage,
@@ -35,7 +44,7 @@ function CompraAoVivoPage() {
   const [showCity, setShowCity] = useState(true);
   const [interval, setInterval] = useState("8");
   const [position, setPosition] = useState("bottom-left");
-  const sample = LIVE_PURCHASES[0];
+  const sample = PREVIEW_SAMPLE;
 
   return (
     <>

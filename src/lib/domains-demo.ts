@@ -53,33 +53,14 @@ export const PLAN_DOMAIN_LIMITS: Record<string, number> = {
   Pro: 5,
 };
 
-/** Plano de demonstração usado para calcular limite/disponibilidade na UI. */
-export const DEMO_PLAN_NAME = "Growth";
-
 /** Sufixo dos domínios PAVOX (apenas visual). */
 export const PAVOX_DOMAIN_SUFFIX = "checkout.pavox.com.br";
 
 /** Alvo de CNAME exibido na etapa de DNS (apenas visual). */
 export const PAVOX_CNAME_TARGET = "domains.pavox.com.br";
 
-/** Lista inicial de domínios de demonstração. */
-export const INITIAL_DEMO_DOMAINS: DemoDomain[] = [
-  {
-    id: "dom-1",
-    domain: "checkout.pavox.com.br/loja-demo",
-    type: "pavox",
-    status: "connected",
-    checkoutId: null,
-    isPrimary: true,
-    connectedAt: "12 mar 2025",
-  },
-  {
-    id: "dom-2",
-    domain: "checkout.minhaloja.com.br",
-    type: "custom",
-    status: "connected",
-    checkoutId: null,
-    isPrimary: false,
-    connectedAt: "28 mar 2025",
-  },
-];
+/**
+ * Lista inicial de domínios. Começa VAZIA — não há domínios fictícios. Os
+ * domínios reais serão adicionados pelo usuário (e, futuramente, persistidos).
+ */
+export const INITIAL_DEMO_DOMAINS: DemoDomain[] = [];

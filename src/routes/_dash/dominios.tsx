@@ -37,12 +37,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  DEMO_PLAN_NAME,
   DOMAIN_TYPE_LABEL,
   INITIAL_DEMO_DOMAINS,
   PLAN_DOMAIN_LIMITS,
   type DemoDomain,
 } from "@/lib/domains-demo";
+import { useSubscription } from "@/lib/billing";
 
 export const Route = createFileRoute("/_dash/dominios")({
   component: Dominios,
@@ -65,7 +65,10 @@ function Dominios() {
   const [addOpen, setAddOpen] = useState(false);
   const [removing, setRemoving] = useState<DemoDomain | null>(null);
 
-  const planName = DEMO_PLAN_NAME;
+  // Plano real da assinatura (sem fallback fictício). Enquanto carrega ou quando
+  // não há assinatura, assume-se o plano gratuito (limite mínimo).
+  const { data: subscription } = useSubscription();
+  const planName = subscription?.plan?.name ?? "Free";
   const domainLimit = PLAN_DOMAIN_LIMITS[planName] ?? 1;
   const currentDomains = domains.length;
   const available = Math.max(domainLimit - currentDomains, 0);

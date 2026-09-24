@@ -1,10 +1,17 @@
 /**
- * Dados de demonstração (mock) da área de Marketing.
+ * Estrutura de dados da área de Marketing.
  *
- * IMPORTANTE: nada aqui representa dados reais. Toda esta camada existe apenas
- * para demonstrar visualmente os estados (vazio, populado, ativo/inativo) das
- * telas. A estrutura foi desenhada para que o DEV substitua estes mocks por
- * dados reais (Supabase/API) posteriormente sem alterar a UI.
+ * IMPORTANTE: esta camada NÃO contém entidades fictícias. As listas de cupons,
+ * order bumps, upsells, brindes, provas sociais, testes A/B e automações começam
+ * VAZIAS — não existe fonte real para elas ainda, então a UI renderiza o estado
+ * vazio ("Nenhum ... configurado") em vez de inventar registros. Quando o backend
+ * (Supabase/API) existir, basta popular estas listas mantendo os mesmos tipos.
+ *
+ * O que permanece aqui é apenas configuração/catálogo (não são dados de conta):
+ * - `OVERVIEW_STATS`: métricas zeradas até haver dados reais.
+ * - `PIXEL_PLATFORMS`: catálogo de integrações disponíveis para conectar (nenhuma
+ *   aparece como conectada, pois não há conexão real).
+ * - `PIXEL_EVENTS` / `CHECKOUT_EVENTS`: mapeamento fixo de eventos do checkout.
  */
 
 export type MarketingToolStatus =
@@ -16,17 +23,7 @@ export type MarketingToolStatus =
   | "Rascunho";
 
 /* -------------------------------------------------------------------------- */
-/* Checkouts (mock — substituir por checkouts reais do usuário)               */
-/* -------------------------------------------------------------------------- */
-
-export const MOCK_CHECKOUTS = [
-  { id: "all", name: "Todos os checkouts" },
-  { id: "checkout-a", name: "Checkout Produto A" },
-  { id: "checkout-b", name: "Checkout Produto B" },
-] as const;
-
-/* -------------------------------------------------------------------------- */
-/* Visão geral                                                                */
+/* Visão geral (métricas zeradas até existir fonte real)                      */
 /* -------------------------------------------------------------------------- */
 
 export const OVERVIEW_STATS = [
@@ -39,6 +36,8 @@ export const OVERVIEW_STATS = [
 
 /* -------------------------------------------------------------------------- */
 /* Pixels e rastreamento                                                      */
+/* Catálogo de plataformas disponíveis para conectar. Nenhuma inicia conectada */
+/* (connections: 0, sem último evento) porque não há integração real ativa.   */
 /* -------------------------------------------------------------------------- */
 
 export type PixelPlatform = {
@@ -59,9 +58,9 @@ export const PIXEL_PLATFORMS: PixelPlatform[] = [
     tag: "M",
     color: "#1877F2",
     description: "Conversões, remarketing e otimização de campanhas.",
-    status: "Ativo",
-    connections: 1,
-    lastEvent: "Purchase · há 4 min",
+    status: "Disponível",
+    connections: 0,
+    lastEvent: null,
   },
   {
     id: "google-ads",
@@ -69,8 +68,8 @@ export const PIXEL_PLATFORMS: PixelPlatform[] = [
     tag: "Ads",
     color: "#4285F4",
     description: "Rastreie conversões e otimize seus lances.",
-    status: "Configurando",
-    connections: 1,
+    status: "Disponível",
+    connections: 0,
     lastEvent: null,
   },
   {
@@ -79,9 +78,9 @@ export const PIXEL_PLATFORMS: PixelPlatform[] = [
     tag: "TT",
     color: "#010101",
     description: "Acompanhe eventos e otimize campanhas no TikTok.",
-    status: "Ativo",
-    connections: 2,
-    lastEvent: "InitiateCheckout · há 12 min",
+    status: "Disponível",
+    connections: 0,
+    lastEvent: null,
   },
   {
     id: "gtm",
@@ -119,9 +118,9 @@ export const PIXEL_PLATFORMS: PixelPlatform[] = [
     tag: "K",
     color: "#FF6A00",
     description: "Otimize campanhas de aquisição no Kwai.",
-    status: "Erro",
-    connections: 1,
-    lastEvent: "Token inválido",
+    status: "Disponível",
+    connections: 0,
+    lastEvent: null,
   },
   {
     id: "taboola",
@@ -188,12 +187,7 @@ export type Coupon = {
   status: MarketingToolStatus;
 };
 
-export const COUPONS: Coupon[] = [
-  { id: "1", code: "BEMVINDO10", discount: "10%", type: "Percentual", used: 128, limit: 500, validity: "31/12/2026", status: "Ativo" },
-  { id: "2", code: "PIX15", discount: "15%", type: "Percentual", used: 342, limit: null, validity: "Sem prazo", status: "Ativo" },
-  { id: "3", code: "BLACK50", discount: "R$ 50,00", type: "Valor fixo", used: 0, limit: 1000, validity: "28/11/2026", status: "Rascunho" },
-  { id: "4", code: "FRETEGRATIS", discount: "R$ 19,90", type: "Valor fixo", used: 87, limit: 200, validity: "Expirado", status: "Pausado" },
-];
+export const COUPONS: Coupon[] = [];
 
 /* -------------------------------------------------------------------------- */
 /* Order Bump                                                                 */
@@ -210,10 +204,7 @@ export type OrderBump = {
   conversion: string;
 };
 
-export const ORDER_BUMPS: OrderBump[] = [
-  { id: "1", mainProduct: "Curso Completo", offer: "Mentoria Individual", price: "R$ 97,00", discount: "40%", checkout: "Checkout Produto A", status: "Ativo", conversion: "23,4%" },
-  { id: "2", mainProduct: "Ebook Premium", offer: "Planilhas Extras", price: "R$ 29,90", discount: "50%", checkout: "Checkout Produto B", status: "Pausado", conversion: "11,8%" },
-];
+export const ORDER_BUMPS: OrderBump[] = [];
 
 /* -------------------------------------------------------------------------- */
 /* Upsell                                                                     */
@@ -229,10 +220,7 @@ export type Upsell = {
   conversion: string;
 };
 
-export const UPSELLS: Upsell[] = [
-  { id: "1", trigger: "Curso Completo", offer: "Acesso Vitalício", price: "R$ 197,00", checkout: "Checkout Produto A", status: "Ativo", conversion: "18,2%" },
-  { id: "2", trigger: "Plano Mensal", offer: "Upgrade Anual", price: "R$ 490,00", checkout: "Checkout Produto B", status: "Rascunho", conversion: "—" },
-];
+export const UPSELLS: Upsell[] = [];
 
 /* -------------------------------------------------------------------------- */
 /* Brindes                                                                    */
@@ -247,10 +235,7 @@ export type Gift = {
   status: MarketingToolStatus;
 };
 
-export const GIFTS: Gift[] = [
-  { id: "1", condition: "Compre 2 produtos", reward: "Ebook exclusivo", minValue: "R$ 150,00", checkout: "Todos os checkouts", status: "Ativo" },
-  { id: "2", condition: "Acima de R$ 300", reward: "Frete grátis", minValue: "R$ 300,00", checkout: "Checkout Produto A", status: "Pausado" },
-];
+export const GIFTS: Gift[] = [];
 
 /* -------------------------------------------------------------------------- */
 /* Provas sociais                                                             */
@@ -266,22 +251,7 @@ export type SocialProof = {
   status: MarketingToolStatus;
 };
 
-export const SOCIAL_PROOFS: SocialProof[] = [
-  { id: "1", name: "Cliente Demonstração", text: "Melhor compra que fiz este ano, recomendo demais!", rating: 5, date: "12/03/2026", product: "Curso Completo", status: "Ativo" },
-  { id: "2", name: "Comprador Exemplo", text: "Entrega rápida e produto de altíssima qualidade.", rating: 5, date: "08/03/2026", product: "Ebook Premium", status: "Ativo" },
-  { id: "3", name: "Usuário Fictício", text: "Suporte excelente, tirou todas as minhas dúvidas.", rating: 4, date: "01/03/2026", product: "Mentoria", status: "Rascunho" },
-];
-
-/* -------------------------------------------------------------------------- */
-/* Compra ao vivo (dados 100% fictícios e demonstrativos)                     */
-/* -------------------------------------------------------------------------- */
-
-export const LIVE_PURCHASES = [
-  { id: "1", name: "João", city: "São Paulo", product: "Curso Completo", time: "agora mesmo" },
-  { id: "2", name: "Maria", city: "Rio de Janeiro", product: "Ebook Premium", time: "há 2 minutos" },
-  { id: "3", name: "Carlos", city: "Belo Horizonte", product: "Mentoria", time: "há 5 minutos" },
-  { id: "4", name: "Ana", city: "Curitiba", product: "Curso Completo", time: "há 8 minutos" },
-] as const;
+export const SOCIAL_PROOFS: SocialProof[] = [];
 
 /* -------------------------------------------------------------------------- */
 /* A/B Testing                                                                */
@@ -297,10 +267,7 @@ export type ABTest = {
   status: MarketingToolStatus;
 };
 
-export const AB_TESTS: ABTest[] = [
-  { id: "1", name: "Cor do botão de compra", variantA: "Checkout A", variantB: "Checkout B", traffic: "50 / 50", metric: "Conversão", status: "Ativo" },
-  { id: "2", name: "Título da oferta", variantA: "Checkout A", variantB: "Checkout B", traffic: "70 / 30", metric: "Ticket médio", status: "Pausado" },
-];
+export const AB_TESTS: ABTest[] = [];
 
 /* -------------------------------------------------------------------------- */
 /* Automação                                                                  */
@@ -313,8 +280,4 @@ export type Automation = {
   status: MarketingToolStatus;
 };
 
-export const AUTOMATIONS: Automation[] = [
-  { id: "1", trigger: "Checkout abandonado", action: "Enviar recuperação por WhatsApp", status: "Ativo" },
-  { id: "2", trigger: "Compra aprovada", action: "Disparar evento Purchase para os pixels", status: "Ativo" },
-  { id: "3", trigger: "Cliente comprou", action: "Iniciar fluxo de pós-venda", status: "Rascunho" },
-];
+export const AUTOMATIONS: Automation[] = [];
