@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   BarChart3,
   Building2,
@@ -15,9 +16,17 @@ import {
   Users,
   UserCircle,
   Globe,
+  Megaphone,
+  ChevronRight,
 } from "lucide-react";
 import { PavoxLogo } from "./logo";
 import { useAuth } from "@/hooks/useAuth";
+import { MARKETING_ITEMS } from "@/lib/marketing-nav";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -90,6 +99,49 @@ function NavItem({
   );
 }
 
+function MarketingGroup({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isMarketing = pathname.startsWith("/marketing");
+  const [open, setOpen] = useState(isMarketing);
+
+  return (
+    <Collapsible open={open || isMarketing} onOpenChange={setOpen}>
+      <CollapsibleTrigger
+        className={cn(
+          "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          isMarketing
+            ? "text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/85",
+        )}
+      >
+        <Megaphone className="h-[17px] w-[17px] shrink-0 opacity-80 group-hover:opacity-100" />
+        <span className="flex-1 truncate text-left">Marketing</span>
+        <ChevronRight
+          className={cn(
+            "h-4 w-4 shrink-0 opacity-60 transition-transform",
+            (open || isMarketing) && "rotate-90",
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+        <div className="mt-1 ml-4 space-y-0.5 border-l border-sidebar-border pl-2.5">
+          {MARKETING_ITEMS.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={onNavigate}
+              activeOptions={{ exact: item.exact ?? false }}
+              className="block truncate rounded-md px-2.5 py-1.5 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:font-semibold data-[status=active]:text-primary"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function SidebarNav({
   onNavigate,
   className,
@@ -124,6 +176,8 @@ export function SidebarNav({
         {main.map((item) => (
           <NavItem key={item.to} {...item} onNavigate={onNavigate} />
         ))}
+
+        <MarketingGroup onNavigate={onNavigate} />
 
         <p className="px-2.5 pt-5 pb-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
           Configurações

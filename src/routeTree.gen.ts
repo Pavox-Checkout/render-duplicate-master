@@ -30,6 +30,20 @@ import { Route as PlanosSelecionarRouteImport } from './routes/planos.selecionar
 import { Route as DashCheckoutsIndexRouteImport } from './routes/_dash/checkouts.index'
 import { Route as DashCheckoutsIdRouteImport } from './routes/_dash/checkouts.$id'
 import { Route as DashCheckoutsNovoRouteImport } from './routes/_dash/checkouts.novo'
+import { Route as DashMarketingIndexRouteImport } from './routes/_dash/marketing.index'
+import { Route as DashMarketingAbTestingRouteImport } from './routes/_dash/marketing.ab-testing'
+import { Route as DashMarketingAutomacaoRouteImport } from './routes/_dash/marketing.automacao'
+import { Route as DashMarketingBrindesRouteImport } from './routes/_dash/marketing.brindes'
+import { Route as DashMarketingCompraAoVivoRouteImport } from './routes/_dash/marketing.compra-ao-vivo'
+import { Route as DashMarketingCuponsRouteImport } from './routes/_dash/marketing.cupons'
+import { Route as DashMarketingEscassezRouteImport } from './routes/_dash/marketing.escassez'
+import { Route as DashMarketingFaixaDescontoRouteImport } from './routes/_dash/marketing.faixa-desconto'
+import { Route as DashMarketingOrderBumpRouteImport } from './routes/_dash/marketing.order-bump'
+import { Route as DashMarketingPixelsRouteImport } from './routes/_dash/marketing.pixels'
+import { Route as DashMarketingProvasSociaisRouteImport } from './routes/_dash/marketing.provas-sociais'
+import { Route as DashMarketingRecuperacaoRouteImport } from './routes/_dash/marketing.recuperacao'
+import { Route as DashMarketingSugestoesPagamentoRouteImport } from './routes/_dash/marketing.sugestoes-pagamento'
+import { Route as DashMarketingUpsellRouteImport } from './routes/_dash/marketing.upsell'
 import { Route as DashPedidosIndexRouteImport } from './routes/_dash/pedidos.index'
 import { Route as DashPedidosIdRouteImport } from './routes/_dash/pedidos.$id'
 import { Route as DashProdutosIndexRouteImport } from './routes/_dash/produtos.index'
@@ -140,6 +154,81 @@ const DashCheckoutsNovoRoute = DashCheckoutsNovoRouteImport.update({
   path: '/checkouts/novo',
   getParentRoute: () => DashRoute,
 } as any)
+const DashMarketingIndexRoute = DashMarketingIndexRouteImport.update({
+  id: '/marketing/',
+  path: '/marketing/',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingAbTestingRoute = DashMarketingAbTestingRouteImport.update({
+  id: '/marketing/ab-testing',
+  path: '/marketing/ab-testing',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingAutomacaoRoute = DashMarketingAutomacaoRouteImport.update({
+  id: '/marketing/automacao',
+  path: '/marketing/automacao',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingBrindesRoute = DashMarketingBrindesRouteImport.update({
+  id: '/marketing/brindes',
+  path: '/marketing/brindes',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingCompraAoVivoRoute =
+  DashMarketingCompraAoVivoRouteImport.update({
+    id: '/marketing/compra-ao-vivo',
+    path: '/marketing/compra-ao-vivo',
+    getParentRoute: () => DashRoute,
+  } as any)
+const DashMarketingCuponsRoute = DashMarketingCuponsRouteImport.update({
+  id: '/marketing/cupons',
+  path: '/marketing/cupons',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingEscassezRoute = DashMarketingEscassezRouteImport.update({
+  id: '/marketing/escassez',
+  path: '/marketing/escassez',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingFaixaDescontoRoute =
+  DashMarketingFaixaDescontoRouteImport.update({
+    id: '/marketing/faixa-desconto',
+    path: '/marketing/faixa-desconto',
+    getParentRoute: () => DashRoute,
+  } as any)
+const DashMarketingOrderBumpRoute = DashMarketingOrderBumpRouteImport.update({
+  id: '/marketing/order-bump',
+  path: '/marketing/order-bump',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingPixelsRoute = DashMarketingPixelsRouteImport.update({
+  id: '/marketing/pixels',
+  path: '/marketing/pixels',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMarketingProvasSociaisRoute =
+  DashMarketingProvasSociaisRouteImport.update({
+    id: '/marketing/provas-sociais',
+    path: '/marketing/provas-sociais',
+    getParentRoute: () => DashRoute,
+  } as any)
+const DashMarketingRecuperacaoRoute =
+  DashMarketingRecuperacaoRouteImport.update({
+    id: '/marketing/recuperacao',
+    path: '/marketing/recuperacao',
+    getParentRoute: () => DashRoute,
+  } as any)
+const DashMarketingSugestoesPagamentoRoute =
+  DashMarketingSugestoesPagamentoRouteImport.update({
+    id: '/marketing/sugestoes-pagamento',
+    path: '/marketing/sugestoes-pagamento',
+    getParentRoute: () => DashRoute,
+  } as any)
+const DashMarketingUpsellRoute = DashMarketingUpsellRouteImport.update({
+  id: '/marketing/upsell',
+  path: '/marketing/upsell',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashPedidosIndexRoute = DashPedidosIndexRouteImport.update({
   id: '/pedidos/',
   path: '/pedidos/',
@@ -186,10 +275,24 @@ export interface FileRoutesByFullPath {
   '/planos/selecionar': typeof PlanosSelecionarRoute
   '/checkouts/$id': typeof DashCheckoutsIdRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
+  '/marketing/ab-testing': typeof DashMarketingAbTestingRoute
+  '/marketing/automacao': typeof DashMarketingAutomacaoRoute
+  '/marketing/brindes': typeof DashMarketingBrindesRoute
+  '/marketing/compra-ao-vivo': typeof DashMarketingCompraAoVivoRoute
+  '/marketing/cupons': typeof DashMarketingCuponsRoute
+  '/marketing/escassez': typeof DashMarketingEscassezRoute
+  '/marketing/faixa-desconto': typeof DashMarketingFaixaDescontoRoute
+  '/marketing/order-bump': typeof DashMarketingOrderBumpRoute
+  '/marketing/pixels': typeof DashMarketingPixelsRoute
+  '/marketing/provas-sociais': typeof DashMarketingProvasSociaisRoute
+  '/marketing/recuperacao': typeof DashMarketingRecuperacaoRoute
+  '/marketing/sugestoes-pagamento': typeof DashMarketingSugestoesPagamentoRoute
+  '/marketing/upsell': typeof DashMarketingUpsellRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
   '/produtos/$id': typeof DashProdutosIdRoute
   '/produtos/novo': typeof DashProdutosNovoRoute
   '/checkouts/': typeof DashCheckoutsIndexRoute
+  '/marketing/': typeof DashMarketingIndexRoute
   '/pedidos/': typeof DashPedidosIndexRoute
   '/produtos/': typeof DashProdutosIndexRoute
 }
@@ -213,10 +316,24 @@ export interface FileRoutesByTo {
   '/planos/selecionar': typeof PlanosSelecionarRoute
   '/checkouts/$id': typeof DashCheckoutsIdRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
+  '/marketing/ab-testing': typeof DashMarketingAbTestingRoute
+  '/marketing/automacao': typeof DashMarketingAutomacaoRoute
+  '/marketing/brindes': typeof DashMarketingBrindesRoute
+  '/marketing/compra-ao-vivo': typeof DashMarketingCompraAoVivoRoute
+  '/marketing/cupons': typeof DashMarketingCuponsRoute
+  '/marketing/escassez': typeof DashMarketingEscassezRoute
+  '/marketing/faixa-desconto': typeof DashMarketingFaixaDescontoRoute
+  '/marketing/order-bump': typeof DashMarketingOrderBumpRoute
+  '/marketing/pixels': typeof DashMarketingPixelsRoute
+  '/marketing/provas-sociais': typeof DashMarketingProvasSociaisRoute
+  '/marketing/recuperacao': typeof DashMarketingRecuperacaoRoute
+  '/marketing/sugestoes-pagamento': typeof DashMarketingSugestoesPagamentoRoute
+  '/marketing/upsell': typeof DashMarketingUpsellRoute
   '/pedidos/$id': typeof DashPedidosIdRoute
   '/produtos/$id': typeof DashProdutosIdRoute
   '/produtos/novo': typeof DashProdutosNovoRoute
   '/checkouts': typeof DashCheckoutsIndexRoute
+  '/marketing': typeof DashMarketingIndexRoute
   '/pedidos': typeof DashPedidosIndexRoute
   '/produtos': typeof DashProdutosIndexRoute
 }
@@ -242,10 +359,24 @@ export interface FileRoutesById {
   '/planos/selecionar': typeof PlanosSelecionarRoute
   '/_dash/checkouts/$id': typeof DashCheckoutsIdRoute
   '/_dash/checkouts/novo': typeof DashCheckoutsNovoRoute
+  '/_dash/marketing/ab-testing': typeof DashMarketingAbTestingRoute
+  '/_dash/marketing/automacao': typeof DashMarketingAutomacaoRoute
+  '/_dash/marketing/brindes': typeof DashMarketingBrindesRoute
+  '/_dash/marketing/compra-ao-vivo': typeof DashMarketingCompraAoVivoRoute
+  '/_dash/marketing/cupons': typeof DashMarketingCuponsRoute
+  '/_dash/marketing/escassez': typeof DashMarketingEscassezRoute
+  '/_dash/marketing/faixa-desconto': typeof DashMarketingFaixaDescontoRoute
+  '/_dash/marketing/order-bump': typeof DashMarketingOrderBumpRoute
+  '/_dash/marketing/pixels': typeof DashMarketingPixelsRoute
+  '/_dash/marketing/provas-sociais': typeof DashMarketingProvasSociaisRoute
+  '/_dash/marketing/recuperacao': typeof DashMarketingRecuperacaoRoute
+  '/_dash/marketing/sugestoes-pagamento': typeof DashMarketingSugestoesPagamentoRoute
+  '/_dash/marketing/upsell': typeof DashMarketingUpsellRoute
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
   '/_dash/produtos/$id': typeof DashProdutosIdRoute
   '/_dash/produtos/novo': typeof DashProdutosNovoRoute
   '/_dash/checkouts/': typeof DashCheckoutsIndexRoute
+  '/_dash/marketing/': typeof DashMarketingIndexRoute
   '/_dash/pedidos/': typeof DashPedidosIndexRoute
   '/_dash/produtos/': typeof DashProdutosIndexRoute
 }
@@ -271,10 +402,24 @@ export interface FileRouteTypes {
     | '/planos/selecionar'
     | '/checkouts/$id'
     | '/checkouts/novo'
+    | '/marketing/ab-testing'
+    | '/marketing/automacao'
+    | '/marketing/brindes'
+    | '/marketing/compra-ao-vivo'
+    | '/marketing/cupons'
+    | '/marketing/escassez'
+    | '/marketing/faixa-desconto'
+    | '/marketing/order-bump'
+    | '/marketing/pixels'
+    | '/marketing/provas-sociais'
+    | '/marketing/recuperacao'
+    | '/marketing/sugestoes-pagamento'
+    | '/marketing/upsell'
     | '/pedidos/$id'
     | '/produtos/$id'
     | '/produtos/novo'
     | '/checkouts/'
+    | '/marketing/'
     | '/pedidos/'
     | '/produtos/'
   fileRoutesByTo: FileRoutesByTo
@@ -298,10 +443,24 @@ export interface FileRouteTypes {
     | '/planos/selecionar'
     | '/checkouts/$id'
     | '/checkouts/novo'
+    | '/marketing/ab-testing'
+    | '/marketing/automacao'
+    | '/marketing/brindes'
+    | '/marketing/compra-ao-vivo'
+    | '/marketing/cupons'
+    | '/marketing/escassez'
+    | '/marketing/faixa-desconto'
+    | '/marketing/order-bump'
+    | '/marketing/pixels'
+    | '/marketing/provas-sociais'
+    | '/marketing/recuperacao'
+    | '/marketing/sugestoes-pagamento'
+    | '/marketing/upsell'
     | '/pedidos/$id'
     | '/produtos/$id'
     | '/produtos/novo'
     | '/checkouts'
+    | '/marketing'
     | '/pedidos'
     | '/produtos'
   id:
@@ -326,10 +485,24 @@ export interface FileRouteTypes {
     | '/planos/selecionar'
     | '/_dash/checkouts/$id'
     | '/_dash/checkouts/novo'
+    | '/_dash/marketing/ab-testing'
+    | '/_dash/marketing/automacao'
+    | '/_dash/marketing/brindes'
+    | '/_dash/marketing/compra-ao-vivo'
+    | '/_dash/marketing/cupons'
+    | '/_dash/marketing/escassez'
+    | '/_dash/marketing/faixa-desconto'
+    | '/_dash/marketing/order-bump'
+    | '/_dash/marketing/pixels'
+    | '/_dash/marketing/provas-sociais'
+    | '/_dash/marketing/recuperacao'
+    | '/_dash/marketing/sugestoes-pagamento'
+    | '/_dash/marketing/upsell'
     | '/_dash/pedidos/$id'
     | '/_dash/produtos/$id'
     | '/_dash/produtos/novo'
     | '/_dash/checkouts/'
+    | '/_dash/marketing/'
     | '/_dash/pedidos/'
     | '/_dash/produtos/'
   fileRoutesById: FileRoutesById
@@ -492,6 +665,104 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashCheckoutsNovoRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/marketing/': {
+      id: '/_dash/marketing/'
+      path: '/marketing'
+      fullPath: '/marketing/'
+      preLoaderRoute: typeof DashMarketingIndexRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/ab-testing': {
+      id: '/_dash/marketing/ab-testing'
+      path: '/marketing/ab-testing'
+      fullPath: '/marketing/ab-testing'
+      preLoaderRoute: typeof DashMarketingAbTestingRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/automacao': {
+      id: '/_dash/marketing/automacao'
+      path: '/marketing/automacao'
+      fullPath: '/marketing/automacao'
+      preLoaderRoute: typeof DashMarketingAutomacaoRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/brindes': {
+      id: '/_dash/marketing/brindes'
+      path: '/marketing/brindes'
+      fullPath: '/marketing/brindes'
+      preLoaderRoute: typeof DashMarketingBrindesRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/compra-ao-vivo': {
+      id: '/_dash/marketing/compra-ao-vivo'
+      path: '/marketing/compra-ao-vivo'
+      fullPath: '/marketing/compra-ao-vivo'
+      preLoaderRoute: typeof DashMarketingCompraAoVivoRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/cupons': {
+      id: '/_dash/marketing/cupons'
+      path: '/marketing/cupons'
+      fullPath: '/marketing/cupons'
+      preLoaderRoute: typeof DashMarketingCuponsRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/escassez': {
+      id: '/_dash/marketing/escassez'
+      path: '/marketing/escassez'
+      fullPath: '/marketing/escassez'
+      preLoaderRoute: typeof DashMarketingEscassezRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/faixa-desconto': {
+      id: '/_dash/marketing/faixa-desconto'
+      path: '/marketing/faixa-desconto'
+      fullPath: '/marketing/faixa-desconto'
+      preLoaderRoute: typeof DashMarketingFaixaDescontoRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/order-bump': {
+      id: '/_dash/marketing/order-bump'
+      path: '/marketing/order-bump'
+      fullPath: '/marketing/order-bump'
+      preLoaderRoute: typeof DashMarketingOrderBumpRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/pixels': {
+      id: '/_dash/marketing/pixels'
+      path: '/marketing/pixels'
+      fullPath: '/marketing/pixels'
+      preLoaderRoute: typeof DashMarketingPixelsRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/provas-sociais': {
+      id: '/_dash/marketing/provas-sociais'
+      path: '/marketing/provas-sociais'
+      fullPath: '/marketing/provas-sociais'
+      preLoaderRoute: typeof DashMarketingProvasSociaisRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/recuperacao': {
+      id: '/_dash/marketing/recuperacao'
+      path: '/marketing/recuperacao'
+      fullPath: '/marketing/recuperacao'
+      preLoaderRoute: typeof DashMarketingRecuperacaoRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/sugestoes-pagamento': {
+      id: '/_dash/marketing/sugestoes-pagamento'
+      path: '/marketing/sugestoes-pagamento'
+      fullPath: '/marketing/sugestoes-pagamento'
+      preLoaderRoute: typeof DashMarketingSugestoesPagamentoRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/marketing/upsell': {
+      id: '/_dash/marketing/upsell'
+      path: '/marketing/upsell'
+      fullPath: '/marketing/upsell'
+      preLoaderRoute: typeof DashMarketingUpsellRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/pedidos/': {
       id: '/_dash/pedidos/'
       path: '/pedidos'
@@ -545,10 +816,24 @@ interface DashRouteChildren {
   DashVendasRoute: typeof DashVendasRoute
   DashCheckoutsIdRoute: typeof DashCheckoutsIdRoute
   DashCheckoutsNovoRoute: typeof DashCheckoutsNovoRoute
+  DashMarketingAbTestingRoute: typeof DashMarketingAbTestingRoute
+  DashMarketingAutomacaoRoute: typeof DashMarketingAutomacaoRoute
+  DashMarketingBrindesRoute: typeof DashMarketingBrindesRoute
+  DashMarketingCompraAoVivoRoute: typeof DashMarketingCompraAoVivoRoute
+  DashMarketingCuponsRoute: typeof DashMarketingCuponsRoute
+  DashMarketingEscassezRoute: typeof DashMarketingEscassezRoute
+  DashMarketingFaixaDescontoRoute: typeof DashMarketingFaixaDescontoRoute
+  DashMarketingOrderBumpRoute: typeof DashMarketingOrderBumpRoute
+  DashMarketingPixelsRoute: typeof DashMarketingPixelsRoute
+  DashMarketingProvasSociaisRoute: typeof DashMarketingProvasSociaisRoute
+  DashMarketingRecuperacaoRoute: typeof DashMarketingRecuperacaoRoute
+  DashMarketingSugestoesPagamentoRoute: typeof DashMarketingSugestoesPagamentoRoute
+  DashMarketingUpsellRoute: typeof DashMarketingUpsellRoute
   DashPedidosIdRoute: typeof DashPedidosIdRoute
   DashProdutosIdRoute: typeof DashProdutosIdRoute
   DashProdutosNovoRoute: typeof DashProdutosNovoRoute
   DashCheckoutsIndexRoute: typeof DashCheckoutsIndexRoute
+  DashMarketingIndexRoute: typeof DashMarketingIndexRoute
   DashPedidosIndexRoute: typeof DashPedidosIndexRoute
   DashProdutosIndexRoute: typeof DashProdutosIndexRoute
 }
@@ -568,10 +853,24 @@ const DashRouteChildren: DashRouteChildren = {
   DashVendasRoute: DashVendasRoute,
   DashCheckoutsIdRoute: DashCheckoutsIdRoute,
   DashCheckoutsNovoRoute: DashCheckoutsNovoRoute,
+  DashMarketingAbTestingRoute: DashMarketingAbTestingRoute,
+  DashMarketingAutomacaoRoute: DashMarketingAutomacaoRoute,
+  DashMarketingBrindesRoute: DashMarketingBrindesRoute,
+  DashMarketingCompraAoVivoRoute: DashMarketingCompraAoVivoRoute,
+  DashMarketingCuponsRoute: DashMarketingCuponsRoute,
+  DashMarketingEscassezRoute: DashMarketingEscassezRoute,
+  DashMarketingFaixaDescontoRoute: DashMarketingFaixaDescontoRoute,
+  DashMarketingOrderBumpRoute: DashMarketingOrderBumpRoute,
+  DashMarketingPixelsRoute: DashMarketingPixelsRoute,
+  DashMarketingProvasSociaisRoute: DashMarketingProvasSociaisRoute,
+  DashMarketingRecuperacaoRoute: DashMarketingRecuperacaoRoute,
+  DashMarketingSugestoesPagamentoRoute: DashMarketingSugestoesPagamentoRoute,
+  DashMarketingUpsellRoute: DashMarketingUpsellRoute,
   DashPedidosIdRoute: DashPedidosIdRoute,
   DashProdutosIdRoute: DashProdutosIdRoute,
   DashProdutosNovoRoute: DashProdutosNovoRoute,
   DashCheckoutsIndexRoute: DashCheckoutsIndexRoute,
+  DashMarketingIndexRoute: DashMarketingIndexRoute,
   DashPedidosIndexRoute: DashPedidosIndexRoute,
   DashProdutosIndexRoute: DashProdutosIndexRoute,
 }
