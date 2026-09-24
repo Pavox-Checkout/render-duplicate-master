@@ -19,6 +19,7 @@ import { Route as DashClientesRouteImport } from './routes/_dash/clientes'
 import { Route as DashConfiguracoesRouteImport } from './routes/_dash/configuracoes'
 import { Route as DashContaRouteImport } from './routes/_dash/conta'
 import { Route as DashDashboardRouteImport } from './routes/_dash/dashboard'
+import { Route as DashDominiosRouteImport } from './routes/_dash/dominios'
 import { Route as DashEquipeRouteImport } from './routes/_dash/equipe'
 import { Route as DashIntegracoesRouteImport } from './routes/_dash/integracoes'
 import { Route as DashPavoxAiRouteImport } from './routes/_dash/pavox-ai'
@@ -82,6 +83,11 @@ const DashContaRoute = DashContaRouteImport.update({
 const DashDashboardRoute = DashDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashDominiosRoute = DashDominiosRouteImport.update({
+  id: '/dominios',
+  path: '/dominios',
   getParentRoute: () => DashRoute,
 } as any)
 const DashEquipeRoute = DashEquipeRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof DashConfiguracoesRoute
   '/conta': typeof DashContaRoute
   '/dashboard': typeof DashDashboardRoute
+  '/dominios': typeof DashDominiosRoute
   '/equipe': typeof DashEquipeRoute
   '/integracoes': typeof DashIntegracoesRoute
   '/pavox-ai': typeof DashPavoxAiRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof DashConfiguracoesRoute
   '/conta': typeof DashContaRoute
   '/dashboard': typeof DashDashboardRoute
+  '/dominios': typeof DashDominiosRoute
   '/equipe': typeof DashEquipeRoute
   '/integracoes': typeof DashIntegracoesRoute
   '/pavox-ai': typeof DashPavoxAiRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/_dash/configuracoes': typeof DashConfiguracoesRoute
   '/_dash/conta': typeof DashContaRoute
   '/_dash/dashboard': typeof DashDashboardRoute
+  '/_dash/dominios': typeof DashDominiosRoute
   '/_dash/equipe': typeof DashEquipeRoute
   '/_dash/integracoes': typeof DashIntegracoesRoute
   '/_dash/pavox-ai': typeof DashPavoxAiRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/conta'
     | '/dashboard'
+    | '/dominios'
     | '/equipe'
     | '/integracoes'
     | '/pavox-ai'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/conta'
     | '/dashboard'
+    | '/dominios'
     | '/equipe'
     | '/integracoes'
     | '/pavox-ai'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/_dash/configuracoes'
     | '/_dash/conta'
     | '/_dash/dashboard'
+    | '/_dash/dominios'
     | '/_dash/equipe'
     | '/_dash/integracoes'
     | '/_dash/pavox-ai'
@@ -401,6 +413,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashDashboardRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/dominios': {
+      id: '/_dash/dominios'
+      path: '/dominios'
+      fullPath: '/dominios'
+      preLoaderRoute: typeof DashDominiosRouteImport
       parentRoute: typeof DashRoute
     }
     '/_dash/equipe': {
@@ -517,6 +536,7 @@ interface DashRouteChildren {
   DashConfiguracoesRoute: typeof DashConfiguracoesRoute
   DashContaRoute: typeof DashContaRoute
   DashDashboardRoute: typeof DashDashboardRoute
+  DashDominiosRoute: typeof DashDominiosRoute
   DashEquipeRoute: typeof DashEquipeRoute
   DashIntegracoesRoute: typeof DashIntegracoesRoute
   DashPavoxAiRoute: typeof DashPavoxAiRoute
@@ -539,6 +559,7 @@ const DashRouteChildren: DashRouteChildren = {
   DashConfiguracoesRoute: DashConfiguracoesRoute,
   DashContaRoute: DashContaRoute,
   DashDashboardRoute: DashDashboardRoute,
+  DashDominiosRoute: DashDominiosRoute,
   DashEquipeRoute: DashEquipeRoute,
   DashIntegracoesRoute: DashIntegracoesRoute,
   DashPavoxAiRoute: DashPavoxAiRoute,
