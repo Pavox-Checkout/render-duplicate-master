@@ -18,9 +18,11 @@ import {
   Globe,
   Megaphone,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 import { PavoxLogo } from "./logo";
 import { useAuth } from "@/hooks/useAuth";
+import { usePavoxAiAccess } from "@/lib/pavox-ai/access";
 import { MARKETING_ITEMS } from "@/lib/marketing-nav";
 import {
   Collapsible,
@@ -80,11 +82,13 @@ function NavItem({
   label,
   icon: Icon,
   onNavigate,
+  locked,
 }: {
   to: string;
   label: string;
   icon: typeof LayoutGrid;
   onNavigate?: (() => void) | undefined;
+  locked?: boolean | undefined;
 }) {
   return (
     <Link
@@ -95,6 +99,12 @@ function NavItem({
     >
       <Icon className="h-[17px] w-[17px] shrink-0 opacity-80 group-data-[status=active]:opacity-100" />
       <span className="truncate">{label}</span>
+      {locked && (
+        <span className="ml-auto flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-primary">
+          <Lock className="h-2.5 w-2.5" />
+          Pro
+        </span>
+      )}
     </Link>
   );
 }
@@ -151,6 +161,7 @@ export function SidebarNav({
 }) {
   const { profile, user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { hasAccess: hasAiAccess } = usePavoxAiAccess();
   const email = profile?.email || user?.email || "";
   const name = profile?.full_name || email.split("@")[0] || "Minha conta";
   const company = profile?.company_name || "Sua empresa";
@@ -174,7 +185,12 @@ export function SidebarNav({
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {main.map((item) => (
-          <NavItem key={item.to} {...item} onNavigate={onNavigate} />
+          <NavItem
+            key={item.to}
+            {...item}
+            onNavigate={onNavigate}
+            locked={item.to === "/pavox-ai" && !hasAiAccess}
+          />
         ))}
 
         <MarketingGroup onNavigate={onNavigate} />
