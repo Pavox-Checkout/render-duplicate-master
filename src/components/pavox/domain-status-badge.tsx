@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { DOMAIN_STATUS, type DomainStatus } from "@/lib/domains-demo";
+import { DOMAIN_STATUS, type DomainStatus } from "@/lib/domains";
 
 const toneClass: Record<string, string> = {
   success: "bg-success/12 text-success border-success/20",

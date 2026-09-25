@@ -11,3 +11,7 @@ verify_jwt = false
 # Called by Mercado Pago; the notification is re-validated against the API.
 [functions.mercadopago-webhook]
 verify_jwt = false
+
+# Authenticates the merchant in code. Needs the VERCEL_TOKEN secret.
+[functions.domains]
+verify_jwt = false
