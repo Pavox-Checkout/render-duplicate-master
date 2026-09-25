@@ -71,6 +71,13 @@
       "when": 1790032907372,
       "tag": "0006_payment_integrations",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790032967372,
+      "tag": "0009_ensure_plans_subscriptions_schema",
+      "breakpoints": true
     }
   ]
 }
