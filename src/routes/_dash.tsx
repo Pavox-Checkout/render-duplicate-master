@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/lib/billing";
 import { SidebarNav } from "@/components/pavox/sidebar-nav";
 import { PavoxLogo } from "@/components/pavox/logo";
+import { ThemeToggle } from "@/components/pavox/theme-toggle";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -75,6 +76,7 @@ function DashLayout() {
                 Pavox AI
               </Link>
             </Button>
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"

@@ -19,7 +19,6 @@ import { StatusBadge } from "@/components/pavox/status-badge";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { Button } from "@/components/ui/button";
 import { brl } from "@/lib/mock";
-import { useAuth } from "@/hooks/useAuth";
 import { useOrders, useProducts } from "@/lib/pavox-data";
 import { calculatePavoxAchievements, PAVOX_MILESTONES } from "@/lib/achievements";
 
@@ -101,12 +100,8 @@ function PavoxAchievements({ revenue, isError }: { revenue: number; isError: boo
 }
 
 function Overview() {
-  const { profile, user } = useAuth();
   const { data: orders = [], isError: ordersError } = useOrders();
   const { data: products = [] } = useProducts();
-
-  const firstName =
-    (profile?.full_name || "").trim().split(" ")[0] || user?.email?.split("@")[0] || "por aqui";
 
   const approved = orders.filter((o) => o.status === "Aprovado");
   const revenue = approved.reduce((sum, o) => sum + Number(o.amount), 0);
@@ -115,8 +110,8 @@ function Overview() {
   return (
     <>
       <PageHeader
-        title={`Bom dia, ${firstName} 👋`}
-        subtitle="Acompanhe o desempenho da sua operação em tempo real."
+        title="Visão geral da sua operação"
+        subtitle="Acompanhe vendas, conversão e desempenho dos seus checkouts."
         actions={
           <>
             <PeriodFilter />
