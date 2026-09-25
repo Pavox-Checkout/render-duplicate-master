@@ -105,27 +105,39 @@ export type Database = {
       }
       customers: {
         Row: {
+          address: Json
           created_at: string
+          document: string
           email: string
           id: string
           name: string
+          person_type: string
           phone: string
+          updated_at: string
           user_id: string
         }
         Insert: {
+          address?: Json
           created_at?: string
+          document?: string
           email?: string
           id?: string
           name: string
+          person_type?: string
           phone?: string
+          updated_at?: string
           user_id?: string
         }
         Update: {
+          address?: Json
           created_at?: string
+          document?: string
           email?: string
           id?: string
           name?: string
+          person_type?: string
           phone?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -133,38 +145,83 @@ export type Database = {
       orders: {
         Row: {
           amount: number
+          buyer: Json
           checkout_id: string | null
           created_at: string
+          currency: string
           customer_id: string | null
+          discount: number
+          expires_at: string | null
+          gateway: string | null
+          gateway_payment_id: string | null
           id: string
+          idempotency_key: string | null
+          paid_at: string | null
+          payment_data: Json
           payment_method: string
+          platform_fee: number
           product_id: string | null
+          product_snapshot: Json
+          quantity: number
           reference: string
+          shipping: number
           status: string
+          subtotal: number
+          updated_at: string
           user_id: string
         }
         Insert: {
           amount?: number
+          buyer?: Json
           checkout_id?: string | null
           created_at?: string
+          currency?: string
           customer_id?: string | null
+          discount?: number
+          expires_at?: string | null
+          gateway?: string | null
+          gateway_payment_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          paid_at?: string | null
+          payment_data?: Json
           payment_method?: string
+          platform_fee?: number
           product_id?: string | null
+          product_snapshot?: Json
+          quantity?: number
           reference?: string
+          shipping?: number
           status?: string
+          subtotal?: number
+          updated_at?: string
           user_id?: string
         }
         Update: {
           amount?: number
+          buyer?: Json
           checkout_id?: string | null
           created_at?: string
+          currency?: string
           customer_id?: string | null
+          discount?: number
+          expires_at?: string | null
+          gateway?: string | null
+          gateway_payment_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          paid_at?: string | null
+          payment_data?: Json
           payment_method?: string
+          platform_fee?: number
           product_id?: string | null
+          product_snapshot?: Json
+          quantity?: number
           reference?: string
+          shipping?: number
           status?: string
+          subtotal?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -193,9 +250,11 @@ export type Database = {
       }
       payment_integrations: {
         Row: {
+          account_label: string
           created_at: string
           credentials: Json
           credentials_masked: Json
+          credentials_secret_id: string | null
           enabled_payment_methods: string[]
           environment: string
           id: string
@@ -208,9 +267,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_label?: string
           created_at?: string
           credentials?: Json
           credentials_masked?: Json
+          credentials_secret_id?: string | null
           enabled_payment_methods?: string[]
           environment?: string
           id?: string
@@ -223,9 +284,11 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          account_label?: string
           created_at?: string
           credentials?: Json
           credentials_masked?: Json
+          credentials_secret_id?: string | null
           enabled_payment_methods?: string[]
           environment?: string
           id?: string
@@ -478,6 +541,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          store_slug: string
           updated_at: string
         }
         Insert: {
@@ -486,6 +550,7 @@ export type Database = {
           email?: string
           full_name?: string
           id: string
+          store_slug: string
           updated_at?: string
         }
         Update: {
@@ -494,6 +559,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          store_slug?: string
           updated_at?: string
         }
         Relationships: []
@@ -691,12 +757,158 @@ export type Database = {
           },
         ]
       }
+      webhook_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          order_id: string | null
+          payload: Json
+          processed_at: string | null
+          provider: string
+          result: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          provider: string
+          result?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+          result?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_public_order: {
+        Args: {
+          p_buyer: Json
+          p_checkout_id: string
+          p_idempotency_key: string
+          p_payment_method: string
+        }
+        Returns: Json
+      }
+      get_public_checkout: {
+        Args: { p_checkout_slug: string; p_store_slug: string }
+        Returns: Json
+      }
+      get_public_order: { Args: { p_order_id: string }; Returns: Json }
+      pavox_apply_payment_status: {
+        Args: {
+          p_amount: number
+          p_currency: string
+          p_event_id: string
+          p_event_type: string
+          p_order_id: string
+          p_payload: Json
+          p_payment_id: string
+          p_provider: string
+          p_status: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      pavox_attach_payment: {
+        Args: {
+          p_gateway: string
+          p_order_id: string
+          p_payment_data: Json
+          p_payment_id: string
+        }
+        Returns: Json
+      }
+      pavox_checkout_payment_methods: {
+        Args: { p_checkout: Database["public"]["Tables"]["checkouts"]["Row"] }
+        Returns: string[]
+      }
+      pavox_checkout_product_id: {
+        Args: { p_checkout: Database["public"]["Tables"]["checkouts"]["Row"] }
+        Returns: string
+      }
+      pavox_gateway_for_method: {
+        Args: { p_method: string; p_user_id: string }
+        Returns: string
+      }
+      pavox_get_integration_credentials: {
+        Args: { p_provider: string; p_user_id: string }
+        Returns: Json
+      }
+      pavox_integration_public_json: {
+        Args: { i: Database["public"]["Tables"]["payment_integrations"]["Row"] }
+        Returns: Json
+      }
+      pavox_order_for_payment: { Args: { p_order_id: string }; Returns: Json }
+      pavox_order_public_json: {
+        Args: { o: Database["public"]["Tables"]["orders"]["Row"] }
+        Returns: Json
+      }
+      pavox_platform_fee: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: number
+      }
+      pavox_product_charge_price: {
+        Args: { p: Database["public"]["Tables"]["products"]["Row"] }
+        Returns: number
+      }
+      pavox_provider_methods: {
+        Args: { p_provider: string }
+        Returns: string[]
+      }
+      pavox_record_integration_test: {
+        Args: { p_provider: string; p_result: string; p_user_id: string }
+        Returns: Json
+      }
+      pavox_save_integration: {
+        Args: {
+          p_account_label: string
+          p_credentials: Json
+          p_environment: string
+          p_masked: Json
+          p_methods: string[]
+          p_provider: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      pavox_slugify: { Args: { value: string }; Returns: string }
+      pavox_supported_payment_providers: { Args: never; Returns: string[] }
+      pavox_unique_store_slug: {
+        Args: { p_base: string; p_profile_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

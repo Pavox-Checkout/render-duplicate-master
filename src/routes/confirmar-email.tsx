@@ -23,7 +23,10 @@ export const Route = createFileRoute("/confirmar-email")({
   head: () => ({
     meta: [
       { title: "Confirmar e-mail · PAVOX" },
-      { name: "description", content: "Digite o código enviado para o seu e-mail para ativar sua conta PAVOX." },
+      {
+        name: "description",
+        content: "Digite o código enviado para o seu e-mail para ativar sua conta PAVOX.",
+      },
     ],
   }),
 });
@@ -84,7 +87,9 @@ function ConfirmarEmailPage() {
     const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
     setResending(false);
     if (error) {
-      toast.error("Não foi possível reenviar agora", { description: "Aguarde alguns instantes e tente novamente." });
+      toast.error("Não foi possível reenviar agora", {
+        description: "Aguarde alguns instantes e tente novamente.",
+      });
       return;
     }
     setCooldown(RESEND_COOLDOWN);
@@ -96,7 +101,9 @@ function ConfirmarEmailPage() {
       <div className="flex items-center justify-center px-5 py-12">
         <div className="w-full max-w-[380px]">
           <PavoxLogo />
-          <h1 className="font-display mt-8 text-[26px] font-bold tracking-tight">Confirme seu e-mail</h1>
+          <h1 className="font-display mt-8 text-[26px] font-bold tracking-tight">
+            Confirme seu e-mail
+          </h1>
           <p className="mt-1.5 text-[14px] text-muted-foreground">
             {emailFromSearch ? (
               <>
@@ -139,7 +146,11 @@ function ConfirmarEmailPage() {
               >
                 <InputOTPGroup>
                   {Array.from({ length: CODE_LENGTH }, (_, i) => (
-                    <InputOTPSlot key={i} index={i} className="h-11 w-10 text-base sm:h-12 sm:w-12 sm:text-lg" />
+                    <InputOTPSlot
+                      key={i}
+                      index={i}
+                      className="h-11 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
+                    />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
@@ -168,8 +179,7 @@ function ConfirmarEmailPage() {
       <div
         className="relative hidden bg-contain bg-center bg-no-repeat lg:flex"
         style={{ backgroundImage: `url(${confirmHeroAsset.url})` }}
-      >
-      </div>
+      ></div>
     </div>
   );
 }

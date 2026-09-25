@@ -82,10 +82,11 @@ function PedidoDetalhe() {
               >
                 <Copy className="h-4 w-4" /> Copiar ID
               </Button>
-              <Button variant="outline" onClick={() => toast("E-mail reenviado ao cliente")}>
+              {/* Sem backend ainda: desabilitados em vez de fingir sucesso. */}
+              <Button variant="outline" disabled title="Em breve">
                 <Mail className="h-4 w-4" /> Reenviar recibo
               </Button>
-              <Button variant="outline" onClick={() => toast("Reembolso disponível em breve")}>
+              <Button variant="outline" disabled title="Em breve">
                 <RotateCcw className="h-4 w-4" /> Reembolsar
               </Button>
             </div>
@@ -95,16 +96,43 @@ function PedidoDetalhe() {
             <div className="surface p-5">
               <h2 className="text-base font-semibold">Resumo</h2>
               <div className="mt-4 divide-y divide-border">
-                <Row label="Valor" value={brl(Number(order.amount))} />
-                <Row label="Desconto" value={brl(0)} />
+                <Row label="Produto" value={String((order.product_snapshot as { name?: string } | null)?.name ?? "—")} />
+                <Row label="Subtotal" value={brl(Number(order.subtotal))} />
+                <Row label="Desconto" value={brl(Number(order.discount))} />
                 <Row label="Total" value={brl(Number(order.amount))} />
+                {order.status === "Aprovado" ? (
+                  <Row label="Taxa PAVOX" value={brl(Number(order.platform_fee))} />
+                ) : null}
+              </div>
+              <h2 className="mt-6 text-base font-semibold">Cliente</h2>
+              <div className="mt-2 divide-y divide-border">
+                <Row label="Nome" value={String((order.buyer as { name?: string } | null)?.name ?? "—")} />
+                <Row label="E-mail" value={String((order.buyer as { email?: string } | null)?.email ?? "—")} />
               </div>
             </div>
             <div className="surface p-5">
               <h2 className="text-base font-semibold">Pagamento</h2>
               <div className="mt-3 divide-y divide-border">
-                <Row label="Método" value={order.payment_method || "—"} />
+                <Row label="Método" value={order.payment_method === "pix" ? "Pix" : order.payment_method || "—"} />
                 <Row label="Status" value={order.status} />
+                <Row label="Gateway" value={order.gateway === "mercadopago" ? "Mercado Pago" : order.gateway || "—"} />
+                {order.paid_at ? <Row label="Pago em" value={new Date(order.paid_at).toLocaleString("pt-BR")} /> : null}
+                {order.gateway_payment_id ? (
+                  <div className="flex items-center justify-between gap-4 py-2.5 text-[13.5px]">
+                    <span className="text-muted-foreground">ID no gateway</span>
+                    <button
+                      type="button"
+                      className="inline-flex min-w-0 items-center gap-1.5 font-mono text-[12px] font-medium hover:text-primary"
+                      onClick={() => {
+                        void navigator.clipboard?.writeText(order.gateway_payment_id!);
+                        toast.success("ID da transação copiado");
+                      }}
+                    >
+                      <span className="truncate">{order.gateway_payment_id}</span>
+                      <Copy className="h-3.5 w-3.5 shrink-0" />
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

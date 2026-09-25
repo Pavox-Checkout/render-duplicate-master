@@ -27,6 +27,16 @@ export function slugify(value: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+/** Public URL of a published checkout: /c/{storeSlug}/{checkoutSlug}. */
+export function publicCheckoutPath(storeSlug: string, checkoutSlug: string) {
+  return `/c/${storeSlug}/${checkoutSlug}`;
+}
+
+export function publicCheckoutUrl(storeSlug: string, checkoutSlug: string) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}${publicCheckoutPath(storeSlug, checkoutSlug)}`;
+}
+
 export function stateFromConfig(row: CheckoutRecord): BuilderState {
   return {
     name: row.name,
@@ -87,7 +97,6 @@ export async function saveCheckout(id: string, state: BuilderState) {
     .from("checkouts")
     .update({
       name: state.name,
-      slug: slugify(state.name),
       config: state.config as never,
     })
     .eq("id", id);
@@ -99,12 +108,19 @@ export async function publishCheckout(id: string, state: BuilderState) {
     .from("checkouts")
     .update({
       name: state.name,
-      slug: slugify(state.name),
       status: "Publicado",
       published: true,
       published_at: new Date().toISOString(),
       config: state.config as never,
     })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function unpublishCheckout(id: string) {
+  const { error } = await supabase
+    .from("checkouts")
+    .update({ status: "Rascunho", published: false })
     .eq("id", id);
   if (error) throw error;
 }
