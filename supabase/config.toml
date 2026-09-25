@@ -1,1 +1,5 @@
 project_id = "cipiezekcudcvivtdnpr"
+
+[functions.public-checkout]
+# Buyers are anonymous; authorization happens in create_public_order.
+verify_jwt = false

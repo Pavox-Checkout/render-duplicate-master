@@ -50,6 +50,7 @@ import { Route as DashPedidosIdRouteImport } from './routes/_dash/pedidos.$id'
 import { Route as DashProdutosIndexRouteImport } from './routes/_dash/produtos.index'
 import { Route as DashProdutosIdRouteImport } from './routes/_dash/produtos.$id'
 import { Route as DashProdutosNovoRouteImport } from './routes/_dash/produtos.novo'
+import { Route as CStoreCheckoutRouteImport } from './routes/c.$store.$checkout'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -260,6 +261,11 @@ const DashProdutosNovoRoute = DashProdutosNovoRouteImport.update({
   path: '/produtos/novo',
   getParentRoute: () => DashRoute,
 } as any)
+const CStoreCheckoutRoute = CStoreCheckoutRouteImport.update({
+  id: '/c/$store/$checkout',
+  path: '/c/$store/$checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -298,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/pedidos/$id': typeof DashPedidosIdRoute
   '/produtos/$id': typeof DashProdutosIdRoute
   '/produtos/novo': typeof DashProdutosNovoRoute
+  '/c/$store/$checkout': typeof CStoreCheckoutRoute
   '/checkouts/': typeof DashCheckoutsIndexRoute
   '/marketing/': typeof DashMarketingIndexRoute
   '/pedidos/': typeof DashPedidosIndexRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/pedidos/$id': typeof DashPedidosIdRoute
   '/produtos/$id': typeof DashProdutosIdRoute
   '/produtos/novo': typeof DashProdutosNovoRoute
+  '/c/$store/$checkout': typeof CStoreCheckoutRoute
   '/checkouts': typeof DashCheckoutsIndexRoute
   '/marketing': typeof DashMarketingIndexRoute
   '/pedidos': typeof DashPedidosIndexRoute
@@ -384,6 +392,7 @@ export interface FileRoutesById {
   '/_dash/pedidos/$id': typeof DashPedidosIdRoute
   '/_dash/produtos/$id': typeof DashProdutosIdRoute
   '/_dash/produtos/novo': typeof DashProdutosNovoRoute
+  '/c/$store/$checkout': typeof CStoreCheckoutRoute
   '/_dash/checkouts/': typeof DashCheckoutsIndexRoute
   '/_dash/marketing/': typeof DashMarketingIndexRoute
   '/_dash/pedidos/': typeof DashPedidosIndexRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/pedidos/$id'
     | '/produtos/$id'
     | '/produtos/novo'
+    | '/c/$store/$checkout'
     | '/checkouts/'
     | '/marketing/'
     | '/pedidos/'
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/pedidos/$id'
     | '/produtos/$id'
     | '/produtos/novo'
+    | '/c/$store/$checkout'
     | '/checkouts'
     | '/marketing'
     | '/pedidos'
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/_dash/pedidos/$id'
     | '/_dash/produtos/$id'
     | '/_dash/produtos/novo'
+    | '/c/$store/$checkout'
     | '/_dash/checkouts/'
     | '/_dash/marketing/'
     | '/_dash/pedidos/'
@@ -526,6 +538,7 @@ export interface RootRouteChildren {
   ConfirmarEmailRoute: typeof ConfirmarEmailRoute
   LoginRoute: typeof LoginRoute
   PlanosSelecionarRoute: typeof PlanosSelecionarRoute
+  CStoreCheckoutRoute: typeof CStoreCheckoutRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -817,6 +830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashProdutosNovoRouteImport
       parentRoute: typeof DashRoute
     }
+    '/c/$store/$checkout': {
+      id: '/c/$store/$checkout'
+      path: '/c/$store/$checkout'
+      fullPath: '/c/$store/$checkout'
+      preLoaderRoute: typeof CStoreCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -905,6 +925,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmarEmailRoute: ConfirmarEmailRoute,
   LoginRoute: LoginRoute,
   PlanosSelecionarRoute: PlanosSelecionarRoute,
+  CStoreCheckoutRoute: CStoreCheckoutRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

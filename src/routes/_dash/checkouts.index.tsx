@@ -3,7 +3,9 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
+  Copy,
   CreditCard,
+  EyeOff,
   Eye,
   Layers,
   MoreVertical,
@@ -42,7 +44,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useProducts } from "@/lib/pavox-data";
-import { deleteCheckout, useCheckoutList } from "@/lib/checkouts-data";
+import {
+  deleteCheckout,
+  publicCheckoutPath,
+  publicCheckoutUrl,
+  unpublishCheckout,
+  useCheckoutList,
+  type CheckoutRecord,
+} from "@/lib/checkouts-data";
+import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/lib/billing";
 import { toast } from "sonner";
 
@@ -102,6 +112,8 @@ function Checkouts() {
   const { data: subscription } = useSubscription();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const storeSlug = profile?.store_slug ?? "";
   const [toDelete, setToDelete] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
@@ -136,6 +148,31 @@ function Checkouts() {
       <Plus className="h-4 w-4" /> {label}
     </Button>
   );
+
+  const openPublic = (c: CheckoutRecord) => {
+    if (!c.published) {
+      toast.error("Publique o checkout para gerar o link público.");
+      return;
+    }
+    if (!storeSlug) return;
+    window.open(publicCheckoutUrl(storeSlug, c.slug), "_blank", "noopener,noreferrer");
+  };
+
+  const copyPublic = (c: CheckoutRecord) => {
+    if (!storeSlug) return;
+    navigator.clipboard?.writeText(publicCheckoutUrl(storeSlug, c.slug));
+    toast.success("Link copiado");
+  };
+
+  const unpublish = async (id: string) => {
+    try {
+      await unpublishCheckout(id);
+      await queryClient.invalidateQueries({ queryKey: ["checkouts"] });
+      toast.success("Checkout despublicado. O link público deixou de funcionar.");
+    } catch {
+      toast.error("Não foi possível despublicar o checkout.");
+    }
+  };
 
   const confirmDelete = async () => {
     if (!toDelete) return;
@@ -242,12 +279,15 @@ function Checkouts() {
               </thead>
               <tbody>
                 {filtered.map((c) => {
-                  const product = products.find((p) => p.id === c.product_id);
+                  const product =
+                    products.find((p) => p.id === c.product_id) ?? products.find((p) => p.checkout_id === c.id);
                   return (
                     <tr key={c.id} className="border-b border-border/60 last:border-0 hover:bg-secondary/20">
                       <td className="px-4 py-4">
                         <p className="font-medium">{c.name}</p>
-                        <p className="text-[12px] text-muted-foreground">/{c.slug}</p>
+                        <p className="text-[12px] text-muted-foreground">
+                          {storeSlug ? publicCheckoutPath(storeSlug, c.slug) : `/${c.slug}`}
+                        </p>
                       </td>
                       <td className="px-4 py-4">
                         {product ? (
@@ -278,8 +318,8 @@ function Checkouts() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            aria-label="Visualizar"
-                            onClick={() => toast("Prévia pública disponível em breve")}
+                            aria-label="Abrir checkout público"
+                            onClick={() => openPublic(c)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -300,6 +340,16 @@ function Checkouts() {
                                   <Pencil className="h-4 w-4" /> Editar
                                 </Link>
                               </DropdownMenuItem>
+                              {c.published ? (
+                                <>
+                                  <DropdownMenuItem onClick={() => copyPublic(c)}>
+                                    <Copy className="h-4 w-4" /> Copiar link
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => void unpublish(c.id)}>
+                                    <EyeOff className="h-4 w-4" /> Despublicar
+                                  </DropdownMenuItem>
+                                </>
+                              ) : null}
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={() => setToDelete(c.id)}

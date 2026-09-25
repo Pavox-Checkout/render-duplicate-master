@@ -44,12 +44,13 @@ import {
   type ProductKind,
 } from "@/lib/checkout-builder";
 import {
+  publicCheckoutUrl,
   publishCheckout,
   saveCheckout,
-  slugify,
   stateFromConfig,
   type CheckoutRecord,
 } from "@/lib/checkouts-data";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -80,7 +81,8 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
   const first = useRef(true);
 
   const config = state.config;
-  const url = `checkout.pavox.com/c/${slugify(state.name) || "checkout"}`;
+  const { profile } = useAuth();
+  const url = profile?.store_slug ? publicCheckoutUrl(profile.store_slug, checkout.slug) : "";
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ["checkouts"] });
@@ -379,13 +381,14 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
             <DialogDescription>Seu checkout foi publicado e está pronto para receber clientes.</DialogDescription>
           </DialogHeader>
           <div className="rounded-lg border border-border bg-secondary/60 px-3 py-2.5 font-mono text-[12.5px] break-all">
-            {url}
+            {url || "Carregando link…"}
           </div>
           <div className="flex gap-2">
             <Button
               className="flex-1"
               onClick={() => {
-                navigator.clipboard?.writeText(`https://${url}`);
+                if (!url) return;
+                navigator.clipboard?.writeText(url);
                 toast.success("Link copiado");
               }}
             >
@@ -394,9 +397,9 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
             <Button
               variant="outline"
               className="flex-1"
+              disabled={!url}
               onClick={() => {
-                setPublishOpen(false);
-                setPreviewOpen(true);
+                window.open(url, "_blank", "noopener,noreferrer");
               }}
             >
               <Eye className="h-4 w-4" /> Abrir checkout

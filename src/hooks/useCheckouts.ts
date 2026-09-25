@@ -31,7 +31,7 @@ export interface UseCheckoutsResult {
 
 export function useCheckouts(): UseCheckoutsResult {
   const query = useQuery({
-    queryKey: ["checkouts"],
+    queryKey: ["checkouts", "options"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("checkouts")

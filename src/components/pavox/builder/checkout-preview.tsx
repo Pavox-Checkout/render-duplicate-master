@@ -58,7 +58,9 @@ import {
  *  - "test"      → simulação (exibe faixa de modo de teste + reinício).
  *  - "published" → representação do checkout publicado (interativo).
  *
- * Nenhum modo cria cliente, pedido, venda, pagamento, webhook ou analytics.
+ * Os modos acima não criam cliente, pedido, venda ou pagamento. O checkout
+ * público real (rota /c/{loja}/{checkout}) usa o modo "published" com
+ * `onSubmit`: aí o envio vai para o backend, que cria o pedido.
  */
 
 type PreviewMode = "design" | "test" | "published";
@@ -134,17 +136,31 @@ const CARD_FIELDS: RuntimeField[] = [
   { id: "card_cvv", label: "CVV", placeholder: "000", required: true, half: true, validate: (v) => (v.replace(/\D/g, "").length >= 3 ? null : "CVV inválido") },
 ];
 
+export type CheckoutSubmission = {
+  identity: Identity;
+  method: string;
+  values: Record<string, string>;
+};
+
 type Props = {
   config: CheckoutConfig;
   device: Device;
   mode?: PreviewMode;
+  /** Checkout público real: métodos que o backend aceita para esta loja. */
+  availableMethods?: string[];
+  /** Checkout público real: envia os dados ao backend (cria o pedido). */
+  onSubmit?: (submission: CheckoutSubmission) => void;
+  submitting?: boolean;
 };
 
-export function CheckoutPreview({ config, device, mode = "design" }: Props) {
+export function CheckoutPreview({ config, device, mode = "design", availableMethods, onSubmit, submitting = false }: Props) {
   const c = config;
   const col = c.colors;
   const mobile = device === "mobile";
   const testMode = mode === "test";
+  const live = mode === "published" && !!onSubmit;
+  const isOffered = (key: "pix" | "card" | "boleto") =>
+    c.payment[key] && (!live || (availableMethods ?? []).includes(key));
 
   const steps = useMemo(() => resolveSteps(c), [c]);
   const stepped = c.steps.enabled && steps.length > 1;
@@ -153,7 +169,7 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [stepIndex, setStepIndex] = useState(0);
-  const [method, setMethod] = useState<string>(c.payment.pix ? "pix" : c.payment.card ? "card" : "boleto");
+  const [method, setMethod] = useState<string>(isOffered("pix") ? "pix" : isOffered("card") ? "card" : "boleto");
   const [shipping, setShipping] = useState(SHIPPING[0]!.id);
   const [finished, setFinished] = useState(false);
 
@@ -165,9 +181,10 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
 
   // Mantém o método de pagamento válido conforme os métodos ativos mudam.
   useEffect(() => {
-    const active = [c.payment.pix && "pix", c.payment.card && "card", c.payment.boleto && "boleto"].filter(Boolean) as string[];
+    const active = (["pix", "card", "boleto"] as const).filter((k) => isOffered(k)) as string[];
     if (active.length > 0 && !active.includes(method)) setMethod(active[0]!);
-  }, [c.payment.pix, c.payment.card, c.payment.boleto, method]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [c.payment.pix, c.payment.card, c.payment.boleto, availableMethods, live, method]);
 
   // Ajusta o índice de etapa caso o número de etapas mude (ex.: físico↔digital).
   useEffect(() => {
@@ -248,11 +265,17 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
   }
 
   function goPrimary() {
+    if (submitting) return;
     const toCheck = stepped ? fieldsForStep(steps[stepIndex]!.key) : allFields;
     const next = validate(toCheck);
     setErrors(next);
     if (Object.keys(next).length > 0) return;
     if (!stepped || stepIndex >= steps.length - 1) {
+      if (live) {
+        if (!isOffered(method as "pix" | "card" | "boleto")) return;
+        onSubmit?.({ identity, method, values });
+        return;
+      }
       setFinished(true);
       return;
     }
@@ -382,7 +405,8 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
               <button
                 type="button"
                 onClick={goPrimary}
-                className={cn("inline-flex items-center justify-center gap-2 px-6 text-white transition-transform active:scale-[0.99]", c.button.full && "flex-1")}
+                disabled={submitting}
+                className={cn("inline-flex items-center justify-center gap-2 px-6 text-white transition-transform active:scale-[0.99] disabled:opacity-70", c.button.full && "flex-1")}
                 style={{
                   height: c.button.height,
                   borderRadius: c.button.radius,
@@ -393,7 +417,7 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
                 }}
               >
                 {c.button.icon ? <Lock className="h-4 w-4" /> : null}
-                {primaryLabel()}
+                {submitting ? "Processando…" : primaryLabel()}
               </button>
             </div>
           </div>
@@ -493,7 +517,7 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
 
         <FieldGrid fields={identityFields} />
 
-        {c.payment.pix ? (
+        {c.payment.pix && !live ? (
           <div className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[12.5px]" style={{ background: `${col.text}08`, borderRadius: c.layout.radius * 0.6 }}>
             <PixIcon className="h-4 w-4 shrink-0" />
             <span>
@@ -509,7 +533,7 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
     return (
       <div className="space-y-3">
         <FieldGrid fields={addressFields} />
-        <div className="space-y-2">
+        {live ? null : <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: col.textMuted }}>
             Opções de frete
           </p>
@@ -544,16 +568,16 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
               </button>
             );
           })}
-        </div>
+        </div>}
       </div>
     );
   }
 
   function Payment() {
     const methods: { key: string; label: string; sub: string; icon: ReactNode }[] = [];
-    if (c.payment.pix) methods.push({ key: "pix", label: "PIX", sub: "Pagamento instantâneo", icon: <PixIcon className="h-5 w-5" /> });
-    if (c.payment.card) methods.push({ key: "card", label: "Cartão de crédito", sub: "Em até 12x", icon: <CreditCard className="h-5 w-5" /> });
-    if (c.payment.boleto) methods.push({ key: "boleto", label: "Boleto", sub: "Compensa em 1 dia útil", icon: <Ticket className="h-5 w-5" /> });
+    if (isOffered("pix")) methods.push({ key: "pix", label: "PIX", sub: "Pagamento instantâneo", icon: <PixIcon className="h-5 w-5" /> });
+    if (isOffered("card")) methods.push({ key: "card", label: "Cartão de crédito", sub: "Em até 12x", icon: <CreditCard className="h-5 w-5" /> });
+    if (isOffered("boleto")) methods.push({ key: "boleto", label: "Boleto", sub: "Compensa em 1 dia útil", icon: <Ticket className="h-5 w-5" /> });
 
     return (
       <div className="space-y-3">
@@ -595,13 +619,20 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
           })}
           {methods.length === 0 ? (
             <p className="text-[12px]" style={{ color: col.textMuted }}>
-              Nenhum método ativo. Ative ao menos um na seção Pagamento.
+              {live
+                ? "Pagamento online indisponível no momento. Tente novamente mais tarde."
+                : "Nenhum método ativo. Ative ao menos um na seção Pagamento."}
             </p>
           ) : null}
         </div>
 
         {method === "card" ? <FieldGrid fields={cardFields} /> : null}
-        {method === "pix" ? (
+        {method === "pix" && live && methods.length > 0 ? (
+          <p className="rounded-lg px-3 py-2.5 text-[12px]" style={{ background: `${col.text}08`, color: col.textMuted, borderRadius: c.layout.radius * 0.6 }}>
+            O QR Code Pix é gerado ao finalizar a compra.
+          </p>
+        ) : null}
+        {method === "pix" && !live ? (
           <div className="flex flex-col items-center gap-2 rounded-lg py-4" style={{ border: `1px dashed ${col.border}`, borderRadius: c.layout.radius * 0.6 }}>
             <div className="grid h-24 w-24 place-items-center rounded-md" style={{ background: `${col.text}0d` }}>
               <PixIcon className="h-10 w-10" />
@@ -611,7 +642,7 @@ export function CheckoutPreview({ config, device, mode = "design" }: Props) {
             </p>
           </div>
         ) : null}
-        {method === "boleto" ? (
+        {method === "boleto" && !live ? (
           <p className="rounded-lg px-3 py-2.5 text-[12px]" style={{ background: `${col.text}08`, color: col.textMuted, borderRadius: c.layout.radius * 0.6 }}>
             O boleto seria gerado após a confirmação. Demonstração — sem cobrança real.
           </p>
