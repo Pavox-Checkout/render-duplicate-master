@@ -152,9 +152,9 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
   };
 
   return (
-    <div className="-mx-1 flex min-h-[calc(100vh-7rem)] flex-col gap-3">
+    <div className="-mx-1 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden">
       {/* TOPO */}
-      <div className="surface flex flex-wrap items-center gap-3 px-3 py-2.5">
+      <div className="surface flex flex-wrap items-center gap-3 px-3 py-2.5 lg:shrink-0">
         <Button asChild variant="ghost" size="sm" className="-ml-1 shrink-0">
           <Link to="/checkouts">
             <ArrowLeft className="h-4 w-4" />
@@ -229,11 +229,11 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
       </div>
 
       {/* EDITOR */}
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(340px,376px)_minmax(0,1fr)]">
-        {/* COLUNA DE CONFIGURAÇÃO */}
-        <div className="surface flex max-h-[70vh] min-h-0 flex-col overflow-hidden lg:max-h-none">
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(340px,376px)_minmax(0,1fr)] lg:overflow-hidden">
+        {/* COLUNA DE CONFIGURAÇÃO — scroll independente */}
+        <div className="surface flex max-h-[70vh] min-h-0 flex-col overflow-hidden lg:h-full lg:max-h-none">
           {/* seletor de modelo */}
-          <div className="border-b border-border p-3">
+          <div className="shrink-0 border-b border-border p-3">
             <p className="mb-2 text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               Modelo do checkout
             </p>
@@ -255,13 +255,13 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
             </div>
           </div>
 
-          {/* seções */}
+          {/* seções — única área com scroll vertical desta coluna */}
           <div className="min-h-0 flex-1 overflow-y-auto">
             <ConfigSidebar config={config} update={updateConfig} />
           </div>
 
           {/* pavox intelligence */}
-          <div className="border-t border-border bg-accent/40 p-3">
+          <div className="shrink-0 border-t border-border bg-accent/40 p-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <p className="text-[12.5px] font-semibold">Pavox Intelligence</p>
@@ -275,9 +275,9 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
           </div>
         </div>
 
-        {/* PREVIEW */}
-        <div className="surface flex min-h-0 flex-col overflow-hidden">
-          <div className="flex items-center gap-3 border-b border-border px-3 py-2">
+        {/* PREVIEW — permanece visível, com scroll independente e próprio */}
+        <div className="surface flex max-h-[70vh] min-h-0 flex-col overflow-hidden lg:h-full lg:max-h-none">
+          <div className="flex shrink-0 items-center gap-3 border-b border-border px-3 py-2">
             <span className="text-[12px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">Preview</span>
             <div className="flex items-center gap-1 rounded-lg bg-secondary p-1">
               {(
@@ -337,7 +337,8 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-secondary/40 p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-secondary/40">
+            <div className="flex min-h-full items-center justify-center p-4">
             <div
               className={cn(
                 "mx-auto overflow-hidden transition-all duration-300",
@@ -347,6 +348,7 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
               )}
             >
               <CheckoutPreview config={config} device={device} mode={previewMode === "test" ? "test" : "design"} />
+            </div>
             </div>
           </div>
         </div>
