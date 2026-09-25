@@ -71,7 +71,7 @@ BEGIN
       AND i.indisunique
       AND (SELECT array_agg(a.attname ORDER BY a.attnum)
            FROM pg_attribute a
-           WHERE a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)) = ARRAY['user_id']
+           WHERE a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)) = ARRAY['user_id']::name[]
   ) THEN
     ALTER TABLE public.subscriptions ADD CONSTRAINT subscriptions_user_id_key UNIQUE (user_id);
   END IF;
