@@ -6,6 +6,7 @@ import { useSubscription } from "@/lib/billing";
 import { SidebarNav } from "@/components/pavox/sidebar-nav";
 import { PavoxLogo } from "@/components/pavox/logo";
 import { ThemeToggle } from "@/components/pavox/theme-toggle";
+import { PavoxSupportWidget } from "@/components/pavox/support/pavox-support-widget";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -96,6 +97,8 @@ function DashLayout() {
           </div>
         </main>
       </div>
+
+      <PavoxSupportWidget />
     </div>
   );
 }
