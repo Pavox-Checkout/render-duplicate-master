@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { webhookEvents } from "@/lib/mock";
 import { toast } from "sonner";
+import { ThemeSegmentedControl } from "@/components/pavox/theme-toggle";
+import { useTheme } from "@/hooks/useTheme";
 
 export const Route = createFileRoute("/_dash/configuracoes")({
   component: Configuracoes,
@@ -28,6 +30,7 @@ export const Route = createFileRoute("/_dash/configuracoes")({
 function Configuracoes() {
   const [apiKey, setApiKey] = useState("pvx_live_9f2c8a1d4b7e6350a1c2");
   const [visible, setVisible] = useState(false);
+  const { resolvedTheme } = useTheme();
 
   return (
     <>
@@ -36,11 +39,28 @@ function Configuracoes() {
       <Tabs defaultValue="empresa">
         <TabsList className="flex-wrap">
           <TabsTrigger value="empresa">Empresa</TabsTrigger>
+          <TabsTrigger value="aparencia">Aparência</TabsTrigger>
           <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
           <TabsTrigger value="seguranca">Segurança</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
           <TabsTrigger value="api">API</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="aparencia" className="mt-5">
+          <div className="surface space-y-4 p-5">
+            <div>
+              <p className="text-[13.5px] font-medium">Tema</p>
+              <p className="text-[12px] text-muted-foreground">
+                Escolha como a PAVOX é exibida neste dispositivo. O tema escuro é o padrão para
+                novas contas.
+              </p>
+            </div>
+            <ThemeSegmentedControl />
+            <p className="text-[12px] text-muted-foreground">
+              Aplicado agora: <span className="font-medium text-foreground">{resolvedTheme === "dark" ? "Escuro" : "Claro"}</span>
+            </p>
+          </div>
+        </TabsContent>
 
         <TabsContent value="empresa" className="mt-5">
           <div className="surface space-y-4 p-5">
