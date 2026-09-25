@@ -1,22 +1,18 @@
-// Public checkout API (no login): the buyer submits the form, the backend
-// creates customer + order with the price read from the database.
+// Public checkout API (no login).
 //
-// POST { checkoutId, paymentMethod, idempotencyKey, buyer: { person_type, name,
-//        email, phone, document, address? } }
-// → 200 { order } | 4xx { error, message }
+// POST { action?: "create", checkoutId, paymentMethod, idempotencyKey, buyer }
+//   → creates customer + order (price from the database) and the gateway charge.
+//   → 200 { order } — order.payment holds the Pix QR code.
+// POST { action: "status", orderId }
+//   → re-reads the charge from the gateway (server-to-server) and returns the order.
 //
-// verify_jwt = false: buyers are anonymous. All authorization happens in
-// create_public_order (published checkout only, server-side price).
+// verify_jwt = false: buyers are anonymous. Authorization lives in the SQL
+// functions (published checkout only, server-side price, order UUID as token).
+import { admin, CORS_HEADERS, error, json, log, str } from "../_shared/http.ts";
+import { chargeOrder, publicOrder, syncOrder } from "../_shared/payments.ts";
+import { GatewayError } from "../_shared/gateways/types.ts";
 
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const ERROR_MESSAGES: Record<string, { status: number; message: string }> = {
+const ORDER_ERRORS: Record<string, { status: number; message: string }> = {
   invalid_request: { status: 400, message: "Requisição inválida." },
   idempotency_conflict: { status: 409, message: "Requisição duplicada com dados diferentes." },
   checkout_not_found: { status: 404, message: "Este checkout não está disponível." },
@@ -32,89 +28,104 @@ const ERROR_MESSAGES: Record<string, { status: number; message: string }> = {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-  });
+function orderError(code: string) {
+  const known = ORDER_ERRORS[code];
+  if (!known) return error("internal_error", "Não foi possível concluir. Tente novamente.", 500);
+  return error(code, known.message, known.status);
 }
 
-function fail(code: string) {
-  const known = ERROR_MESSAGES[code] ?? { status: 500, message: "Não foi possível concluir. Tente novamente." };
-  return json({ error: ERROR_MESSAGES[code] ? code : "internal_error", message: known.message }, known.status);
+function buyerFrom(raw: Record<string, unknown>) {
+  const address = raw["address"] && typeof raw["address"] === "object" ? (raw["address"] as Record<string, unknown>) : null;
+  return {
+    person_type: raw["person_type"] === "pj" ? "pj" : "pf",
+    name: str(raw["name"], 200),
+    email: str(raw["email"], 254),
+    phone: str(raw["phone"], 30),
+    document: str(raw["document"], 30),
+    ...(address
+      ? {
+          address: {
+            zip: str(address["zip"], 12),
+            street: str(address["street"], 200),
+            number: str(address["number"], 20),
+            complement: str(address["complement"], 100),
+            city: str(address["city"], 100),
+            state: str(address["state"], 2),
+          },
+        }
+      : {}),
+  };
 }
 
-function secretKey(): string {
-  const keys = Deno.env.get("SUPABASE_SECRET_KEYS");
-  if (keys) {
-    const parsed = JSON.parse(keys) as Record<string, string>;
-    if (parsed["default"]) return parsed["default"];
-  }
-  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-}
-
-const admin = createClient(Deno.env.get("SUPABASE_URL")!, secretKey(), {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-
-function str(value: unknown, max: number): string {
-  return typeof value === "string" ? value.slice(0, max) : "";
-}
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return fail("invalid_request");
-  }
-
+async function handleCreate(body: Record<string, unknown>) {
   const checkoutId = str(body["checkoutId"], 36);
   const idempotencyKey = str(body["idempotencyKey"], 36);
   const paymentMethod = str(body["paymentMethod"], 16);
   const rawBuyer = body["buyer"];
   if (!UUID_RE.test(checkoutId) || !UUID_RE.test(idempotencyKey) || !rawBuyer || typeof rawBuyer !== "object") {
-    return fail("invalid_request");
+    return orderError("invalid_request");
   }
 
-  const b = rawBuyer as Record<string, unknown>;
-  const rawAddress = b["address"] && typeof b["address"] === "object" ? (b["address"] as Record<string, unknown>) : null;
-  const buyer = {
-    person_type: b["person_type"] === "pj" ? "pj" : "pf",
-    name: str(b["name"], 200),
-    email: str(b["email"], 254),
-    phone: str(b["phone"], 30),
-    document: str(b["document"], 30),
-    ...(rawAddress
-      ? {
-          address: {
-            zip: str(rawAddress["zip"], 12),
-            street: str(rawAddress["street"], 200),
-            number: str(rawAddress["number"], 20),
-            complement: str(rawAddress["complement"], 100),
-            city: str(rawAddress["city"], 100),
-            state: str(rawAddress["state"], 2),
-          },
-        }
-      : {}),
-  };
-
-  const { data: order, error } = await admin.rpc("create_public_order", {
+  const { data: order, error: rpcError } = await admin.rpc("create_public_order", {
     p_checkout_id: checkoutId,
-    p_buyer: buyer,
+    p_buyer: buyerFrom(rawBuyer as Record<string, unknown>),
     p_payment_method: paymentMethod,
     p_idempotency_key: idempotencyKey,
   });
-
-  if (error) {
-    const code = error.message in ERROR_MESSAGES ? error.message : "internal_error";
-    console.error(JSON.stringify({ event: "order.create_failed", checkout_id: checkoutId, code, detail: error.message }));
-    return fail(code);
+  if (rpcError) {
+    log("order.create_failed", { checkout_id: checkoutId, code: rpcError.message });
+    return orderError(rpcError.message);
   }
 
-  console.log(JSON.stringify({ event: "order.created", checkout_id: checkoutId, order_id: (order as { id: string }).id }));
-  return json({ order });
+  const orderId = (order as { id: string }).id;
+  log("order.created", { checkout_id: checkoutId, order_id: orderId });
+
+  try {
+    return json({ order: await chargeOrder(orderId) });
+  } catch (err) {
+    const code = err instanceof GatewayError ? err.code : "unknown_error";
+    log("payment.failed", { order_id: orderId, code, detail: err instanceof Error ? err.message : String(err) });
+    return json(
+      {
+        error: "payment_failed",
+        message: "Não foi possível gerar o pagamento agora. Tente novamente em instantes.",
+        order: await publicOrder(orderId),
+      },
+      502,
+    );
+  }
+}
+
+async function handleStatus(body: Record<string, unknown>) {
+  const orderId = str(body["orderId"], 36);
+  if (!UUID_RE.test(orderId)) return orderError("invalid_request");
+  const order = (await publicOrder(orderId)) as { status: string } | null;
+  if (!order) return error("order_not_found", "Pedido não encontrado.", 404);
+  if (order.status === "Pendente") {
+    try {
+      await syncOrder(orderId, "poll");
+    } catch (err) {
+      log("payment.sync_failed", { order_id: orderId, detail: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return json({ order: await publicOrder(orderId) });
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
+  if (req.method !== "POST") return error("method_not_allowed", "Método não permitido.", 405);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return orderError("invalid_request");
+  }
+
+  try {
+    return body["action"] === "status" ? await handleStatus(body) : await handleCreate(body);
+  } catch (err) {
+    log("checkout.internal_error", { detail: err instanceof Error ? err.message : String(err) });
+    return orderError("internal_error");
+  }
 });

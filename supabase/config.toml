@@ -1,5 +1,13 @@
 project_id = "cipiezekcudcvivtdnpr"
 
+# Buyers are anonymous; authorization happens in the SQL functions.
 [functions.public-checkout]
-# Buyers are anonymous; authorization happens in create_public_order.
+verify_jwt = false
+
+# Authenticates the merchant in code (supports the new non-JWT API keys).
+[functions.integrations]
+verify_jwt = false
+
+# Called by Mercado Pago; the notification is re-validated against the API.
+[functions.mercadopago-webhook]
 verify_jwt = false

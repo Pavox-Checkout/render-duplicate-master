@@ -17,14 +17,14 @@ CRIAR CHECKOUT → PUBLICAR → LINK PÚBLICO → CLIENTE COMPRA → PEDIDO → 
 → PAGAMENTO SANDBOX APROVADO → WEBHOOK → PEDIDO = PAGO → VENDA → DASHBOARD
 ```
 
-Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
+Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta a validação com credenciais de teste reais (compra sandbox + webhook).
 
 ---
 
 ## 🔴 Crítica
 
 ### 1. Página pública de checkout
-- Estado atual: ⚫ inexistente
+- Estado atual: ✅ real (Sprint 1) — `/c/{loja}/{checkout}`, `src/routes/c.$store.$checkout.tsx`
 - Arquivos envolvidos: `src/lib/checkouts-data.ts` (`publishCheckout`), `src/components/pavox/builder/checkout-preview.tsx` (modo `published` só simula), `src/routes/_dash/checkouts.*`
 - Problema: publicar só marca `published = true`. Não existe rota pública; o renderizador declara "Nenhum modo cria cliente, pedido, venda, pagamento".
 - Dependências: slug único (#16), produto vinculado ao checkout, criação de pedido (#5).
@@ -33,7 +33,7 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 - Prioridade: 🔴 crítica
 
 ### 2. Integrações reais de gateway (Mercado Pago, Stripe, Asaas, Pagar.me)
-- Estado atual: 🔴 fake — só persiste credenciais
+- Estado atual: 🟡 parcial — Mercado Pago Pix real (Orders API, `supabase/functions/_shared/gateways/mercadopago.ts`); Stripe, Asaas e Pagar.me aparecem como "Em breve"; cartão e boleto pendentes
 - Arquivos envolvidos: `src/lib/payments/catalog.ts`, `src/lib/payments/use-integrations.ts`, `src/components/pavox/integration-*.tsx`, tabela `payment_integrations`
 - Problema: nenhuma chamada a API de gateway; nenhum Pix/cartão/boleto é criado.
 - Dependências: backend server-side (Edge Functions), #6.
@@ -42,7 +42,7 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 - Prioridade: 🔴 crítica
 
 ### 3. Botão "Testar integração"
-- Estado atual: 🔴 fake
+- Estado atual: ✅ real — Edge Function `integrations` chama `GET /users/me` do Mercado Pago e mapeia 401/403/429/5xx
 - Arquivos envolvidos: `use-integrations.ts` (`useTestIntegration`)
 - Problema: só verifica se os campos estão preenchidos e grava `last_test_status = 'ok'`.
 - Dependências: #2.
@@ -51,7 +51,7 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 - Prioridade: 🔴 crítica
 
 ### 4. Webhooks / confirmação de pagamento
-- Estado atual: ⚫ inexistente
+- Estado atual: 🟡 implementado — `mercadopago-webhook` + consulta server-to-server enquanto o comprador aguarda; `webhook_events` com `UNIQUE(provider, event_id)`; transição condicional em `pavox_apply_payment_status()`. Falta validar com notificação real do Mercado Pago
 - Arquivos envolvidos: —
 - Problema: nada marca pedido como pago.
 - Dependências: #2, #5.
@@ -60,7 +60,7 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 - Prioridade: 🔴 crítica
 
 ### 5. Pedidos, clientes e vendas
-- Estado atual: 🟡 parcial — tabelas e telas existem, nada cria registros
+- Estado atual: ✅ real — pedido e cliente criados no servidor com preço do banco; detalhe do pedido mostra gateway, ID da transação, taxa e comprador
 - Arquivos envolvidos: `orders`, `customers`, `src/routes/_dash/pedidos.*`, `clientes.tsx`, `vendas.tsx`, `src/lib/pavox-data.ts`
 - Problema: nenhum fluxo cria pedido/cliente; `customers` sem unicidade por loja; `orders` sem campos de gateway, `paid_at`, idempotência.
 - Dependências: #1.
@@ -71,7 +71,7 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 ## 🟠 Alta
 
 ### 6. Segurança das credenciais
-- Estado atual: 🔴 inseguro
+- Estado atual: ✅ real — segredos no Supabase Vault (`credentials_secret_id`), coluna `credentials` sem permissão de leitura para `authenticated`, gravação só pela Edge Function
 - Arquivos envolvidos: `payment_integrations.credentials` (JSONB em texto puro), `use-integrations.ts` (lê `credentials` no navegador para mesclar/testar)
 - Problema: segredos em texto puro e legíveis pelo navegador do dono via RLS.
 - Solução: gravar/ler credenciais apenas em Edge Function; criptografia (AES-256-GCM, chave em secret da função) ou Supabase Vault; revogar `SELECT` da coluna para `authenticated`.
@@ -90,7 +90,7 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 - Prioridade: 🟠 alta
 
 ### 9. Taxa da PAVOX por venda
-- Estado atual: ⚫ inexistente — tabela `transaction_fees` existe, nunca é preenchida
+- Estado atual: 🟡 parcial — `orders.platform_fee` calculada na aprovação (`pavox_platform_fee`, % do plano, 2 casas); cobrança do lojista ainda não existe
 - Problema: modelo de cobrança da taxa ainda não definido (fatura posterior × split).
 - Solução: `calculatePlatformFee` central em basis points; registrar no pedido ao confirmar pagamento.
 - Prioridade: 🟠 alta — **decisão de negócio pendente**
@@ -103,6 +103,7 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 
 ### 11. Cupons, order bump, upsell, brindes, provas sociais, A/B, automação
 - Estado atual: 🔴 fake — `src/lib/marketing-data.ts` (listas vazias) + `toast.success` sem persistência
+- Atenção: o modelo padrão do Builder traz depoimentos fictícios ("Mariana A.", "Rafael S.") que aparecem no checkout público se o lojista não os editar.
 
 ### 12. Pixels e tracking
 - Estado atual: 🔴 fake — catálogo apenas (`marketing.pixels.tsx`, `marketing.tracking.tsx`)
@@ -139,6 +140,13 @@ Estado: ⚫ inexistente a partir de "LINK PÚBLICO".
 - Checkout público oculta o que não tem backend: cupom, parcelas, fretes fixos, "1% no Pix", compra ao vivo e contador de escassez.
 - Dry-run da migration no banco (transação desfeita): validou slugs, idempotência, dedupe de cliente, validação de e-mail e permissões.
 - Pendente: aplicar em produção (aguardando confirmação), deploy da Edge Function, teste E2E no navegador. Nenhum método de pagamento é oferecido até a Sprint 2 (lista de gateways suportados vazia).
+
+## Sprints 2 e 3 — Mercado Pago Pix, webhook, confirmação
+
+- Migration `0011_payments_mercadopago_pix.sql`: Vault para credenciais, guarda de status da integração, `pavox_supported_payment_providers() = {mercadopago}` (Pix), `payment_data` no pedido, `get_public_order()`, `webhook_events`, `pavox_apply_payment_status()` (idempotente, valida valor/moeda/lojista, baixa estoque, calcula taxa), helper de imagem pública movido para o schema `private`.
+- Edge Functions: `public-checkout` (cria pedido + Pix, consulta status), `integrations` (salva/testa no gateway), `mercadopago-webhook`.
+- Testes: `supabase/functions/_shared/gateways/mercadopago_test.ts` (4 testes, API simulada); dry-runs das migrations 0010 e 0011 no banco (desfeitos); chamadas reais às Edge Functions via `pg_net` (400/404/401/409 esperados); E2E da página pública no navegador com respostas simuladas.
+- Pendente: compra sandbox real com credenciais de teste do lojista (gera o Order ID pedido pelo Mercado Pago), confirmação por webhook real, formato exato da resposta Orders validado em produção.
 
 ## Histórico
 

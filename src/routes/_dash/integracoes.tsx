@@ -97,7 +97,8 @@ function Integracoes() {
         <div className="grid gap-3 sm:grid-cols-2">
           {rows.map((p) => {
             const integ = savedByProvider.get(p.id);
-            const isPayment = p.kind === "payment";
+            // Gateways sem adaptador no backend aparecem como "Em breve" (sem conexão fictícia).
+            const isPayment = p.kind === "payment" && p.live;
             const connected = isPayment && integ && integ.status !== "not_connected";
             return (
               <div

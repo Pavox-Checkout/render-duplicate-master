@@ -5,10 +5,9 @@
 // isolates each account's rows. No server function / service role is required.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  getPaymentProvider,
-  maskCredentials,
   type Environment,
   type IntegrationStatus,
   type JsonValue,
@@ -18,10 +17,10 @@ import {
 
 const QUERY_KEY = ["payment-integrations"] as const;
 
-// Columns safe to read for listing/display — deliberately excludes the raw
-// `credentials` column so secrets do not flow into client state by default.
+// Columns the browser may read. Secrets live in Supabase Vault and are only
+// reachable by the backend (Edge Function `integrations`).
 const SAFE_FIELDS =
-  "id, provider, environment, status, enabled_payment_methods, credentials_masked, routing, last_tested_at, last_test_status, created_at, updated_at";
+  "id, provider, environment, status, enabled_payment_methods, credentials_masked, routing, last_tested_at, last_test_status, account_label, created_at, updated_at";
 
 type IntegrationRow = {
   id: string;
@@ -33,6 +32,7 @@ type IntegrationRow = {
   routing: Record<string, JsonValue> | null;
   last_tested_at: string | null;
   last_test_status: string | null;
+  account_label?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -64,15 +64,10 @@ function mapRow(row: IntegrationRow): SavedIntegration {
     routing: (row.routing ?? {}) as Record<string, JsonValue>,
     lastTestedAt: row.last_tested_at,
     lastTestStatus: row.last_test_status,
+    accountLabel: row.account_label ?? "",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
-}
-
-async function requireUserId(): Promise<string> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) throw new Error("Sessão expirada. Faça login novamente.");
-  return data.user.id;
 }
 
 export function useIntegrations() {
@@ -89,68 +84,42 @@ export function useIntegrations() {
   });
 }
 
+async function invokeIntegrations<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke("integrations", { body });
+  if (error) {
+    let message = "Não foi possível falar com o servidor. Tente novamente.";
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const payload = (await error.context.json()) as { message?: string };
+        if (payload?.message) message = payload.message;
+      } catch {
+        // keep the generic message
+      }
+    }
+    throw new Error(message);
+  }
+  return data as T;
+}
+
+/** Public URL the merchant registers as the gateway webhook. */
+export function integrationWebhookUrl(provider: string, userId: string) {
+  const base = import.meta.env["VITE_SUPABASE_URL"] as string;
+  return `${base}/functions/v1/${provider}-webhook?store=${userId}`;
+}
+
 export function useSaveIntegration() {
   const qc = useQueryClient();
   return useMutation({
+    // Credentials go to the backend, which validates them against the gateway
+    // and stores them encrypted. They are never read back by the browser.
     mutationFn: async (input: {
       provider: string;
       environment: Environment;
       methods: PaymentMethod[];
       credentials: Record<string, string>;
     }): Promise<SavedIntegration> => {
-      const provider = getPaymentProvider(input.provider);
-      if (!provider) throw new Error("Gateway inválido.");
-
-      const userId = await requireUserId();
-
-      // Merge with any previously stored secrets so a blank field on edit keeps
-      // the existing value. Reading the owner's own credentials is allowed by RLS.
-      const { data: existing, error: readError } = await supabase
-        .from("payment_integrations")
-        .select("credentials")
-        .eq("user_id", userId)
-        .eq("provider", provider.id)
-        .maybeSingle();
-      if (readError) throw new Error(readError.message);
-
-      const previous = toStringRecord(
-        (existing as { credentials?: Record<string, JsonValue> } | null)?.credentials,
-      );
-
-      const merged: Record<string, string> = {};
-      for (const field of provider.credentialFields) {
-        const typed = (input.credentials[field.key] ?? "").trim();
-        const value = typed || previous[field.key] || "";
-        if (!value) throw new Error(`Informe o campo "${field.label}".`);
-        merged[field.key] = value;
-      }
-
-      const methods = input.methods.filter((m) => provider.methods.includes(m));
-      if (methods.length === 0) throw new Error("Selecione ao menos um método de pagamento.");
-
-      const environment: Environment = provider.environments.includes(input.environment)
-        ? input.environment
-        : (provider.environments[0] ?? "sandbox");
-
-      const { data, error } = await supabase
-        .from("payment_integrations")
-        .upsert(
-          {
-            user_id: userId,
-            provider: provider.id,
-            environment,
-            status: "connected",
-            enabled_payment_methods: methods,
-            credentials: merged,
-            credentials_masked: maskCredentials(provider, merged),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,provider" },
-        )
-        .select(SAFE_FIELDS)
-        .single();
-      if (error) throw new Error(error.message);
-      return mapRow(data as IntegrationRow);
+      const result = await invokeIntegrations<{ integration: IntegrationRow }>({ action: "save", ...input });
+      return mapRow(result.integration);
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEY });
@@ -184,39 +153,9 @@ export function useTestIntegration() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
-      id: string;
-    }): Promise<{ result: "ok" | "incomplete"; message: string }> => {
-      // Read the stored credentials (owner-only via RLS) to check completeness.
-      const { data: row, error: readError } = await supabase
-        .from("payment_integrations")
-        .select("provider, credentials")
-        .eq("id", input.id)
-        .single();
-      if (readError) throw new Error(readError.message);
-
-      const provider = getPaymentProvider((row as { provider: string }).provider);
-      const credentials = toStringRecord(
-        (row as { credentials?: Record<string, JsonValue> }).credentials,
-      );
-
-      const missing = provider
-        ? provider.credentialFields.filter((f) => !(credentials[f.key] ?? "").trim())
-        : [];
-
-      const result: "ok" | "incomplete" = missing.length === 0 ? "ok" : "incomplete";
-      const message =
-        result === "ok"
-          ? "Credenciais presentes. A verificação real com a API do gateway será ativada na próxima etapa."
-          : `Faltam credenciais: ${missing.map((f) => f.label).join(", ")}.`;
-
-      const { error: updateError } = await supabase
-        .from("payment_integrations")
-        .update({ last_tested_at: new Date().toISOString(), last_test_status: result })
-        .eq("id", input.id);
-      if (updateError) throw new Error(updateError.message);
-
-      return { result, message };
-    },
+      provider: string;
+    }): Promise<{ result: string; message: string }> =>
+      invokeIntegrations<{ result: string; message: string }>({ action: "test", provider: input.provider }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEY });
     },

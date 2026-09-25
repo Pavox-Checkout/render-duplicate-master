@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Pencil, Power, RotateCcw, Wifi } from "lucide-react";
+import { Copy, Loader2, Pencil, Power, RotateCcw, Wifi } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -28,7 +28,12 @@ import {
   type ProviderDef,
   type SavedIntegration,
 } from "@/lib/payments/catalog";
-import { useSetIntegrationStatus, useTestIntegration } from "@/lib/payments/use-integrations";
+import {
+  integrationWebhookUrl,
+  useSetIntegrationStatus,
+  useTestIntegration,
+} from "@/lib/payments/use-integrations";
+import { useAuth } from "@/hooks/useAuth";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -46,6 +51,7 @@ export function IntegrationManageDialog({
   onEdit: (provider: ProviderDef, existing: SavedIntegration) => void;
 }) {
   const provider = getProvider(integration.provider);
+  const { user } = useAuth();
   const test = useTestIntegration();
   const setStatus = useSetIntegrationStatus();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -53,14 +59,15 @@ export function IntegrationManageDialog({
   if (!provider) return null;
 
   const isActive = integration.status === "connected";
+  const webhookUrl = user ? integrationWebhookUrl(integration.provider, user.id) : "";
 
   const onTest = async () => {
     try {
-      const res = await test.mutateAsync({ id: integration.id });
-      if (res.result === "incomplete") toast.error(res.message);
-      else toast.info(res.message);
-    } catch {
-      toast.error("Não foi possível testar a conexão agora.");
+      const res = await test.mutateAsync({ provider: integration.provider });
+      if (res.result === "connected") toast.success(res.message);
+      else toast.error(res.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível testar a conexão agora.");
     }
   };
 
@@ -70,8 +77,11 @@ export function IntegrationManageDialog({
       toast.success(status === "disabled" ? "Integração desativada." : "Integração reativada.");
       setConfirmOpen(false);
       onOpenChange(false);
-    } catch {
-      toast.error("Não foi possível atualizar a integração.");
+    } catch (err) {
+      const msg = err instanceof Error && err.message.includes("integration_not_verified")
+        ? "Teste a conexão com sucesso antes de reativar."
+        : "Não foi possível atualizar a integração.";
+      toast.error(msg);
     }
   };
 
@@ -114,6 +124,7 @@ export function IntegrationManageDialog({
                 </div>
               }
             />
+            {integration.accountLabel ? <Row label="Conta" value={integration.accountLabel} /> : null}
             <Row label="Conectado em" value={formatDate(integration.createdAt)} />
             <Row label="Atualizado em" value={formatDate(integration.updatedAt)} />
             {provider.credentialFields.map((field) => (
@@ -128,6 +139,29 @@ export function IntegrationManageDialog({
               />
             ))}
           </dl>
+
+          {webhookUrl ? (
+            <div className="space-y-1.5 rounded-lg border border-border p-3 text-[12.5px]">
+              <p className="font-medium">URL de notificações (webhook)</p>
+              <p className="text-muted-foreground">
+                No painel do {provider.name}, em Suas integrações › Webhooks, cadastre esta URL com o evento
+                <strong> Order (Mercado Pago)</strong>. Assim os pedidos pagos são confirmados na hora.
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="min-w-0 flex-1 truncate rounded bg-secondary px-2 py-1 font-mono text-[11.5px]">{webhookUrl}</code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(webhookUrl);
+                    toast.success("URL copiada");
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => void onTest()} disabled={test.isPending}>

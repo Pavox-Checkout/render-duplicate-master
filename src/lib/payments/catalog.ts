@@ -38,6 +38,8 @@ export type ProviderDef = {
   credentialFields: CredentialField[];
   methods: PaymentMethod[];
   environments: Environment[];
+  /** Backend adapter implemented: the integration can actually charge. */
+  live: boolean;
 };
 
 /** A persisted integration as it is safely exposed to the client (no raw secrets). */
@@ -51,6 +53,7 @@ export type SavedIntegration = {
   routing: Record<string, JsonValue>;
   lastTestedAt: string | null;
   lastTestStatus: string | null;
+  accountLabel: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -91,8 +94,10 @@ export const PROVIDERS: ProviderDef[] = [
       },
       { key: "public_key", label: "Public Key", secret: false },
     ],
-    methods: ["pix", "card", "boleto"],
+    // Cartão e boleto entram quando os adaptadores existirem no backend.
+    methods: ["pix"],
     environments: ["sandbox", "production"],
+    live: true,
   },
   {
     id: "asaas",
@@ -105,6 +110,7 @@ export const PROVIDERS: ProviderDef[] = [
     credentialFields: [{ key: "api_key", label: "API Key", secret: true }],
     methods: ["pix", "card", "boleto"],
     environments: ["sandbox", "production"],
+    live: false,
   },
   {
     id: "pagarme",
@@ -120,6 +126,7 @@ export const PROVIDERS: ProviderDef[] = [
     ],
     methods: ["pix", "card", "boleto"],
     environments: ["sandbox", "production"],
+    live: false,
   },
   {
     id: "stripe",
@@ -135,6 +142,7 @@ export const PROVIDERS: ProviderDef[] = [
     ],
     methods: ["card", "pix", "boleto"],
     environments: ["sandbox", "production"],
+    live: false,
   },
   {
     id: "shopify",
@@ -147,6 +155,7 @@ export const PROVIDERS: ProviderDef[] = [
     credentialFields: [],
     methods: [],
     environments: [],
+    live: false,
   },
   {
     id: "woocommerce",
@@ -159,6 +168,7 @@ export const PROVIDERS: ProviderDef[] = [
     credentialFields: [],
     methods: [],
     environments: [],
+    live: false,
   },
 ];
 

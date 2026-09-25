@@ -85,6 +85,13 @@
       "when": 1790033027372,
       "tag": "0010_public_checkout_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790033087372,
+      "tag": "0011_payments_mercadopago_pix",
+      "breakpoints": true
     }
   ]
 }
