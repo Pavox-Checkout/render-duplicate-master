@@ -162,7 +162,8 @@ function PublicCheckoutPage() {
         image: image.data ?? undefined,
       },
       // Not implemented server-side yet — hidden instead of faking them.
-      summary: { ...base.summary, couponEnabled: false, installmentsEnabled: false },
+      summary: { ...base.summary, installmentsEnabled: false },
+      coupon: { ...base.coupon, enabled: false },
       live: { ...base.live, enabled: false },
       scarcity: { ...base.scarcity, enabled: false },
     };
