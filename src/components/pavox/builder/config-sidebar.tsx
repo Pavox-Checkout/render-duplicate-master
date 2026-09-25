@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   Smartphone,
   Sparkles,
+  Ticket as TicketPercent,
   Timer,
   Trash2,
   Truck,
@@ -46,6 +47,7 @@ import {
 import {
   ADDRESS_FIELDS,
   CANONICAL_STEPS,
+  COUPON_POSITIONS,
   CUSTOMER_FIELDS,
   FIELD_LABELS,
   FONT_LABELS,
@@ -53,10 +55,16 @@ import {
   PALETTES,
   PALETTE_SWATCHES,
   STEP_DESCRIPTIONS,
+  STEP_SCOPED_POSITIONS,
+  SUMMARY_POSITIONS,
   newId,
   type CheckoutConfig,
   type FieldKey,
 } from "@/lib/checkout-builder";
+
+function stepLabel(key: string) {
+  return CANONICAL_STEPS.find((s) => s.key === key)?.label ?? key;
+}
 import { cn } from "@/lib/utils";
 
 // `receiptText` não existe no pacote de ícones — mapeia para um disponível.
@@ -318,15 +326,44 @@ export function ConfigSidebar({ config, update }: Props) {
                 />
               </Group>
               <Divider />
-              <Group title="Cupom">
-                <SwitchRow label="Exibir cupom de desconto" checked={config.summary.couponEnabled} onChange={(v) => set("summary", { couponEnabled: v })} />
-                {config.summary.couponEnabled ? (
-                  <SwitchRow label='Mostrar "Inserir cupom" primeiro' checked={config.summary.couponFirst} onChange={(v) => set("summary", { couponFirst: v })} />
+              <Group title="Posição">
+                <SelectRow
+                  label="Onde exibir o resumo"
+                  value={config.summary.position}
+                  onChange={(v) => set("summary", { position: v })}
+                  options={SUMMARY_POSITIONS}
+                />
+                {STEP_SCOPED_POSITIONS[config.summary.position] && config.steps.enabled ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    Só aparece enquanto a etapa &quot;{stepLabel(STEP_SCOPED_POSITIONS[config.summary.position]!)}&quot; estiver ativa.
+                  </p>
                 ) : null}
               </Group>
               <Divider />
               <SwitchRow label="Exibir parcelamento no resumo" checked={config.summary.installmentsEnabled} onChange={(v) => set("summary", { installmentsEnabled: v })} />
             </>
+          ) : null}
+        </SectionItem>
+      ) : null}
+
+      {/* ── CUPOM ── */}
+      {advanced ? (
+        <SectionItem value="cupom" icon={TicketPercent} title="Cupom de desconto" active={config.coupon.enabled}>
+          <SwitchRow label="Exibir cupom de desconto" checked={config.coupon.enabled} onChange={(v) => set("coupon", { enabled: v })} />
+          {config.coupon.enabled ? (
+            <Group title="Posição">
+              <SelectRow
+                label="Onde exibir o cupom"
+                value={config.coupon.position}
+                onChange={(v) => set("coupon", { position: v })}
+                options={COUPON_POSITIONS}
+              />
+              {STEP_SCOPED_POSITIONS[config.coupon.position] && config.steps.enabled ? (
+                <p className="text-[11px] text-muted-foreground">
+                  Só aparece enquanto a etapa &quot;{stepLabel(STEP_SCOPED_POSITIONS[config.coupon.position]!)}&quot; estiver ativa.
+                </p>
+              ) : null}
+            </Group>
           ) : null}
         </SectionItem>
       ) : null}
@@ -590,17 +627,28 @@ export function ConfigSidebar({ config, update }: Props) {
               />
               <TextField label="Frase personalizada (opcional)" value={config.live.customPhrase} onChange={(v) => set("live", { customPhrase: v })} />
               <SwitchRow label="Mostrar avatar" checked={config.live.showAvatar} onChange={(v) => set("live", { showAvatar: v })} />
-              <SelectRow
-                label="Posição"
-                value={config.live.position}
-                onChange={(v) => set("live", { position: v })}
-                options={[
-                  { value: "bottom-left", label: "Inferior esquerdo" },
-                  { value: "bottom-right", label: "Inferior direito" },
-                  { value: "top-left", label: "Superior esquerdo" },
-                  { value: "top-right", label: "Superior direito" },
-                ]}
+              <SwitchRow
+                label="Flutuante (sobre o checkout)"
+                checked={config.live.floating}
+                onChange={(v) => set("live", { floating: v })}
               />
+              {config.live.floating ? (
+                <SelectRow
+                  label="Posição"
+                  value={config.live.position}
+                  onChange={(v) => set("live", { position: v })}
+                  options={[
+                    { value: "bottom-left", label: "Inferior esquerdo" },
+                    { value: "bottom-right", label: "Inferior direito" },
+                    { value: "top-left", label: "Superior esquerdo" },
+                    { value: "top-right", label: "Superior direito" },
+                  ]}
+                />
+              ) : (
+                <p className="rounded-md bg-secondary/60 px-2.5 py-1.5 text-[11.5px] text-muted-foreground">
+                  Exibido no fluxo, no topo do checkout.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <NumberField label="Duração" value={config.live.duration} min={2} max={20} suffix="s" onChange={(v) => set("live", { duration: v })} />
                 <NumberField label="Intervalo" value={config.live.interval} min={3} max={60} suffix="s" onChange={(v) => set("live", { interval: v })} />

@@ -37,6 +37,7 @@ import {
   maskPhone,
   resolveSteps,
   type Align,
+  type BlockPosition,
   type CheckoutConfig,
   type Device,
   type FieldKey,
@@ -296,6 +297,27 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
     return `Continuar para ${(next?.label ?? "").toLowerCase()}`;
   }
 
+  /**
+   * Renderiza Resumo/Cupom em uma âncora específica. Cada bloco tem sua
+   * própria posição (`c.summary.position` / `c.coupon.position`), então o
+   * lojista pode movê-los livremente pelo checkout. `after-summary` é um
+   * valor especial de cupom: sempre "cola" imediatamente depois do resumo,
+   * onde quer que ele esteja — não é uma âncora física própria.
+   */
+  function renderSlot(position: BlockPosition, opts: { card?: boolean } = {}): ReactNode {
+    const showSummary = c.summary.enabled && c.summary.position === position;
+    const showCoupon =
+      c.coupon.enabled && (c.coupon.position === position || (c.coupon.position === "after-summary" && showSummary));
+    if (!showSummary && !showCoupon) return null;
+    const card = opts.card !== false;
+    return (
+      <div className={card ? "space-y-3 p-4" : "space-y-3"} style={card ? cardStyle : undefined}>
+        {showSummary ? <Summary config={c} /> : null}
+        {showCoupon ? <Coupon config={c} /> : null}
+      </div>
+    );
+  }
+
   /* ───────────── tela de conclusão ───────────── */
   if (finished) {
     return (
@@ -353,10 +375,14 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
           {/* stepper — apenas em modo etapas */}
           {stepped ? <Steps config={c} device={device} current={stepIndex} /> : null}
 
+          {renderSlot("before-product")}
+
           {/* card do produto */}
           <div className="p-4" style={cardStyle}>
             <Product config={c} />
           </div>
+
+          {renderSlot("after-product")}
 
           {/* prova social */}
           {c.social.enabled ? (
@@ -369,24 +395,39 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
           <div className="space-y-4 p-4" style={cardStyle}>
             {stepped && current ? (
               <StepSection numbered index={stepIndex} total={steps.length} label={current.label}>
-                {current.key === "identificacao" ? <Identification /> : null}
+                {current.key === "identificacao" ? (
+                  <>
+                    {renderSlot("before-identification", { card: false })}
+                    <Identification />
+                    {renderSlot("after-identification", { card: false })}
+                  </>
+                ) : null}
                 {current.key === "entrega" ? <Delivery /> : null}
-                {current.key === "pagamento" ? <Payment /> : null}
+                {current.key === "pagamento" ? (
+                  <>
+                    {renderSlot("before-payment", { card: false })}
+                    <Payment />
+                    {renderSlot("after-payment", { card: false })}
+                  </>
+                ) : null}
               </StepSection>
             ) : (
               <>
-                {c.summary.couponEnabled && c.summary.couponFirst ? <Coupon config={c} /> : null}
+                {renderSlot("before-identification", { card: false })}
                 <StepSection label="Identificação">
                   <Identification />
                 </StepSection>
+                {renderSlot("after-identification", { card: false })}
                 {c.product.kind === "physical" ? (
                   <StepSection label="Entrega">
                     <Delivery />
                   </StepSection>
                 ) : null}
+                {renderSlot("before-payment", { card: false })}
                 <StepSection label="Pagamento">
                   <Payment />
                 </StepSection>
+                {renderSlot("after-payment", { card: false })}
               </>
             )}
 
@@ -422,12 +463,8 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
             </div>
           </div>
 
-          {/* resumo */}
-          {c.summary.enabled ? (
-            <div className="space-y-3 p-4" style={cardStyle}>
-              <Summary config={c} />
-            </div>
-          ) : null}
+          {/* resumo/cupom — posição padrão (antes do rodapé) */}
+          {renderSlot("before-footer")}
 
           {/* escassez acima do botão */}
           {c.scarcity.enabled && c.scarcity.position === "above-button" ? <Scarcity config={c} /> : null}
@@ -437,11 +474,14 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
 
           {/* rodapé */}
           {c.footer.enabled ? <Footer config={c} /> : null}
+
+          {/* resumo/cupom — final do checkout */}
+          {renderSlot("end")}
         </div>
       </div>
 
       {/* compra ao vivo */}
-      {c.live.enabled ? <LiveToast config={c} /> : null}
+      {c.live.enabled ? <LiveToast config={c} showPreviewTag={mode !== "published"} /> : null}
     </div>
   );
 
@@ -1023,7 +1063,6 @@ function Summary({ config: c }: { config: CheckoutConfig }) {
   const total = p.price;
   return (
     <>
-      {c.summary.couponEnabled && !c.summary.couponFirst ? <Coupon config={c} /> : null}
       <div className="space-y-1.5 text-[12.5px]" style={{ color: col.textMuted }}>
         <div className="flex justify-between">
           <span>{p.title}</span>
@@ -1102,7 +1141,7 @@ function Footer({ config: c }: { config: CheckoutConfig }) {
   );
 }
 
-function LiveToast({ config: c }: { config: CheckoutConfig }) {
+function LiveToast({ config: c, showPreviewTag = true }: { config: CheckoutConfig; showPreviewTag?: boolean }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
     const cycle = setInterval(
@@ -1117,34 +1156,50 @@ function LiveToast({ config: c }: { config: CheckoutConfig }) {
 
   const pos = c.live.position;
   const phrase = c.live.customPhrase.trim() || c.live.phrase;
+  const floating = c.live.floating !== false;
+
+  const card = (
+    <div className="flex items-center gap-2.5 rounded-xl p-2.5 shadow-[var(--shadow-lift)]" style={{ background: c.colors.surface, border: `1px solid ${c.colors.border}`, color: c.colors.text }}>
+      {c.live.showAvatar ? <Avatar name={c.live.name} primary={c.colors.primary} /> : null}
+      <div className="min-w-0">
+        <p className="text-[11.5px] leading-tight">
+          <span className="font-semibold">{c.live.name}</span> {phrase} <span className="font-semibold">{c.live.product}</span>
+        </p>
+        <p className="mt-0.5 flex items-center gap-1 text-[10.5px]" style={{ color: c.colors.textMuted }}>
+          {c.live.showLocation ? (
+            <>
+              <MapPin className="h-3 w-3" /> {c.live.location} ·{" "}
+            </>
+          ) : null}
+          <span>agora mesmo</span>
+        </p>
+      </div>
+    </div>
+  );
+
+  if (!floating) {
+    return (
+      <div className={cn("px-4 pb-2 transition-opacity duration-500 motion-reduce:transition-none", visible ? "opacity-100" : "opacity-0")}>
+        {card}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "pointer-events-none absolute z-10 max-w-[240px] transition-all duration-500",
+        "pointer-events-none absolute z-10 max-w-[240px] transition-all duration-500 motion-reduce:transition-none",
         pos.includes("bottom") ? "bottom-3" : "top-3",
         pos.includes("left") ? "left-3" : "right-3",
         visible ? "translate-y-0 opacity-100" : (pos.includes("bottom") ? "translate-y-2" : "-translate-y-2") + " opacity-0",
       )}
     >
-      <div className="flex items-center gap-2.5 rounded-xl p-2.5 shadow-[var(--shadow-lift)]" style={{ background: c.colors.surface, border: `1px solid ${c.colors.border}`, color: c.colors.text }}>
-        {c.live.showAvatar ? <Avatar name={c.live.name} primary={c.colors.primary} /> : null}
-        <div className="min-w-0">
-          <p className="text-[11.5px] leading-tight">
-            <span className="font-semibold">{c.live.name}</span> {phrase} <span className="font-semibold">{c.live.product}</span>
-          </p>
-          <p className="mt-0.5 flex items-center gap-1 text-[10.5px]" style={{ color: c.colors.textMuted }}>
-            {c.live.showLocation ? (
-              <>
-                <MapPin className="h-3 w-3" /> {c.live.location} ·{" "}
-              </>
-            ) : null}
-            <span>agora mesmo</span>
-          </p>
-        </div>
-      </div>
-      <span className="mt-1 block text-center text-[9px] font-medium uppercase tracking-wide" style={{ color: c.colors.textMuted }}>
-        Prévia
-      </span>
+      {card}
+      {showPreviewTag ? (
+        <span className="mt-1 block text-center text-[9px] font-medium uppercase tracking-wide" style={{ color: c.colors.textMuted }}>
+          Prévia
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -33,6 +33,27 @@ export type SecurityStyle = "inline" | "badges";
 export type LivePosition = "bottom-left" | "bottom-right" | "top-left" | "top-right";
 export type SummaryBehavior = "open" | "closed" | "mobile-toggle";
 
+/**
+ * Pontos de ancoragem centralizados usados pelos blocos posicionáveis
+ * (Cupom e Resumo, por ora). Não é drag-and-drop: o lojista escolhe uma
+ * posição em uma lista, e o mesmo `CheckoutConfig` decide onde o bloco
+ * aparece tanto no Preview quanto no checkout publicado — a mesma função
+ * (`resolveSteps`-like) nunca gera posições impossíveis, pois só usa
+ * âncoras que sempre existem (Identificação e Pagamento são etapas
+ * canônicas presentes em todo checkout, físico ou digital).
+ */
+export type BlockPosition =
+  | "top"
+  | "before-product"
+  | "after-product"
+  | "before-identification"
+  | "after-identification"
+  | "before-payment"
+  | "after-payment"
+  | "after-summary"
+  | "before-footer"
+  | "end";
+
 export type NoticeMessage = { id: string; text: string };
 
 /**
@@ -98,9 +119,15 @@ export type BannerConfig = {
 export type SummaryConfig = {
   enabled: boolean;
   behavior: SummaryBehavior;
-  couponEnabled: boolean;
-  couponFirst: boolean;
+  /** Onde o card de resumo aparece no fluxo do checkout. */
+  position: BlockPosition;
   installmentsEnabled: boolean;
+};
+
+/** Bloco de cupom, independente do Resumo — pode ficar em qualquer âncora. */
+export type CouponConfig = {
+  enabled: boolean;
+  position: BlockPosition;
 };
 
 export type StepsConfig = {
@@ -138,6 +165,9 @@ export type LiveConfig = {
   phrase: string;
   customPhrase: string;
   showAvatar: boolean;
+  /** Exibe como notificação flutuante (overlay) sobre o checkout. Quando
+   *  desativado, aparece embutida no fluxo, logo abaixo do cabeçalho. */
+  floating: boolean;
   position: LivePosition;
   duration: number;
   interval: number;
@@ -243,6 +273,7 @@ export type CheckoutConfig = {
   notice: NoticeConfig;
   banner: BannerConfig;
   summary: SummaryConfig;
+  coupon: CouponConfig;
   steps: StepsConfig;
   scarcity: ScarcityConfig;
   social: SocialConfig;
@@ -478,9 +509,12 @@ function baseConfig(): CheckoutConfig {
     summary: {
       enabled: true,
       behavior: "mobile-toggle",
-      couponEnabled: true,
-      couponFirst: false,
+      position: "before-footer",
       installmentsEnabled: true,
+    },
+    coupon: {
+      enabled: true,
+      position: "after-summary",
     },
     steps: {
       enabled: true,
@@ -530,6 +564,7 @@ function baseConfig(): CheckoutConfig {
       phrase: "acabou de comprar",
       customPhrase: "",
       showAvatar: true,
+      floating: true,
       position: "bottom-left",
       duration: 5,
       interval: 8,
@@ -658,6 +693,60 @@ export function defaultConfig(): CheckoutConfig {
 }
 
 /** Faz merge do config salvo (parcial/antigo) com os defaults atuais. */
+const BLOCK_POSITIONS: BlockPosition[] = [
+  "top",
+  "before-product",
+  "after-product",
+  "before-identification",
+  "after-identification",
+  "before-payment",
+  "after-payment",
+  "after-summary",
+  "before-footer",
+  "end",
+];
+
+function isBlockPosition(v: unknown): v is BlockPosition {
+  return typeof v === "string" && (BLOCK_POSITIONS as string[]).includes(v);
+}
+
+/** Opções de posição para o card de Resumo (não pode ficar "depois do resumo"). */
+export const SUMMARY_POSITIONS: { value: BlockPosition; label: string }[] = [
+  { value: "top", label: "Topo do checkout" },
+  { value: "before-product", label: "Antes do produto" },
+  { value: "after-product", label: "Depois do produto" },
+  { value: "before-identification", label: "Antes da Identificação" },
+  { value: "after-identification", label: "Depois da Identificação" },
+  { value: "before-payment", label: "Antes do Pagamento" },
+  { value: "after-payment", label: "Depois do Pagamento" },
+  { value: "before-footer", label: "Antes do rodapé (padrão)" },
+  { value: "end", label: "Final do checkout" },
+];
+
+/** Opções de posição para o Cupom, incluindo a âncora relativa ao Resumo. */
+export const COUPON_POSITIONS: { value: BlockPosition; label: string }[] = [
+  { value: "after-summary", label: "Junto ao resumo (padrão)" },
+  { value: "top", label: "Topo do checkout" },
+  { value: "before-product", label: "Antes do produto" },
+  { value: "after-product", label: "Depois do produto" },
+  { value: "before-identification", label: "Antes da Identificação" },
+  { value: "after-identification", label: "Depois da Identificação" },
+  { value: "before-payment", label: "Antes do Pagamento" },
+  { value: "after-payment", label: "Depois do Pagamento" },
+  { value: "before-footer", label: "Antes do rodapé" },
+  { value: "end", label: "Final do checkout" },
+];
+
+/** Âncoras que só aparecem enquanto uma etapa específica está ativa, quando
+ *  o checkout está no modo "em etapas". Usado só para exibir um aviso no
+ *  Builder — a renderização em si já respeita isso naturalmente. */
+export const STEP_SCOPED_POSITIONS: Partial<Record<BlockPosition, StepKey>> = {
+  "before-identification": "identificacao",
+  "after-identification": "identificacao",
+  "before-payment": "pagamento",
+  "after-payment": "pagamento",
+};
+
 export function normalizeConfig(raw: unknown): CheckoutConfig {
   const base = baseConfig();
   if (!raw || typeof raw !== "object") return base;
@@ -679,7 +768,28 @@ export function normalizeConfig(raw: unknown): CheckoutConfig {
     divider: { ...base.divider, ...obj("divider") },
     notice: { ...base.notice, ...obj("notice"), messages: arr("notice", "messages", base.notice.messages) },
     banner: { ...base.banner, ...obj("banner") },
-    summary: { ...base.summary, ...obj("summary") },
+    summary: {
+      ...base.summary,
+      ...obj("summary"),
+      position: isBlockPosition(obj("summary")["position"]) ? (obj("summary")["position"] as BlockPosition) : base.summary.position,
+    },
+    // O cupom morava dentro de "summary" (couponEnabled/couponFirst). Migra
+    // configs antigas automaticamente, preservando a intenção original.
+    coupon: (() => {
+      const legacySummary = obj("summary");
+      const hasOwnSection = r["coupon"] && typeof r["coupon"] === "object";
+      if (hasOwnSection) {
+        const section = obj("coupon");
+        return {
+          enabled: typeof section["enabled"] === "boolean" ? (section["enabled"] as boolean) : base.coupon.enabled,
+          position: isBlockPosition(section["position"]) ? (section["position"] as BlockPosition) : base.coupon.position,
+        };
+      }
+      const legacyEnabled =
+        typeof legacySummary["couponEnabled"] === "boolean" ? (legacySummary["couponEnabled"] as boolean) : base.coupon.enabled;
+      const legacyFirst = legacySummary["couponFirst"] === true;
+      return { enabled: legacyEnabled, position: legacyFirst ? ("before-identification" as BlockPosition) : base.coupon.position };
+    })(),
     steps: {
       ...base.steps,
       ...obj("steps"),
