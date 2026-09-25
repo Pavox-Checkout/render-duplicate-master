@@ -78,9 +78,10 @@ Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta 
 - Prioridade: 🟠 alta (nenhum segredo novo deve voltar ao navegador a partir da Sprint 2)
 
 ### 7. Domínios personalizados
-- Estado atual: 🔴 fake — `src/lib/domains-demo.ts`, `src/routes/_dash/dominios.tsx`, `domain-add-dialog.tsx`
-- Problema: nada persiste, nenhuma verificação DNS/SSL.
-- Solução: tabela `domains` + API de domínios da Vercel (adicionar domínio ao projeto, verificar TXT/CNAME, SSL automático).
+- Estado atual: 🟡 implementado, aguardando `VERCEL_TOKEN` — tabela `domains` (migration 0012), Edge Function `domains` (API de domínios da Vercel: adicionar ao projeto, desafio TXT, `GET /v6/domains/{d}/config`), `src/lib/domains.ts`, `src/routes/_dash/dominios.tsx`, rota `/` resolve o host (`src/lib/custom-domain.ts` + `get_domain_checkout`)
+- Fluxo: lojista informa `checkout.loja.com.br` → backend adiciona ao projeto Vercel → mostra CNAME/A (+ TXT de posse quando exigido) → "Verificar" consulta a Vercel → `active` só quando posse e DNS estão ok; HTTPS emitido pela Vercel.
+- Limite por plano no banco (`pavox_domain_limit`: Free 1, Growth 3, Pro 5).
+- Pendente: secret `VERCEL_TOKEN` nas Edge Functions do Supabase; teste com domínio real; opção "Domínio PAVOX" (subdomínio próprio da PAVOX) removida até a PAVOX ter um domínio.
 - Prioridade: 🟠 alta
 
 ### 8. Assinaturas Growth/Pro
