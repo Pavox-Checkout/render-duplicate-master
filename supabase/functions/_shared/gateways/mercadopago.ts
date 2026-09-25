@@ -33,7 +33,7 @@ type MpOrder = {
       payment_method?: { qr_code?: string; qr_code_base64?: string; ticket_url?: string };
     }>;
   };
-  errors?: Array<{ code?: string; message?: string }>;
+  errors?: Array<{ code?: string; message?: string; details?: string[] }>;
   message?: string;
 };
 
@@ -73,6 +73,15 @@ function splitName(full: string): { first: string; last: string } {
 
 function money(value: number): string {
   return value.toFixed(2);
+}
+
+// Mercado Pago rejects a reused X-Idempotency-Key whose body differs, so the
+// key is bound to the exact request: a retry of the same charge reuses it,
+// a corrected request gets a new one.
+async function idempotencyKey(orderId: string, body: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${orderId}:${body}`));
+  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${orderId}-${hex.slice(0, 16)}`;
 }
 
 export class MercadoPagoGateway implements PaymentGateway {
@@ -122,7 +131,6 @@ export class MercadoPagoGateway implements PaymentGateway {
     const { first, last } = splitName(input.buyer.name);
     const doc = input.buyer.document.replace(/\D/g, "");
     const phone = input.buyer.phone.replace(/\D/g, "");
-    const minutes = Math.max(5, Math.round((input.expiresAt.getTime() - Date.now()) / 60000));
 
     const body = {
       type: "online",
@@ -135,7 +143,8 @@ export class MercadoPagoGateway implements PaymentGateway {
           {
             amount: money(input.amount),
             payment_method: { id: "pix", type: "bank_transfer" },
-            expiration_time: `PT${minutes}M`,
+            // Fixed (not "time left") so retries send an identical body.
+            expiration_time: "PT30M",
           },
         ],
       },
@@ -153,23 +162,28 @@ export class MercadoPagoGateway implements PaymentGateway {
           title: input.product.name.slice(0, 150),
           unit_price: money(input.product.unitPrice),
           quantity: 1,
-          external_code: input.product.id,
+          // Mercado Pago caps external_code at 30 chars; a UUID has 36.
+          external_code: input.product.id.replace(/-/g, "").slice(0, 30),
           description: input.description.slice(0, 250),
           category_id: "others",
         },
       ],
     };
 
+    const payload = JSON.stringify(body);
     const res = await this.request("/v1/orders", {
       method: "POST",
-      // Same order → same key: a network retry never creates a second charge.
-      headers: { "X-Idempotency-Key": input.orderId },
-      body: JSON.stringify(body),
+      headers: { "X-Idempotency-Key": await idempotencyKey(input.orderId, payload) },
+      body: payload,
     });
     const data = (await res.json().catch(() => ({}))) as MpOrder;
 
     if (!res.ok) {
-      const detail = data.errors?.[0]?.message ?? data.message ?? `HTTP ${res.status}`;
+      const mpError = data.errors?.[0];
+      const detail =
+        [mpError?.code, mpError?.message ?? data.message, ...(mpError?.details ?? [])]
+          .filter(Boolean)
+          .join(" | ") || `HTTP ${res.status}`;
       if (res.status === 401 || res.status === 403 || res.status === 429 || res.status >= 500) {
         throw new GatewayError(connectionStatusFor(res.status), detail, res.status);
       }

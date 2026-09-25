@@ -394,39 +394,36 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
           {/* formulário — etapas ou página única */}
           <div className="space-y-4 p-4" style={cardStyle}>
             {stepped && current ? (
-              <StepSection numbered index={stepIndex} total={steps.length} label={current.label}>
-                {current.key === "identificacao" ? (
-                  <>
-                    {renderSlot("before-identification", { card: false })}
-                    <Identification />
-                    {renderSlot("after-identification", { card: false })}
-                  </>
-                ) : null}
-                {current.key === "entrega" ? <Delivery /> : null}
-                {current.key === "pagamento" ? (
-                  <>
-                    {renderSlot("before-payment", { card: false })}
-                    <Payment />
-                    {renderSlot("after-payment", { card: false })}
-                  </>
-                ) : null}
-              </StepSection>
+              StepSection({
+                numbered: true,
+                index: stepIndex,
+                total: steps.length,
+                label: current.label,
+                children:
+                  current.key === "identificacao" ? (
+                    <>
+                      {renderSlot("before-identification", { card: false })}
+                      {Identification()}
+                      {renderSlot("after-identification", { card: false })}
+                    </>
+                  ) : current.key === "entrega" ? (
+                    Delivery()
+                  ) : current.key === "pagamento" ? (
+                    <>
+                      {renderSlot("before-payment", { card: false })}
+                      {Payment()}
+                      {renderSlot("after-payment", { card: false })}
+                    </>
+                  ) : null,
+              })
             ) : (
               <>
                 {renderSlot("before-identification", { card: false })}
-                <StepSection label="Identificação">
-                  <Identification />
-                </StepSection>
+                {StepSection({ label: "Identificação", children: Identification() })}
                 {renderSlot("after-identification", { card: false })}
-                {c.product.kind === "physical" ? (
-                  <StepSection label="Entrega">
-                    <Delivery />
-                  </StepSection>
-                ) : null}
+                {c.product.kind === "physical" ? StepSection({ label: "Entrega", children: Delivery() }) : null}
                 {renderSlot("before-payment", { card: false })}
-                <StepSection label="Pagamento">
-                  <Payment />
-                </StepSection>
+                {StepSection({ label: "Pagamento", children: Payment() })}
                 {renderSlot("after-payment", { card: false })}
               </>
             )}
@@ -485,7 +482,10 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
     </div>
   );
 
-  /* ───────────── seções interativas (fecham sobre o estado) ───────────── */
+  /* ───────────── seções interativas (fecham sobre o estado) ─────────────
+     São chamadas como funções ({Payment()}), nunca como <Payment />: declaradas
+     aqui dentro, ganhariam um tipo novo a cada render e o React remontaria os
+     inputs a cada tecla — o campo perde o foco e o teclado do celular fecha. */
 
   function StepSection({
     label,
@@ -555,7 +555,7 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
           </div>
         ) : null}
 
-        <FieldGrid fields={identityFields} />
+        {FieldGrid(identityFields)}
 
         {c.payment.pix && !live ? (
           <div className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[12.5px]" style={{ background: `${col.text}08`, borderRadius: c.layout.radius * 0.6 }}>
@@ -572,7 +572,7 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
   function Delivery() {
     return (
       <div className="space-y-3">
-        <FieldGrid fields={addressFields} />
+        {FieldGrid(addressFields)}
         {live ? null : <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: col.textMuted }}>
             Opções de frete
@@ -666,7 +666,7 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
           ) : null}
         </div>
 
-        {method === "card" ? <FieldGrid fields={cardFields} /> : null}
+        {method === "card" ? FieldGrid(cardFields) : null}
         {method === "pix" && live && methods.length > 0 ? (
           <p className="rounded-lg px-3 py-2.5 text-[12px]" style={{ background: `${col.text}08`, color: col.textMuted, borderRadius: c.layout.radius * 0.6 }}>
             O QR Code Pix é gerado ao finalizar a compra.
@@ -691,7 +691,7 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
     );
   }
 
-  function FieldGrid({ fields }: { fields: RuntimeField[] }) {
+  function FieldGrid(fields: RuntimeField[]) {
     if (fields.length === 0) return null;
     return (
       <div className="grid grid-cols-2 gap-2.5">

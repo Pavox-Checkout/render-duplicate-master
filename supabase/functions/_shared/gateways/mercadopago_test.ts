@@ -22,7 +22,7 @@ const pixInput = {
   amount: 9.9,
   description: "Produto — pedido PVX-ABCD1234",
   buyer: { name: "Maria da Silva", email: "maria@example.com", phone: "(11) 91234-5678", document: "123.456.789-09", person_type: "pf" as const },
-  product: { id: "p1", name: "Produto", unitPrice: 9.9 },
+  product: { id: "9a6d41be-7a78-40f8-9580-992b44aabc95", name: "Produto", unitPrice: 9.9 },
   notificationUrl: "https://example.supabase.co/functions/v1/mercadopago-webhook?store=u1",
   statementDescriptor: "LOJA",
   expiresAt: new Date(Date.now() + 30 * 60 * 1000),
@@ -53,9 +53,14 @@ Deno.test("createPix sends an idempotent Orders request and parses the QR code",
     const call = mock.calls[0]!;
     assertEquals(call.url, "https://api.mercadopago.com/v1/orders");
     const headers = call.init.headers as Record<string, string>;
-    assertEquals(headers["X-Idempotency-Key"], pixInput.orderId);
-    assertEquals(headers["Authorization"], "Bearer APP_USR-x");
     const body = JSON.parse(String(call.init.body));
+    // Bound to the order and the exact body (≤ 64 chars), stable across retries.
+    const key = headers["X-Idempotency-Key"]!;
+    assertEquals(key.startsWith(`${pixInput.orderId}-`), true);
+    assertEquals(key.length <= 64, true);
+    assertEquals(body.transactions.payments[0].expiration_time, "PT30M");
+    assertEquals(body.items[0].external_code.length <= 30, true);
+    assertEquals(headers["Authorization"], "Bearer APP_USR-x");
     assertEquals(body.total_amount, "9.90");
     assertEquals(body.external_reference, pixInput.orderId);
     assertEquals(body.transactions.payments[0].payment_method, { id: "pix", type: "bank_transfer" });
