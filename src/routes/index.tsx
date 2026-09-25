@@ -13,27 +13,40 @@ import { Pricing } from "@/components/pavox/landing/sections/pricing";
 import { Trust } from "@/components/pavox/landing/sections/trust";
 import { Faq } from "@/components/pavox/landing/sections/faq";
 import { FinalCta } from "@/components/pavox/landing/sections/final-cta";
+import { PublicCheckout } from "@/components/pavox/public-checkout";
+import { resolveCustomDomain } from "@/lib/custom-domain";
 
 export const Route = createFileRoute("/")({
-  component: LandingPage,
-  head: () => ({
-    meta: [
-      { title: "PAVOX · Checkout de alta performance" },
-      {
-        name: "description",
-        content:
-          "Crie checkouts de alta performance, gerencie produtos e clientes e acompanhe sua operação em tempo real com a PAVOX.",
-      },
-      { property: "og:title", content: "PAVOX · Seu checkout. Mais conversão. Mais vendas." },
-      {
-        property: "og:description",
-        content: "A plataforma completa para criar checkouts de alta performance e acompanhar tudo em tempo real.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
+  // On a merchant's custom domain the root serves that merchant's checkout.
+  loader: () => resolveCustomDomain(),
+  component: IndexPage,
+  head: ({ loaderData }) => ({
+    meta: loaderData
+      ? [{ title: "Checkout seguro" }, { name: "robots", content: "noindex" }]
+      : [
+          { title: "PAVOX · Checkout de alta performance" },
+          {
+            name: "description",
+            content:
+              "Crie checkouts de alta performance, gerencie produtos e clientes e acompanhe sua operação em tempo real com a PAVOX.",
+          },
+          { property: "og:title", content: "PAVOX · Seu checkout. Mais conversão. Mais vendas." },
+          {
+            property: "og:description",
+            content:
+              "A plataforma completa para criar checkouts de alta performance e acompanhar tudo em tempo real.",
+          },
+          { property: "og:type", content: "website" },
+          { name: "twitter:card", content: "summary_large_image" },
+        ],
   }),
 });
+
+function IndexPage() {
+  const target = Route.useLoaderData();
+  if (target) return <PublicCheckout store={target.store} checkout={target.checkout} />;
+  return <LandingPage />;
+}
 
 function LandingPage() {
   return (

@@ -142,6 +142,59 @@ export type Database = {
         }
         Relationships: []
       }
+      domains: {
+        Row: {
+          checkout_id: string | null
+          created_at: string
+          dns_records: Json
+          hostname: string
+          id: string
+          is_primary: boolean
+          last_checked_at: string | null
+          last_error: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          checkout_id?: string | null
+          created_at?: string
+          dns_records?: Json
+          hostname: string
+          id?: string
+          is_primary?: boolean
+          last_checked_at?: string | null
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          checkout_id?: string | null
+          created_at?: string
+          dns_records?: Json
+          hostname?: string
+          id?: string
+          is_primary?: boolean
+          last_checked_at?: string | null
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domains_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "checkouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           amount: number
@@ -821,6 +874,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_domain_checkout: { Args: { p_host: string }; Returns: Json }
       get_public_checkout: {
         Args: { p_checkout_slug: string; p_store_slug: string }
         Returns: Json
@@ -909,6 +963,11 @@ export type Database = {
         Args: { p_base: string; p_profile_id: string }
         Returns: string
       }
+      set_domain_checkout: {
+        Args: { p_checkout_id: string; p_domain_id: string }
+        Returns: Json
+      }
+      set_primary_domain: { Args: { p_domain_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

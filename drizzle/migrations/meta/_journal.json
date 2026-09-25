@@ -92,6 +92,13 @@
       "when": 1790033087372,
       "tag": "0011_payments_mercadopago_pix",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790033147372,
+      "tag": "0012_custom_domains",
+      "breakpoints": true
     }
   ]
 }
