@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { AlertCircle, CheckCircle2, Copy, Loader2, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, ExternalLink, Loader2, XCircle } from "lucide-react";
 import {
   CheckoutPreview,
   type CheckoutSubmission,
@@ -10,6 +10,10 @@ import { normalizeConfig, type CheckoutConfig } from "@/lib/checkout-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { brl } from "@/lib/mock";
+import {
+  MercadoPagoCardForm,
+  type MercadoPagoCardFormHandle,
+} from "@/components/pavox/mercadopago-card-form";
 import { toast } from "sonner";
 
 type PublicProduct = {
@@ -46,16 +50,21 @@ type PublicOrder = {
     qr_code_base64?: string;
     ticket_url?: string | null;
     expires_at?: string | null;
+    // Boleto
+    digitable_line?: string;
+    // Card
+    status_detail?: string;
+    installments?: number;
   };
 };
 
 const POLL_MS = 5000;
 
-// Sensitive card data never leaves the browser towards PAVOX: card payments
-// will use the gateway's tokenization.
+// The demo card fields are never sent: real card payments are typed in the
+// gateway's secure form (MercadoPagoCardForm) and arrive here as a token.
 const CARD_FIELD_IDS = new Set(["card_number", "card_name", "card_exp", "card_cvv"]);
 
-function buyerFromSubmission(sub: CheckoutSubmission, physical: boolean) {
+function buyerFromSubmission(sub: CheckoutSubmission, withAddress: boolean) {
   const v = Object.fromEntries(Object.entries(sub.values).filter(([k]) => !CARD_FIELD_IDS.has(k)));
   const pj = sub.identity === "pj";
   return {
@@ -64,19 +73,35 @@ function buyerFromSubmission(sub: CheckoutSubmission, physical: boolean) {
     email: v["email"] ?? "",
     phone: v["phone"] ?? "",
     document: (pj ? v["cnpj"] : v["doc"]) ?? "",
-    ...(physical
+    ...(withAddress
       ? {
           address: {
             zip: v["zip"] ?? "",
             street: v["street"] ?? "",
             number: v["number"] ?? "",
             complement: v["complement"] ?? "",
+            neighborhood: v["neighborhood"] ?? "",
             city: v["city"] ?? "",
             state: v["state"] ?? "",
           },
         }
       : {}),
   };
+}
+
+/** Friendly text for a declined card (Mercado Pago status_detail). */
+function cardDeclineMessage(detail: string | undefined) {
+  const d = (detail ?? "").toLowerCase();
+  if (d.includes("insufficient")) return "Saldo ou limite insuficiente. Tente outro cartão.";
+  if (d.includes("security_code") || d.includes("cvv"))
+    return "Código de segurança inválido. Confira o CVV.";
+  if (d.includes("expir")) return "Cartão vencido. Use outro cartão.";
+  if (d.includes("date")) return "Data de validade inválida. Confira os dados do cartão.";
+  if (d.includes("call_for_authorize"))
+    return "O banco pediu para você autorizar a compra. Ligue para o banco ou use outro cartão.";
+  if (d.includes("high_risk") || d.includes("fraud"))
+    return "Pagamento recusado por segurança. Tente outro cartão ou Pix.";
+  return "O pagamento com cartão foi recusado. Confira os dados ou use outro cartão.";
 }
 
 async function readFunctionError(
@@ -105,6 +130,7 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
   const [submitting, setSubmitting] = useState(false);
   const [order, setOrder] = useState<PublicOrder | null>(null);
   const idempotencyKey = useRef<string | null>(null);
+  const cardForm = useRef<MercadoPagoCardFormHandle>(null);
 
   const query = useQuery({
     queryKey: ["public-checkout", store, checkout],
@@ -117,6 +143,21 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
       return (data ?? null) as unknown as PublicCheckout | null;
     },
     retry: 1,
+  });
+
+  // Public key of the store's gateway, used by the browser to tokenize cards.
+  const offersCard = query.data?.payment_methods.includes("card") ?? false;
+  const cardConfig = useQuery({
+    queryKey: ["public-checkout-card", query.data?.checkout.id],
+    enabled: offersCard,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("public-checkout", {
+        body: { action: "config", checkoutId: query.data!.checkout.id },
+      });
+      if (error) return null;
+      return (data as { card: { provider: string; publicKey: string } | null }).card;
+    },
   });
 
   const product = query.data?.product ?? null;
@@ -166,14 +207,27 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
   const submit = async (submission: CheckoutSubmission) => {
     const data = query.data;
     if (!data?.product || submitting) return;
-    idempotencyKey.current ??= crypto.randomUUID();
     setSubmitting(true);
+    let card = null;
+    if (submission.method === "card") {
+      card = (await cardForm.current?.tokenize()) ?? null;
+      if (!card) {
+        setSubmitting(false);
+        toast.error("Confira os dados do cartão.");
+        return;
+      }
+    }
+    idempotencyKey.current ??= crypto.randomUUID();
     const { data: result, error } = await supabase.functions.invoke("public-checkout", {
       body: {
         checkoutId: data.checkout.id,
         paymentMethod: submission.method,
         idempotencyKey: idempotencyKey.current,
-        buyer: buyerFromSubmission(submission, data.product.type === "fisico"),
+        buyer: buyerFromSubmission(
+          submission,
+          data.product.type === "fisico" || submission.method === "boleto",
+        ),
+        ...(card ? { card } : {}),
       },
     });
     setSubmitting(false);
@@ -183,7 +237,14 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
       toast.error((await readFunctionError(error)).message);
       return;
     }
-    setOrder((result as { order: PublicOrder }).order);
+    const next = (result as { order: PublicOrder }).order;
+    if (next.payment_method === "card" && next.status === "Recusado") {
+      // Declined card: stay on the form; the next attempt is a new order.
+      idempotencyKey.current = null;
+      toast.error(cardDeclineMessage(next.payment?.status_detail));
+      return;
+    }
+    setOrder(next);
   };
 
   if (query.isLoading) {
@@ -244,6 +305,23 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
         availableMethods={data.payment_methods}
         onSubmit={(s) => void submit(s)}
         submitting={submitting}
+        cardSlot={
+          cardConfig.data ? (
+            <MercadoPagoCardForm
+              ref={cardForm}
+              publicKey={cardConfig.data.publicKey}
+              amount={Number(data.product.price)}
+            />
+          ) : cardConfig.isLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin opacity-60" />
+            </div>
+          ) : (
+            <p className="text-[12.5px] opacity-70">
+              Pagamento com cartão indisponível no momento. Escolha outra forma de pagamento.
+            </p>
+          )
+        }
       />
     </div>
   );
@@ -262,20 +340,26 @@ function OrderResult({
   const pending = order.status === "Pendente";
   const paid = order.status === "Aprovado";
   const qr = order.payment?.qr_code ?? "";
+  const boleto = order.payment_method === "boleto";
+  const card = order.payment_method === "card";
+  const line = order.payment?.digitable_line ?? "";
 
   // While the Pix is open, ask the backend to re-check the charge with the
   // gateway. The status shown here always comes from the server.
   useEffect(() => {
     if (!pending) return;
-    const timer = setInterval(async () => {
-      const { data } = await supabase.functions.invoke("public-checkout", {
-        body: { action: "status", orderId: order.id },
-      });
-      const next = (data as { order?: PublicOrder } | null)?.order;
-      if (next && next.status !== order.status) onUpdate(next);
-    }, POLL_MS);
+    const timer = setInterval(
+      async () => {
+        const { data } = await supabase.functions.invoke("public-checkout", {
+          body: { action: "status", orderId: order.id },
+        });
+        const next = (data as { order?: PublicOrder } | null)?.order;
+        if (next && next.status !== order.status) onUpdate(next);
+      },
+      boleto ? POLL_MS * 6 : POLL_MS,
+    );
     return () => clearInterval(timer);
-  }, [pending, order.id, order.status, onUpdate]);
+  }, [pending, boleto, order.id, order.status, onUpdate]);
 
   const tone = paid ? col.success : pending ? col.warning : col.error;
   const title = paid
@@ -283,9 +367,15 @@ function OrderResult({
     : pending
       ? qr
         ? "Pague com Pix"
-        : "Pedido registrado"
+        : boleto
+          ? "Boleto gerado"
+          : card
+            ? "Pagamento em análise"
+            : "Pedido registrado"
       : order.status === "Expirado"
-        ? "Pix expirado"
+        ? boleto
+          ? "Boleto vencido"
+          : "Pix expirado"
         : order.status === "Reembolsado"
           ? "Pagamento reembolsado"
           : "Pagamento não concluído";
@@ -294,7 +384,11 @@ function OrderResult({
     : pending
       ? qr
         ? "Escaneie o QR Code ou copie o código Pix no app do seu banco. A confirmação aparece aqui automaticamente."
-        : "Seu pedido foi registrado e está aguardando pagamento."
+        : boleto
+          ? "Pague o boleto no app do seu banco ou em uma lotérica. A confirmação leva até 2 dias úteis após o pagamento."
+          : card
+            ? "O pagamento com cartão está sendo analisado. Esta página se atualiza sozinha."
+            : "Seu pedido foi registrado e está aguardando pagamento."
       : "Este pagamento não foi concluído. Você pode fazer um novo pedido.";
 
   return (
@@ -365,6 +459,46 @@ function OrderResult({
           </div>
         ) : null}
 
+        {pending && boleto && (line || order.payment?.ticket_url) ? (
+          <div className="mt-5 space-y-3">
+            {line ? (
+              <div
+                className="flex items-center gap-2 rounded-lg p-2 text-left"
+                style={{ border: `1px solid ${col.border}` }}
+              >
+                <code className="min-w-0 flex-1 break-all text-[11.5px]">{line}</code>
+                <button
+                  type="button"
+                  className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-semibold text-white"
+                  style={{ background: col.button }}
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(line);
+                    toast.success("Linha digitável copiada");
+                  }}
+                >
+                  <Copy className="h-4 w-4" /> Copiar
+                </button>
+              </div>
+            ) : null}
+            {order.payment?.ticket_url ? (
+              <a
+                href={order.payment.ticket_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md text-[13px] font-semibold"
+                style={{ border: `1px solid ${col.border}` }}
+              >
+                <ExternalLink className="h-4 w-4" /> Abrir boleto
+              </a>
+            ) : null}
+            {order.expires_at ? (
+              <p className="text-[12px]" style={{ color: col.textMuted }}>
+                Vence em {new Date(order.expires_at).toLocaleDateString("pt-BR")}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <dl className="mt-5 space-y-2 text-left text-[13.5px]">
           <div className="flex justify-between gap-3">
             <dt style={{ color: col.textMuted }}>Pedido</dt>
@@ -374,6 +508,12 @@ function OrderResult({
             <dt style={{ color: col.textMuted }}>Total</dt>
             <dd className="font-semibold">{brl(Number(order.amount))}</dd>
           </div>
+          {card && order.payment?.installments && order.payment.installments > 1 ? (
+            <div className="flex justify-between gap-3">
+              <dt style={{ color: col.textMuted }}>Parcelas</dt>
+              <dd className="font-semibold">{order.payment.installments}x no cartão</dd>
+            </div>
+          ) : null}
           {order.gateway_payment_id ? (
             <div className="flex justify-between gap-3">
               <dt style={{ color: col.textMuted }}>Transação</dt>

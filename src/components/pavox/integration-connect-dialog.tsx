@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { ProviderLogo } from "@/components/pavox/provider-logo";
 import {
   ENVIRONMENT_LABELS,
   PAYMENT_METHOD_LABELS,
@@ -108,13 +109,7 @@ export function IntegrationConnectDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[12px] font-bold text-white"
-              style={{ backgroundColor: provider.color }}
-              aria-hidden
-            >
-              {provider.tag}
-            </span>
+            <ProviderLogo provider={provider} className="h-8 w-8 rounded-lg" />
             {isEdit ? "Editar" : "Conectar"} {provider.name}
           </DialogTitle>
           <DialogDescription>

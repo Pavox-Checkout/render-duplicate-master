@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { IntegrationStatusBadge } from "./integration-status-badge";
+import { ProviderLogo } from "@/components/pavox/provider-logo";
 import {
   ENVIRONMENT_LABELS,
   PAYMENT_METHOD_LABELS,
@@ -94,13 +95,7 @@ export function IntegrationManageDialog({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2.5">
-              <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-[12px] font-bold text-white"
-                style={{ backgroundColor: provider.color }}
-                aria-hidden
-              >
-                {provider.tag}
-              </span>
+              <ProviderLogo provider={provider} className="h-8 w-8 rounded-lg" />
               {provider.name}
             </DialogTitle>
             <DialogDescription>Gerencie esta conexão de gateway.</DialogDescription>

@@ -28,7 +28,7 @@ const pixInput = {
   expiresAt: new Date(Date.now() + 30 * 60 * 1000),
 };
 
-Deno.test("createPix sends an idempotent Orders request and parses the QR code", async () => {
+Deno.test("createCharge (pix) sends an idempotent Orders request and parses the QR code", async () => {
   const mock = mockFetch([
     {
       status: 201,
@@ -44,7 +44,7 @@ Deno.test("createPix sends an idempotent Orders request and parses the QR code",
   ]);
   try {
     const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "sandbox");
-    const pix = await gw.createPix(pixInput);
+    const pix = await gw.createCharge(pixInput);
     assertEquals(pix.paymentId, "ORD01TEST");
     assertEquals(pix.status, "pending");
     assertEquals(pix.qrCode, "000201PIX");
@@ -73,11 +73,11 @@ Deno.test("createPix sends an idempotent Orders request and parses the QR code",
   }
 });
 
-Deno.test("createPix maps gateway errors", async () => {
+Deno.test("createCharge (pix) maps gateway errors", async () => {
   const mock = mockFetch([{ status: 401, body: { message: "invalid token" } }]);
   try {
     const gw = new MercadoPagoGateway({ access_token: "bad" }, "sandbox");
-    const err = await assertRejects(() => gw.createPix(pixInput), GatewayError);
+    const err = await assertRejects(() => gw.createCharge(pixInput), GatewayError);
     assertEquals(err.code, "invalid_credentials");
   } finally {
     mock.restore();
@@ -128,7 +128,7 @@ Deno.test("testConnection maps HTTP status and rejects test tokens in production
   }
 });
 
-Deno.test("createPix sends marketplace_fee only when a split fee is given", async () => {
+Deno.test("createCharge (pix) sends marketplace_fee only when a split fee is given", async () => {
   const ok = {
     status: 201,
     body: { id: "ORD02", status: "action_required", transactions: { payments: [{ payment_method: { qr_code: "PIX" } }] } },
@@ -136,10 +136,129 @@ Deno.test("createPix sends marketplace_fee only when a split fee is given", asyn
   const mock = mockFetch([ok, structuredClone(ok)]);
   try {
     const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
-    await gw.createPix({ ...pixInput, marketplaceFee: 0.2 });
-    await gw.createPix({ ...pixInput, marketplaceFee: null });
+    await gw.createCharge({ ...pixInput, marketplaceFee: 0.2 });
+    await gw.createCharge({ ...pixInput, marketplaceFee: null });
     assertEquals(JSON.parse(String(mock.calls[0]!.init.body)).marketplace_fee, "0.20");
     assertEquals("marketplace_fee" in JSON.parse(String(mock.calls[1]!.init.body)), false);
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("createCharge sends a tokenized card and returns the decided status", async () => {
+  const mock = mockFetch([
+    {
+      status: 201,
+      body: {
+        id: "ORD03",
+        status: "processed",
+        transactions: { payments: [{ status: "processed", status_detail: "accredited", payment_method: { id: "master" } }] },
+      },
+    },
+  ]);
+  try {
+    const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
+    const res = await gw.createCharge({
+      ...pixInput,
+      method: "card",
+      card: {
+        token: "abcdef0123456789abcdef0123456789",
+        paymentMethodId: "master",
+        paymentTypeId: "credit_card",
+        installments: 3,
+        identification: { type: "CPF", number: "111.444.777-35" },
+      },
+    });
+    assertEquals(res.status, "approved");
+    assertEquals(res.statusDetail, "accredited");
+    const body = JSON.parse(String(mock.calls[0]!.init.body));
+    assertEquals(body.transactions.payments[0].payment_method, {
+      id: "master",
+      type: "credit_card",
+      token: "abcdef0123456789abcdef0123456789",
+      installments: 3,
+    });
+    assertEquals(body.payer.identification, { type: "CPF", number: "11144477735" });
+    assertEquals("expiration_time" in body.transactions.payments[0], false);
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("createCharge treats a declined card order as a result, not an error", async () => {
+  const mock = mockFetch([
+    {
+      status: 402,
+      body: {
+        id: "ORD04",
+        status: "failed",
+        transactions: { payments: [{ status: "failed", status_detail: "rejected_by_issuer" }] },
+      },
+    },
+  ]);
+  try {
+    const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
+    const res = await gw.createCharge({
+      ...pixInput,
+      method: "card",
+      card: { token: "abcdef0123456789abcdef0123456789", paymentMethodId: "visa", paymentTypeId: "credit_card", installments: 1 },
+    });
+    assertEquals(res.status, "rejected");
+    assertEquals(res.statusDetail, "rejected_by_issuer");
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("createCharge refuses a card charge without a token", async () => {
+  const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
+  await assertRejects(() => gw.createCharge({ ...pixInput, method: "card" }), GatewayError);
+});
+
+Deno.test("createCharge sends boleto with the payer address and returns the digitable line", async () => {
+  const mock = mockFetch([
+    {
+      status: 201,
+      body: {
+        id: "ORD05",
+        status: "action_required",
+        transactions: {
+          payments: [
+            {
+              status: "action_required",
+              date_of_expiration: "2026-10-01T23:59:59.000-03:00",
+              payment_method: { ticket_url: "https://mp/boleto", digitable_line: "2379338", barcode_content: "2379" },
+            },
+          ],
+        },
+      },
+    },
+  ]);
+  try {
+    const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
+    const res = await gw.createCharge({
+      ...pixInput,
+      method: "boleto",
+      buyer: {
+        ...pixInput.buyer,
+        address: { zip: "93420-533", street: "Rua A", number: "", neighborhood: "Centro", city: "Novo Hamburgo", state: "RS" },
+      },
+    });
+    assertEquals(res.status, "pending");
+    assertEquals(res.digitableLine, "2379338");
+    assertEquals(res.ticketUrl, "https://mp/boleto");
+    assertEquals(res.expiresAt, "2026-10-01T23:59:59.000-03:00");
+    const body = JSON.parse(String(mock.calls[0]!.init.body));
+    assertEquals(body.transactions.payments[0].payment_method, { id: "boleto", type: "ticket" });
+    assertEquals(body.transactions.payments[0].expiration_time, "P3D");
+    assertEquals(body.payer.address, {
+      zip_code: "93420533",
+      street_name: "Rua A",
+      street_number: "S/N",
+      neighborhood: "Centro",
+      city: "Novo Hamburgo",
+      state: "RS",
+    });
   } finally {
     mock.restore();
   }

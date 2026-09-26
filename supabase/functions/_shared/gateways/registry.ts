@@ -13,7 +13,7 @@ export type ProviderSpec = {
 const PROVIDERS: Record<string, ProviderSpec> = {
   mercadopago: {
     requiredCredentials: ["access_token", "public_key"],
-    methods: ["pix"],
+    methods: ["pix", "card", "boleto"],
     create: (credentials, environment) =>
       new MercadoPagoGateway(credentials as unknown as MercadoPagoCredentials, environment),
   },

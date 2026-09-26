@@ -17,15 +17,40 @@ export type ConnectionResult = {
   accountLabel?: string;
 };
 
+export type Address = {
+  zip: string;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood?: string;
+  city: string;
+  state: string;
+};
+
 export type Buyer = {
   name: string;
   email: string;
   phone: string;
   document: string;
   person_type: "pf" | "pj";
+  address?: Address | Record<string, never>;
 };
 
-export type PixInput = {
+export type ChargeMethod = "pix" | "card" | "boleto";
+
+/** Card already tokenized in the browser by the gateway SDK (raw card data never reaches PAVOX). */
+export type CardData = {
+  token: string;
+  paymentMethodId: string;
+  paymentTypeId: "credit_card" | "debit_card";
+  installments: number;
+  identification?: { type: string; number: string };
+};
+
+export type ChargeInput = {
+  /** Defaults to "pix". */
+  method?: ChargeMethod;
+  card?: CardData;
   orderId: string;
   reference: string;
   amount: number;
@@ -39,13 +64,19 @@ export type PixInput = {
   marketplaceFee?: number | null;
 };
 
-export type PixResult = {
+export type ChargeResult = {
   paymentId: string;
   status: NormalizedPaymentStatus;
-  qrCode: string;
-  qrCodeBase64: string;
+  /** Gateway reason, e.g. a card rejection code. */
+  statusDetail: string;
   ticketUrl: string | null;
   expiresAt: string | null;
+  // Pix
+  qrCode?: string;
+  qrCodeBase64?: string;
+  // Boleto
+  digitableLine?: string;
+  barcode?: string;
 };
 
 export type NormalizedPaymentStatus = "pending" | "approved" | "rejected" | "cancelled" | "expired" | "refunded";
@@ -71,6 +102,6 @@ export class GatewayError extends Error {
 
 export interface PaymentGateway {
   testConnection(): Promise<ConnectionResult>;
-  createPix(input: PixInput): Promise<PixResult>;
+  createCharge(input: ChargeInput): Promise<ChargeResult>;
   getPayment(paymentId: string): Promise<PaymentInfo>;
 }

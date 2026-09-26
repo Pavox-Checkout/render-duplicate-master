@@ -137,6 +137,18 @@ const CARD_FIELDS: RuntimeField[] = [
   { id: "card_cvv", label: "CVV", placeholder: "000", required: true, half: true, validate: (v) => (v.replace(/\D/g, "").length >= 3 ? null : "CVV inválido") },
 ];
 
+// Boleto (Mercado Pago) exige CPF/CNPJ e endereço completo com bairro,
+// mesmo quando o produto é digital.
+const BOLETO_FIELDS: Omit<RuntimeField, "required">[] = [
+  PF_META.doc,
+  PF_META.zip,
+  PF_META.street,
+  PF_META.number,
+  { id: "neighborhood", label: "Bairro", placeholder: "Seu bairro", half: true },
+  PF_META.city,
+  { ...PF_META.state, half: true },
+];
+
 export type CheckoutSubmission = {
   identity: Identity;
   method: string;
@@ -152,9 +164,19 @@ type Props = {
   /** Checkout público real: envia os dados ao backend (cria o pedido). */
   onSubmit?: (submission: CheckoutSubmission) => void;
   submitting?: boolean;
+  /** Checkout público real: formulário seguro do gateway para cartão (substitui os campos de demonstração). */
+  cardSlot?: ReactNode;
 };
 
-export function CheckoutPreview({ config, device, mode = "design", availableMethods, onSubmit, submitting = false }: Props) {
+export function CheckoutPreview({
+  config,
+  device,
+  mode = "design",
+  availableMethods,
+  onSubmit,
+  submitting = false,
+  cardSlot,
+}: Props) {
   const c = config;
   const col = c.colors;
   const mobile = device === "mobile";
@@ -215,11 +237,13 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
         { id: "phone", label: "Celular/WhatsApp", placeholder: "(00) 00000-0000", type: "tel", mask: maskPhone, validate: vPhone, required: c.fields.required.includes("phone") },
       ];
     }
+    // Boleto exige CPF mesmo quando o lojista deixou o campo opcional.
+    const boletoLive = live && method === "boleto";
     return CUSTOMER_FIELDS.filter((f) => c.fields.customer.includes(f)).map((f) => ({
       ...PF_META[f],
-      required: c.fields.required.includes(f),
+      required: c.fields.required.includes(f) || (boletoLive && f === "doc"),
     }));
-  }, [identity, c.fields.customer, c.fields.required]);
+  }, [identity, c.fields.customer, c.fields.required, live, method]);
 
   const addressFields = useMemo<RuntimeField[]>(
     () =>
@@ -230,18 +254,33 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
     [c.fields.address, c.fields.required],
   );
 
-  const cardFields = method === "card" ? CARD_FIELDS : [];
+  // No checkout publicado o cartão é digitado no formulário seguro do gateway.
+  const cardFields = method === "card" && !live ? CARD_FIELDS : [];
+
+  // Boleto: pede só o que ainda não foi pedido nas outras etapas.
+  const boletoFields = useMemo<RuntimeField[]>(() => {
+    if (!live || method !== "boleto") return [];
+    const asked = new Set([
+      ...identityFields.map((f) => f.id),
+      ...(c.product.kind === "physical" ? addressFields.map((f) => f.id) : []),
+    ]);
+    return BOLETO_FIELDS.filter((f) => !asked.has(f.id) && !(f.id === "doc" && identity === "pj")).map(
+      (f) => ({ ...f, required: true }),
+    );
+  }, [live, method, identityFields, addressFields, c.product.kind, identity]);
+
+  const paymentFields = useMemo(() => [...cardFields, ...boletoFields], [cardFields, boletoFields]);
 
   function fieldsForStep(key: StepKey): RuntimeField[] {
     if (key === "identificacao") return identityFields;
     if (key === "entrega") return addressFields;
-    if (key === "pagamento") return cardFields;
+    if (key === "pagamento") return paymentFields;
     return [];
   }
 
   const allFields = useMemo(
     () => steps.flatMap((s) => fieldsForStep(s.key)),
-    [steps, identityFields, addressFields, cardFields],
+    [steps, identityFields, addressFields, paymentFields],
   );
 
   function setValue(id: string, v: string) {
@@ -617,7 +656,7 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
     const methods: { key: string; label: string; sub: string; icon: ReactNode }[] = [];
     if (isOffered("pix")) methods.push({ key: "pix", label: "PIX", sub: "Pagamento instantâneo", icon: <PixIcon className="h-5 w-5" /> });
     if (isOffered("card")) methods.push({ key: "card", label: "Cartão de crédito", sub: "Em até 12x", icon: <CreditCard className="h-5 w-5" /> });
-    if (isOffered("boleto")) methods.push({ key: "boleto", label: "Boleto", sub: "Compensa em 1 dia útil", icon: <Ticket className="h-5 w-5" /> });
+    if (isOffered("boleto")) methods.push({ key: "boleto", label: "Boleto", sub: "Aprovação em até 2 dias úteis", icon: <Ticket className="h-5 w-5" /> });
 
     return (
       <div className="space-y-3">
@@ -666,7 +705,23 @@ export function CheckoutPreview({ config, device, mode = "design", availableMeth
           ) : null}
         </div>
 
-        {method === "card" ? FieldGrid(cardFields) : null}
+        {method === "card" ? (live && cardSlot ? cardSlot : FieldGrid(cardFields)) : null}
+        {method === "boleto" && boletoFields.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-[12px]" style={{ color: col.textMuted }}>
+              Para gerar o boleto precisamos do seu documento e endereço.
+            </p>
+            {FieldGrid(boletoFields)}
+          </div>
+        ) : null}
+        {method === "boleto" && live ? (
+          <p
+            className="rounded-lg px-3 py-2.5 text-[12px]"
+            style={{ background: `${col.text}08`, color: col.textMuted, borderRadius: c.layout.radius * 0.6 }}
+          >
+            O boleto é gerado ao finalizar a compra e vence em 3 dias úteis.
+          </p>
+        ) : null}
         {method === "pix" && live && methods.length > 0 ? (
           <p className="rounded-lg px-3 py-2.5 text-[12px]" style={{ background: `${col.text}08`, color: col.textMuted, borderRadius: c.layout.radius * 0.6 }}>
             O QR Code Pix é gerado ao finalizar a compra.

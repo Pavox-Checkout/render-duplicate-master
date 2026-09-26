@@ -106,6 +106,13 @@
       "when": 1790033207372,
       "tag": "0013_mercadopago_oauth_split",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790033267372,
+      "tag": "0014_mercadopago_card_boleto",
+      "breakpoints": true
     }
   ]
 }

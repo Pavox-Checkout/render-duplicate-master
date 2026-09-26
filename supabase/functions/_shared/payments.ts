@@ -3,7 +3,14 @@
 // after reading the charge server-to-server from the gateway.
 import { admin, log } from "./http.ts";
 import { gatewayFor } from "./gateways/registry.ts";
-import { GatewayError, type PaymentGateway } from "./gateways/types.ts";
+import {
+  GatewayError,
+  type Buyer,
+  type CardData,
+  type ChargeMethod,
+  type ChargeResult,
+  type PaymentGateway,
+} from "./gateways/types.ts";
 import {
   needsRefresh,
   oauthConfig,
@@ -23,7 +30,7 @@ type OrderForPayment = {
   gateway: string | null;
   gateway_payment_id: string | null;
   expires_at: string | null;
-  buyer: { name: string; email: string; phone: string; document: string; person_type: "pf" | "pj" };
+  buyer: Buyer;
   product: { id: string; name: string; unit_price: number };
   store_name: string;
   provider: string | null;
@@ -98,19 +105,57 @@ export async function publicOrder(orderId: string) {
   return data;
 }
 
-/** Creates the gateway charge for a pending order (once) and returns the public order. */
-export async function chargeOrder(orderId: string) {
+const CHARGE_METHODS: ChargeMethod[] = ["pix", "card", "boleto"];
+
+/** What the buyer needs to see to pay (never card data). */
+function paymentData(method: ChargeMethod, result: ChargeResult, card?: CardData) {
+  if (method === "card") {
+    return {
+      method,
+      status_detail: result.statusDetail,
+      brand: card?.paymentMethodId ?? null,
+      installments: card?.installments ?? 1,
+    };
+  }
+  if (method === "boleto") {
+    return {
+      method,
+      ticket_url: result.ticketUrl,
+      digitable_line: result.digitableLine ?? "",
+      barcode: result.barcode ?? "",
+      expires_at: result.expiresAt,
+    };
+  }
+  return {
+    method,
+    qr_code: result.qrCode ?? "",
+    qr_code_base64: result.qrCodeBase64 ?? "",
+    ticket_url: result.ticketUrl,
+    expires_at: result.expiresAt,
+  };
+}
+
+/**
+ * Creates the gateway charge for a pending order (once) and returns the public
+ * order. `card` carries the token created in the browser for card payments.
+ */
+export async function chargeOrder(orderId: string, options: { card?: CardData } = {}) {
   const order = await orderForPayment(orderId);
   if (!order) throw new Error("order_not_found");
   if (order.gateway_payment_id || order.status !== "Pendente") return publicOrder(orderId);
   if (!order.provider) throw new GatewayError("invalid_credentials", "Nenhum gateway conectado para este método.");
+  const method = order.payment_method as ChargeMethod;
+  if (!CHARGE_METHODS.includes(method)) throw new GatewayError("invalid_request", "Método de pagamento inválido.");
+  if (method === "card" && !options.card) throw new GatewayError("invalid_request", "Dados do cartão ausentes.");
 
   const { gateway, credentials } = await loadConnection(order.user_id, order.provider);
   // Fee fixed at charge time. With OAuth, Mercado Pago retains it (split);
   // otherwise it is recorded for later billing when the order is approved.
   const marketplaceFee = splitFee(credentials, Number(order.platform_fee_quote));
   const expiresAt = order.expires_at ? new Date(order.expires_at) : new Date(Date.now() + 30 * 60 * 1000);
-  const pix = await gateway.createPix({
+  const result = await gateway.createCharge({
+    method,
+    ...(options.card ? { card: options.card } : {}),
     orderId: order.id,
     reference: order.reference,
     amount: Number(order.amount),
@@ -126,25 +171,32 @@ export async function chargeOrder(orderId: string) {
   log("payment.created", {
     order_id: order.id,
     provider: order.provider,
-    gateway_payment_id: pix.paymentId,
+    method,
+    gateway_payment_id: result.paymentId,
+    status: result.status,
     fee_collection: marketplaceFee ? "split" : "invoice",
   });
 
   const { data, error } = await admin.rpc("pavox_attach_payment", {
     p_order_id: order.id,
     p_gateway: order.provider,
-    p_payment_id: pix.paymentId,
-    p_payment_data: {
-      method: "pix",
-      qr_code: pix.qrCode,
-      qr_code_base64: pix.qrCodeBase64,
-      ticket_url: pix.ticketUrl,
-      expires_at: pix.expiresAt,
-    },
+    p_payment_id: result.paymentId,
+    p_payment_data: paymentData(method, result, options.card),
     p_platform_fee: marketplaceFee,
     p_fee_collection: marketplaceFee ? "split" : "invoice",
   });
   if (error) throw new Error(error.message);
+
+  // Cards are decided on the spot: apply approved/rejected now (same path as
+  // the webhook, re-read from the gateway) instead of waiting for it.
+  if (result.status !== "pending") {
+    try {
+      await syncOrder(order.id, "charge");
+      return publicOrder(order.id);
+    } catch (err) {
+      log("payment.sync_failed", { order_id: order.id, detail: err instanceof Error ? err.message : String(err) });
+    }
+  }
   return data;
 }
 

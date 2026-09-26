@@ -7,8 +7,10 @@ import {
   type NormalizedPaymentStatus,
   type PaymentGateway,
   type PaymentInfo,
-  type PixInput,
-  type PixResult,
+  type Address,
+  type ChargeInput,
+  type ChargeMethod,
+  type ChargeResult,
 } from "./types.ts";
 
 const API = "https://api.mercadopago.com";
@@ -30,7 +32,13 @@ type MpOrder = {
       status_detail?: string;
       date_of_expiration?: string;
       expiration_time?: string;
-      payment_method?: { qr_code?: string; qr_code_base64?: string; ticket_url?: string };
+      payment_method?: {
+        qr_code?: string;
+        qr_code_base64?: string;
+        ticket_url?: string;
+        digitable_line?: string;
+        barcode_content?: string;
+      };
     }>;
   };
   errors?: Array<{ code?: string; message?: string; details?: string[] }>;
@@ -84,6 +92,28 @@ async function idempotencyKey(orderId: string, body: string): Promise<string> {
   return `${orderId}-${hex.slice(0, 16)}`;
 }
 
+function paymentNode(method: ChargeMethod, input: ChargeInput) {
+  const amount = money(input.amount);
+  if (method === "card") {
+    const card = input.card!;
+    return {
+      amount,
+      payment_method: {
+        id: card.paymentMethodId,
+        type: card.paymentTypeId,
+        token: card.token,
+        installments: card.installments,
+      },
+    };
+  }
+  if (method === "boleto") {
+    // 3 business days is Mercado Pago's recommended minimum for boleto.
+    return { amount, payment_method: { id: "boleto", type: "ticket" }, expiration_time: "P3D" };
+  }
+  // Fixed (not "time left") so retries send an identical body.
+  return { amount, payment_method: { id: "pix", type: "bank_transfer" }, expiration_time: "PT30M" };
+}
+
 export class MercadoPagoGateway implements PaymentGateway {
   constructor(
     private readonly credentials: MercadoPagoCredentials,
@@ -127,10 +157,23 @@ export class MercadoPagoGateway implements PaymentGateway {
     return { status: "connected", accountLabel: me.nickname ?? (me.id ? String(me.id) : "") };
   }
 
-  async createPix(input: PixInput): Promise<PixResult> {
+  async createCharge(input: ChargeInput): Promise<ChargeResult> {
+    const method = input.method ?? "pix";
     const { first, last } = splitName(input.buyer.name);
     const doc = input.buyer.document.replace(/\D/g, "");
     const phone = input.buyer.phone.replace(/\D/g, "");
+    const address = (input.buyer.address ?? {}) as Partial<Address>;
+    // Card: identification typed in the gateway's card form wins over the checkout field.
+    const identification =
+      method === "card" && input.card?.identification?.number
+        ? { type: input.card.identification.type, number: input.card.identification.number.replace(/\D/g, "") }
+        : doc.length === 11 || doc.length === 14
+          ? { type: doc.length === 11 ? "CPF" : "CNPJ", number: doc }
+          : null;
+
+    if (method === "card" && !input.card?.token) {
+      throw new GatewayError("invalid_request", "Dados do cartão ausentes.");
+    }
 
     const body = {
       type: "online",
@@ -139,24 +182,25 @@ export class MercadoPagoGateway implements PaymentGateway {
       total_amount: money(input.amount),
       description: input.description.slice(0, 250),
       ...(input.marketplaceFee ? { marketplace_fee: money(input.marketplaceFee) } : {}),
-      transactions: {
-        payments: [
-          {
-            amount: money(input.amount),
-            payment_method: { id: "pix", type: "bank_transfer" },
-            // Fixed (not "time left") so retries send an identical body.
-            expiration_time: "PT30M",
-          },
-        ],
-      },
+      transactions: { payments: [paymentNode(method, input)] },
       payer: {
         email: input.buyer.email,
         first_name: first,
         last_name: last,
-        ...(doc.length === 11 || doc.length === 14
-          ? { identification: { type: doc.length === 11 ? "CPF" : "CNPJ", number: doc } }
-          : {}),
+        ...(identification ? { identification } : {}),
         ...(phone.length >= 10 ? { phone: { area_code: phone.slice(0, 2), number: phone.slice(2) } } : {}),
+        ...(method === "boleto"
+          ? {
+              address: {
+                zip_code: (address.zip ?? "").replace(/\D/g, ""),
+                street_name: address.street ?? "",
+                street_number: address.number || "S/N",
+                neighborhood: address.neighborhood ?? "",
+                city: address.city ?? "",
+                state: address.state ?? "",
+              },
+            }
+          : {}),
       },
       items: [
         {
@@ -179,7 +223,10 @@ export class MercadoPagoGateway implements PaymentGateway {
     });
     const data = (await res.json().catch(() => ({}))) as MpOrder;
 
-    if (!res.ok) {
+    // A declined card can still come back as an order (status "failed"): that
+    // is a result, not an error.
+    const isOrder = Boolean(data.id && data.transactions?.payments?.length);
+    if (!res.ok && !isOrder) {
       const mpError = data.errors?.[0];
       const detail =
         [mpError?.code, mpError?.message ?? data.message, ...(mpError?.details ?? [])]
@@ -192,18 +239,26 @@ export class MercadoPagoGateway implements PaymentGateway {
     }
 
     const payment = data.transactions?.payments?.[0];
-    const method = payment?.payment_method ?? {};
-    if (!data.id || !method.qr_code) {
+    const pm = payment?.payment_method ?? {};
+    if (!data.id) throw new GatewayError("unknown_error", "Resposta do Mercado Pago sem ID da order.");
+    if (method === "pix" && !pm.qr_code) {
       throw new GatewayError("unknown_error", "Resposta do Mercado Pago sem QR Code Pix.");
+    }
+    if (method === "boleto" && !pm.ticket_url && !pm.digitable_line) {
+      throw new GatewayError("unknown_error", "Resposta do Mercado Pago sem boleto.");
     }
 
     return {
       paymentId: data.id,
       status: normalize(data.status),
-      qrCode: method.qr_code,
-      qrCodeBase64: method.qr_code_base64 ?? "",
-      ticketUrl: method.ticket_url ?? null,
-      expiresAt: payment?.date_of_expiration ?? input.expiresAt.toISOString(),
+      statusDetail: payment?.status_detail ?? data.status_detail ?? "",
+      ticketUrl: pm.ticket_url ?? null,
+      expiresAt:
+        payment?.date_of_expiration ?? (method === "card" ? null : input.expiresAt.toISOString()),
+      ...(method === "pix" ? { qrCode: pm.qr_code ?? "", qrCodeBase64: pm.qr_code_base64 ?? "" } : {}),
+      ...(method === "boleto"
+        ? { digitableLine: pm.digitable_line ?? "", barcode: pm.barcode_content ?? "" }
+        : {}),
     };
   }
 
