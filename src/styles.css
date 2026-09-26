@@ -210,6 +210,17 @@
   filter: blur(70px);
 }
 
+@keyframes pavox-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes pavox-float {
   0%,
   100% {
