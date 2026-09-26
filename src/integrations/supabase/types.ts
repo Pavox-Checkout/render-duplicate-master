@@ -880,6 +880,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      pavox_admin_access: { Args: Record<PropertyKey, never>; Returns: Json }
+      pavox_admin_overview: { Args: { p_days?: number }; Returns: Json }
+      pavox_admin_list: {
+        Args: { p_kind: string; p_query?: string; p_status?: string; p_page?: number; p_days?: number }
+        Returns: Json
+      }
+      pavox_admin_merchant: { Args: { p_merchant_id: string }; Returns: Json }
+      pavox_admin_add_note: { Args: { p_merchant_id: string; p_body: string }; Returns: string }
       create_public_order: {
         Args: {
           p_buyer: Json

@@ -12,6 +12,8 @@ const loginHeroAsset = { url: "/pavox-auth-banner.png" };
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
+  validateSearch: (search: Record<string, unknown>): { redirect?: "/admin" } =>
+    search["redirect"] === "/admin" ? { redirect: "/admin" } : {},
   head: () => ({
     meta: [
       { title: "Entrar · PAVOX" },
@@ -26,14 +28,16 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
+  const destination = redirect === "/admin" ? "/admin" : "/dashboard";
   const { session, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) void navigate({ to: "/dashboard" });
-  }, [loading, session, navigate]);
+    if (!loading && session) void navigate({ to: destination });
+  }, [loading, session, navigate, destination]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +68,7 @@ function LoginPage() {
       return;
     }
     toast.success("Bem-vindo de volta");
-    void navigate({ to: "/dashboard" });
+    void navigate({ to: destination });
   };
 
   const resetPassword = async () => {

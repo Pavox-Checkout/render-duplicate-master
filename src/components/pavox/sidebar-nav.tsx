@@ -19,8 +19,10 @@ import {
   Megaphone,
   ChevronRight,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
 import { PavoxLogo } from "./logo";
+import { useAdminAccess } from "@/lib/admin/data";
 import { useAuth } from "@/hooks/useAuth";
 import { usePavoxAiAccess } from "@/lib/pavox-ai/access";
 import { MARKETING_ITEMS } from "@/lib/marketing-nav";
@@ -162,6 +164,7 @@ export function SidebarNav({
   const { profile, user, signOut } = useAuth();
   const navigate = useNavigate();
   const { hasAccess: hasAiAccess } = usePavoxAiAccess();
+  const { data: adminAccess } = useAdminAccess();
   const email = profile?.email || user?.email || "";
   const name = profile?.full_name || email.split("@")[0] || "Minha conta";
   const company = profile?.company_name || "Sua empresa";
@@ -194,6 +197,7 @@ export function SidebarNav({
         ))}
 
         <MarketingGroup onNavigate={onNavigate} />
+        {adminAccess?.role && <NavItem to="/admin" label="Administração" icon={ShieldCheck} onNavigate={onNavigate} />}
 
         <p className="px-2.5 pt-5 pb-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
           Configurações
