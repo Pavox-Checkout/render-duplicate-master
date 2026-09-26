@@ -26,11 +26,7 @@ import { useAdminAccess } from "@/lib/admin/data";
 import { useAuth } from "@/hooks/useAuth";
 import { usePavoxAiAccess } from "@/lib/pavox-ai/access";
 import { MARKETING_ITEMS } from "@/lib/marketing-nav";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -76,7 +72,7 @@ const settings = [
   { to: "/equipe", label: "Equipe", icon: Building2 },
   { to: "/dominios", label: "Domínios", icon: Globe },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
-  { to: "/planos", label: "Planos", icon: CreditCard },
+  { to: "/planos", label: "Planos e pagamentos", icon: CreditCard },
 ] as const;
 
 function NavItem({
@@ -121,9 +117,7 @@ function MarketingGroup({ onNavigate }: { onNavigate?: (() => void) | undefined 
       <CollapsibleTrigger
         className={cn(
           "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          isMarketing
-            ? "text-sidebar-accent-foreground"
-            : "text-sidebar-foreground/85",
+          isMarketing ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/85",
         )}
       >
         <Megaphone className="h-[17px] w-[17px] shrink-0 opacity-80 group-hover:opacity-100" />
@@ -197,7 +191,9 @@ export function SidebarNav({
         ))}
 
         <MarketingGroup onNavigate={onNavigate} />
-        {adminAccess?.role && <NavItem to="/admin" label="Administração" icon={ShieldCheck} onNavigate={onNavigate} />}
+        {adminAccess?.role && (
+          <NavItem to="/admin" label="Administração" icon={ShieldCheck} onNavigate={onNavigate} />
+        )}
 
         <p className="px-2.5 pt-5 pb-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
           Configurações
