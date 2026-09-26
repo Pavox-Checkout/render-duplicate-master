@@ -6,12 +6,7 @@
 // shape here is intentionally prepared for per-method routing adapters.
 
 export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+  string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export type PaymentMethod = "pix" | "card" | "boleto";
 export type Environment = "sandbox" | "production";
@@ -44,6 +39,7 @@ export type ProviderDef = {
   oauth?: boolean;
   /** PAVOX registers the payment webhook on the account by itself. */
   autoWebhook?: boolean;
+  referenceLogo?: { source: string; x: number; y: number };
 };
 
 /** A persisted integration as it is safely exposed to the client (no raw secrets). */

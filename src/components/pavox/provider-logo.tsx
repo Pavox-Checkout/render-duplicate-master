@@ -22,13 +22,26 @@ export function ProviderLogo({
   className?: string;
 }) {
   const path = LOGO_PATHS[provider.id];
+  const referenceLogo = "referenceLogo" in provider ? provider.referenceLogo : undefined;
   return (
     <span
-      className={cn("flex shrink-0 items-center justify-center font-bold text-white", className)}
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden font-bold text-white",
+        className,
+      )}
       style={{ backgroundColor: provider.color }}
       aria-hidden
     >
-      {path ? (
+      {referenceLogo ? (
+        <span
+          className="h-full w-full shrink-0 bg-no-repeat"
+          style={{
+            backgroundImage: `url(${referenceLogo.source})`,
+            backgroundPosition: `-${referenceLogo.x - 28}px -${referenceLogo.y - 28}px`,
+            backgroundSize: "1496px 837px",
+          }}
+        />
+      ) : path ? (
         <svg viewBox="0 0 24 24" className="h-[58%] w-[58%]" fill="currentColor">
           <title>{provider.name}</title>
           <path d={path} />
