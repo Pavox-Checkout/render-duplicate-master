@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/pavox/page-header";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isValidCPF, maskCPF } from "@/lib/checkout-builder";
 
 export const Route = createFileRoute("/_dash/conta")({
   component: Conta,
@@ -25,6 +28,33 @@ function Conta() {
   const name = profile?.full_name || authUser?.email?.split("@")[0] || "";
   const email = profile?.email || authUser?.email || "";
   const company = profile?.company_name || "";
+  const [cpf, setCpf] = useState("");
+  const [savingCpf, setSavingCpf] = useState(false);
+
+  useEffect(() => {
+    setCpf(profile?.cpf ? maskCPF(profile.cpf) : "");
+  }, [profile?.cpf]);
+
+  const saveCpf = async () => {
+    const normalizedCpf = cpf.replace(/\D/g, "");
+    if (!isValidCPF(normalizedCpf)) {
+      toast.error("Informe um CPF válido.");
+      return;
+    }
+    setSavingCpf(true);
+    const { error } = await supabase.from("profiles").update({ cpf: normalizedCpf }).eq("id", authUser?.id ?? "");
+    setSavingCpf(false);
+    if (error) {
+      if (error.code === "23505") {
+        toast.error("Este CPF já está vinculado a outra conta PAVOX.");
+      } else {
+        toast.error("Não foi possível salvar o CPF.");
+      }
+      return;
+    }
+    toast.success("CPF salvo com sucesso.");
+  };
+
   const initials =
     name
       .split(" ")
@@ -68,9 +98,21 @@ function Conta() {
               <Label htmlFor="c">Empresa</Label>
               <Input id="c" key={company} defaultValue={company} />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                value={cpf}
+                onChange={(event) => setCpf(maskCPF(event.target.value))}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                maxLength={14}
+                required
+              />
+            </div>
           </div>
-          <Button className="mt-6" onClick={() => toast.success("Alterações salvas")}>
-            Salvar alterações
+          <Button className="mt-6" onClick={() => void saveCpf()} disabled={savingCpf || !authUser}>
+            {savingCpf ? "Salvando..." : "Salvar alterações"}
           </Button>
         </div>
 
