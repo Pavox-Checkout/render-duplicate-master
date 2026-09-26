@@ -165,7 +165,17 @@ Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta 
 - `public-checkout`: ação `config` (chave pública para o Brick), campo `card`, mensagem de cartão recusado (402).
 - Front: formulário seguro do Mercado Pago no lugar dos campos de demonstração, campos de boleto sob demanda, tela de boleto (linha digitável, abrir boleto, vencimento), cartão recusado mantém o comprador no formulário; logos oficiais (Simple Icons, CC0) para Mercado Pago, Stripe, Shopify e WooCommerce.
 - Testes: 18 testes Deno (cartão aprovado/recusado/sem token, boleto com endereço); E2E no navegador dos campos de boleto e do slot de cartão.
-- Pendente: compra real com cartão (o Brick carrega de sdk.mercadopago.com, inacessível no ambiente de teste); 3DS (`action_required`) aparece como "em análise"; reembolso pelo painel.
+- Pendente: compra real com cartão (o Brick carrega de sdk.mercadopago.com, inacessível no ambiente de teste); 3DS (`action_required`) aparece como "em análise".
+
+## Sprint 6 — Reembolso e e-mails ao comprador
+
+- Migration `0015_order_emails_refunds.sql`: `orders.emails_sent` + `pavox_claim_order_email` / `pavox_release_order_email` (um e-mail por tipo por pedido; só `service_role`).
+- Adaptador: `refund()` no Mercado Pago (`POST /v1/orders/{id}/refund`, reembolso total, idempotente por pedido).
+- Edge Function `orders` (lojista logado, dono do pedido): `refund` e `resend_receipt`.
+- E-mails via Brevo (`_shared/email.ts`): "Pagamento confirmado" ao aprovar e "Pagamento reembolsado" ao reembolsar, disparados em `syncOrder` (webhook, polling, cartão). Falha no e-mail nunca desfaz o pagamento; sem secrets o envio é pulado e registrado.
+- Front: botões "Reembolsar" (com confirmação) e "Reenviar recibo" no detalhe do pedido.
+- Testes: 25 testes Deno (reembolso, e-mail, escape de HTML); dry-run da migration.
+- Pendente: secrets `BREVO_API_KEY` e `EMAIL_FROM` (usuária cola no Supabase); reembolso parcial.
 
 ## Histórico
 

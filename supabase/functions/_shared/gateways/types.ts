@@ -104,4 +104,6 @@ export interface PaymentGateway {
   testConnection(): Promise<ConnectionResult>;
   createCharge(input: ChargeInput): Promise<ChargeResult>;
   getPayment(paymentId: string): Promise<PaymentInfo>;
+  /** Full refund of an approved charge. */
+  refund(paymentId: string): Promise<{ status: NormalizedPaymentStatus }>;
 }

@@ -263,3 +263,31 @@ Deno.test("createCharge sends boleto with the payer address and returns the digi
     mock.restore();
   }
 });
+
+Deno.test("refund posts an idempotent full refund and maps the status", async () => {
+  const mock = mockFetch([{ status: 201, body: { id: "ORD06", status: "refunded" } }]);
+  try {
+    const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
+    const res = await gw.refund("ORD06");
+    assertEquals(res.status, "refunded");
+    const call = mock.calls[0]!;
+    assertEquals(call.url, "https://api.mercadopago.com/v1/orders/ORD06/refund");
+    assertEquals(call.init.method, "POST");
+    assertEquals((call.init.headers as Record<string, string>)["X-Idempotency-Key"], "refund-ORD06");
+    assertEquals(call.init.body, undefined);
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("refund surfaces Mercado Pago errors", async () => {
+  const mock = mockFetch([{ status: 400, body: { errors: [{ code: "refund_not_allowed", message: "Refund window expired" }] } }]);
+  try {
+    const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
+    const err = await assertRejects(() => gw.refund("ORD07"), GatewayError);
+    assertEquals(err.code, "payment_rejected");
+    assertEquals(err.message.includes("Refund window expired"), true);
+  } finally {
+    mock.restore();
+  }
+});
