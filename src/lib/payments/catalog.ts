@@ -42,6 +42,8 @@ export type ProviderDef = {
   live: boolean;
   /** Supports "Conectar com {name}" (OAuth) — no keys to paste, fee via split. */
   oauth?: boolean;
+  /** PAVOX registers the payment webhook on the account by itself. */
+  autoWebhook?: boolean;
 };
 
 /** A persisted integration as it is safely exposed to the client (no raw secrets). */
@@ -109,13 +111,21 @@ export const PROVIDERS: ProviderDef[] = [
     name: "Asaas",
     category: "Pagamentos",
     kind: "payment",
-    desc: "Cobranças recorrentes e gestão financeira.",
+    desc: "Pix e boleto com a sua conta Asaas.",
     color: "#1E3A8A",
     tag: "AS",
-    credentialFields: [{ key: "api_key", label: "API Key", secret: true }],
-    methods: ["pix", "card", "boleto"],
+    credentialFields: [
+      {
+        key: "api_key",
+        label: "Chave de API",
+        secret: true,
+        hint: "No Asaas: menu do usuário › Integrações › Chaves de API › Gerar chave.",
+      },
+    ],
+    methods: ["pix", "boleto"],
     environments: ["sandbox", "production"],
-    live: false,
+    live: true,
+    autoWebhook: true,
   },
   {
     id: "pagarme",

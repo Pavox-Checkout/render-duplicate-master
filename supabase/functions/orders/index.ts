@@ -5,6 +5,7 @@
 import { admin, CORS_HEADERS, error, json, log, str } from "../_shared/http.ts";
 import { notifyBuyer, publicOrder, refundOrder } from "../_shared/payments.ts";
 import { GatewayError } from "../_shared/gateways/types.ts";
+import { providerSpec } from "../_shared/gateways/registry.ts";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -16,8 +17,13 @@ async function currentUserId(req: Request): Promise<string | null> {
 }
 
 async function ownedOrder(orderId: string, userId: string) {
-  const { data } = await admin.from("orders").select("id, status").eq("id", orderId).eq("user_id", userId).maybeSingle();
-  return data as { id: string; status: string } | null;
+  const { data } = await admin
+    .from("orders")
+    .select("id, status, gateway")
+    .eq("id", orderId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data as { id: string; status: string; gateway: string | null } | null;
 }
 
 Deno.serve(async (req) => {
@@ -40,6 +46,8 @@ Deno.serve(async (req) => {
   const order = await ownedOrder(orderId, userId);
   if (!order) return error("not_found", "Pedido não encontrado.", 404);
 
+  const gatewayName = providerSpec(order.gateway ?? "")?.displayName ?? "gateway";
+
   try {
     if (body["action"] === "refund") {
       if (order.status !== "Aprovado" && order.status !== "Reembolsado") {
@@ -52,7 +60,7 @@ Deno.serve(async (req) => {
         order: updated,
         message: done
           ? "Pagamento reembolsado."
-          : "Reembolso solicitado ao Mercado Pago. O status muda assim que ele confirmar.",
+          : `Reembolso solicitado ao ${gatewayName}. O status muda assim que ele confirmar.`,
       });
     }
 
@@ -74,7 +82,7 @@ Deno.serve(async (req) => {
     const detail = err instanceof Error ? err.message : String(err);
     log("order.action_failed", { order_id: orderId, action: body["action"], detail });
     if (err instanceof GatewayError && err.code === "payment_rejected") {
-      return error("refund_rejected", `O Mercado Pago recusou o reembolso: ${detail}`, 422);
+      return error("refund_rejected", `O ${gatewayName} recusou o reembolso: ${detail}`, 422);
     }
     return json(
       {

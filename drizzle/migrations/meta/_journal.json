@@ -127,6 +127,13 @@
       "when": 1790033387372,
       "tag": "0016_platform_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790033447372,
+      "tag": "0017_asaas_pix_boleto",
+      "breakpoints": true
     }
   ]
 }

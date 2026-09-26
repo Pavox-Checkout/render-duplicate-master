@@ -16,6 +16,10 @@ verify_jwt = false
 [functions.domains]
 verify_jwt = false
 
+# Called by Asaas; checks the asaas-access-token header and re-reads the charge.
+[functions.asaas-webhook]
+verify_jwt = false
+
 [functions.mercadopago-oauth]
 verify_jwt = false
 

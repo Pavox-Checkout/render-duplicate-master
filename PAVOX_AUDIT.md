@@ -177,6 +177,17 @@ Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta 
 - Testes: 25 testes Deno (reembolso, e-mail, escape de HTML); dry-run da migration.
 - Pendente: secrets `BREVO_API_KEY` e `EMAIL_FROM` (usuária cola no Supabase); reembolso parcial.
 
+## Sprint 7 — Asaas (Pix e boleto)
+
+- Adaptador `_shared/gateways/asaas.ts` (API v3): cliente por CPF/CNPJ (reaproveitado), cobrança Pix (QR Code + copia e cola) e boleto (linha digitável + link), consulta, reembolso total. Sem cabeçalho de idempotência no Asaas: antes de criar, procura cobrança pelo `externalReference` (= id do pedido).
+- Conexão: chave de API validada (`/myAccount/commercialInfo`), chave de sandbox recusada em produção, exige chave Pix ativa quando o Pix é habilitado, e a PAVOX cadastra sozinha o webhook na conta Asaas com token aleatório (guardado no Vault). `registry.ts` ganhou `displayName`, `splitFee` e `onConnect` por gateway.
+- Edge Function `asaas-webhook`: confere `asaas-access-token` (comparação em tempo constante), acha o pedido pela cobrança e relê o status na API antes de mudar qualquer coisa.
+- Migration `0017_asaas_pix_boleto.sql`: Asaas nos gateways suportados (`{pix, boleto}`); `pavox_document_required_methods`; `get_public_checkout` devolve `document_required`; `create_public_order` exige CPF/CNPJ quando o método é processado pelo Asaas.
+- Front: Asaas ativo em Integrações (campo "Chave de API", aviso de webhook automático); checkout pede CPF no Pix quando o gateway é o Asaas.
+- Split opcional: com o secret `ASAAS_PLATFORM_WALLET_ID` a taxa PAVOX vai por split para a carteira da PAVOX; sem ele, fica registrada para cobrança posterior.
+- Testes: 36 testes Deno (11 do Asaas); dry-run da migration; webhook sem token → 401 na função publicada.
+- Pendente: conexão e cobrança reais com uma conta Asaas (sandbox ou produção); cartão pelo Asaas (exige tokenização no servidor — decisão de PCI).
+
 ## Histórico
 
 - 2026-09-23: backend migrado para Supabase próprio; tabelas de equipe, bucket de imagens e `payment_integrations` criados; página `/confirmar-email`.
