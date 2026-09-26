@@ -42,9 +42,22 @@ function Conta() {
       return;
     }
     setSavingCpf(true);
-    const { error } = await supabase.from("profiles").update({ cpf: normalizedCpf }).eq("id", authUser?.id ?? "");
+    const userId = authUser?.id;
+    if (!userId) {
+      toast.error("Sua sessão expirou. Entre novamente para salvar o CPF.");
+      return;
+    }
+
+    setSavingCpf(true);
+    const { error } = await supabase.from("profiles").update({ cpf: normalizedCpf }).eq("id", userId);
     setSavingCpf(false);
     if (error) {
+      console.error("[v0] Falha ao salvar CPF", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
       if (error.code === "23505") {
         toast.error("Este CPF já está vinculado a outra conta PAVOX.");
       } else {
