@@ -27,6 +27,8 @@ type PaymentMethod = "pix" | "card" | "boleto";
 type PaymentRoutingSectionProps = {
   availableGateways?: ProviderDef[];
   compatibility?: Partial<Record<PaymentMethod, (gateway: ProviderDef) => boolean>>;
+  selectedGateways?: Partial<Record<PaymentMethod, string>>;
+  onSelectedGatewaysChange?: (selected: Partial<Record<PaymentMethod, string>>) => void;
 };
 
 const routingMethods: Array<{
@@ -58,10 +60,17 @@ const routingMethods: Array<{
 export function PaymentRoutingSection({
   availableGateways = [],
   compatibility,
+  selectedGateways: controlledSelectedGateways,
+  onSelectedGatewaysChange,
 }: PaymentRoutingSectionProps) {
-  const [selectedGateways, setSelectedGateways] = useState<Partial<Record<PaymentMethod, string>>>(
-    {},
-  );
+  const [localSelectedGateways, setLocalSelectedGateways] = useState<
+    Partial<Record<PaymentMethod, string>>
+  >({});
+  const selectedGateways = controlledSelectedGateways ?? localSelectedGateways;
+  const updateSelectedGateways = (next: Partial<Record<PaymentMethod, string>>) => {
+    if (onSelectedGatewaysChange) onSelectedGatewaysChange(next);
+    else setLocalSelectedGateways(next);
+  };
   const [saved, setSaved] = useState(false);
 
   const gatewayOptions = useMemo(
@@ -120,7 +129,7 @@ export function PaymentRoutingSection({
             selectedGateway={selectedGateways[method.id]}
             onSelect={(gatewayId) => {
               setSaved(false);
-              setSelectedGateways((current) => ({ ...current, [method.id]: gatewayId }));
+              updateSelectedGateways({ ...selectedGateways, [method.id]: gatewayId });
             }}
           />
         ))}
@@ -131,7 +140,7 @@ export function PaymentRoutingSection({
           variant="ghost"
           disabled={!hasChanges}
           onClick={() => {
-            setSelectedGateways({});
+            updateSelectedGateways({});
             setSaved(false);
           }}
         >
@@ -161,6 +170,8 @@ function PaymentRoutingCard({
 
   return (
     <Card
+      id={`routing-${method.id}`}
+      tabIndex={-1}
       className={cn(
         "flex min-h-[278px] flex-col transition-colors",
         selected && "border-primary/40",

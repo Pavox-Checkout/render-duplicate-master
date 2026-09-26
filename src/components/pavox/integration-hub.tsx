@@ -10,8 +10,12 @@ import {
   Webhook,
   X,
 } from "lucide-react";
+import { ActiveGatewaysSummary } from "@/components/pavox/active-gateways-summary";
 import { PageHeader } from "@/components/pavox/page-header";
-import { PaymentRoutingSection } from "@/components/pavox/payment-routing-section";
+import {
+  PaymentRoutingSection,
+  type PaymentMethod,
+} from "@/components/pavox/payment-routing-section";
 import { ProviderLogo } from "@/components/pavox/provider-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +39,9 @@ import { cn } from "@/lib/utils";
 export function IntegrationHub() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<ProviderDef | null>(null);
+  const [selectedGateways, setSelectedGateways] = useState<Partial<Record<PaymentMethod, string>>>(
+    {},
+  );
   const filtered = useMemo(
     () => UI_GATEWAYS.filter((gateway) => gateway.name.toLowerCase().includes(query.toLowerCase())),
     [query],
@@ -67,6 +74,19 @@ export function IntegrationHub() {
           />
         </div>
       </div>
+      <ActiveGatewaysSummary
+        selectedGateways={selectedGateways}
+        gateways={UI_GATEWAYS}
+        onChangeGateway={(method) => {
+          document.getElementById("payment-routing-title")?.scrollIntoView({ behavior: "smooth" });
+          document.getElementById(`routing-${method}`)?.focus();
+        }}
+      />
+      <PaymentRoutingSection
+        availableGateways={UI_GATEWAYS}
+        selectedGateways={selectedGateways}
+        onSelectedGatewaysChange={setSelectedGateways}
+      />
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((gateway) => (
@@ -83,7 +103,6 @@ export function IntegrationHub() {
           <p className="mt-1 text-sm text-muted-foreground">Tente buscar por outro nome.</p>
         </div>
       )}
-      <PaymentRoutingSection />
       <GatewayConfigPanel gateway={selected} onClose={() => setSelected(null)} />
     </div>
   );
