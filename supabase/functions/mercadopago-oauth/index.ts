@@ -16,6 +16,7 @@ import {
   oauthCredentials,
 } from "../_shared/gateways/mercadopago-oauth.ts";
 import { MercadoPagoGateway } from "../_shared/gateways/mercadopago.ts";
+import { providerSpec } from "../_shared/gateways/registry.ts";
 import { isAllowedReturnOrigin } from "../_shared/return-origin.ts";
 
 const PROVIDER = "mercadopago";
@@ -129,20 +130,24 @@ async function handleCallback(url: URL): Promise<Response> {
       return backTo(origin, check.status === "permission_error" ? "not_brazil" : "error");
     }
 
-    // Keep the methods already chosen; Pix is the only one live today.
+    // Keep the methods already chosen (limited to what the adapter charges);
+    // a first connection enables all of them.
+    const supported = providerSpec(PROVIDER)?.methods ?? ["pix"];
     const { data: existing } = await admin
       .from("payment_integrations")
       .select("enabled_payment_methods")
       .eq("user_id", userId)
       .eq("provider", PROVIDER)
       .maybeSingle();
-    const methods = ((existing?.enabled_payment_methods as string[] | null) ?? []).filter((m) => m === "pix");
+    const methods = ((existing?.enabled_payment_methods as string[] | null) ?? []).filter((m) =>
+      supported.includes(m),
+    );
 
     const { error: saveError } = await admin.rpc("pavox_save_integration", {
       p_user_id: userId,
       p_provider: PROVIDER,
       p_environment: environment,
-      p_methods: methods.length ? methods : ["pix"],
+      p_methods: methods.length ? methods : supported,
       p_credentials: credentials,
       p_masked: { access_token: "Conectado pelo Mercado Pago" },
       p_account_label: check.accountLabel ?? "",

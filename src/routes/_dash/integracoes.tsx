@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/pavox/empty-state";
 import { IntegrationStatusBadge } from "@/components/pavox/integration-status-badge";
 import { IntegrationConnectDialog } from "@/components/pavox/integration-connect-dialog";
 import { IntegrationManageDialog } from "@/components/pavox/integration-manage-dialog";
+import { ProviderLogo } from "@/components/pavox/provider-logo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -136,13 +137,7 @@ function Integracoes() {
                 className="surface flex flex-col p-5 transition-shadow hover:shadow-[var(--shadow-lift)]"
               >
                 <div className="flex items-start justify-between">
-                  <span
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-[13px] font-bold text-white"
-                    style={{ backgroundColor: p.color }}
-                    aria-hidden
-                  >
-                    {p.tag}
-                  </span>
+                  <ProviderLogo provider={p} className="h-10 w-10 rounded-xl" />
                   {isPayment ? (
                     <IntegrationStatusBadge status={integ?.status ?? "not_connected"} />
                   ) : (

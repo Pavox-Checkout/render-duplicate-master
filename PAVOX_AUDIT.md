@@ -158,6 +158,15 @@ Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta 
 - Testes: 14 testes Deno (OAuth, renovação, split, allowlist de retorno, `marketplace_fee`); dry-run da migration; `state` falso recusado e início sem login → 401 nas funções publicadas.
 - Pendente: secret `MP_CLIENT_SECRET` (usuária cola no Supabase); fluxo OAuth completo no navegador; renovação para lojistas sem vendas por 5+ meses (hoje só renova ao vender/testar).
 
+## Sprint 5 — Cartão e boleto no Mercado Pago, logos
+
+- Adaptador: `createCharge` (Pix, cartão, boleto) na API de Orders. Cartão chega tokenizado pelo Card Payment Brick (número/CVV nunca passam pela PAVOX); recusa volta como resultado (status `failed`) e é aplicada na hora. Boleto envia endereço com bairro (`P3D`) e devolve linha digitável + link.
+- Migration `0014_mercadopago_card_boleto.sql`: Mercado Pago → `{pix, card, boleto}`; `create_public_order` exige CPF/CNPJ e endereço com bairro no boleto (também em produto digital); integrações Mercado Pago existentes ganham cartão e boleto.
+- `public-checkout`: ação `config` (chave pública para o Brick), campo `card`, mensagem de cartão recusado (402).
+- Front: formulário seguro do Mercado Pago no lugar dos campos de demonstração, campos de boleto sob demanda, tela de boleto (linha digitável, abrir boleto, vencimento), cartão recusado mantém o comprador no formulário; logos oficiais (Simple Icons, CC0) para Mercado Pago, Stripe, Shopify e WooCommerce.
+- Testes: 18 testes Deno (cartão aprovado/recusado/sem token, boleto com endereço); E2E no navegador dos campos de boleto e do slot de cartão.
+- Pendente: compra real com cartão (o Brick carrega de sdk.mercadopago.com, inacessível no ambiente de teste); 3DS (`action_required`) aparece como "em análise"; reembolso pelo painel.
+
 ## Histórico
 
 - 2026-09-23: backend migrado para Supabase próprio; tabelas de equipe, bucket de imagens e `payment_integrations` criados; página `/confirmar-email`.

@@ -99,8 +99,7 @@ export const PROVIDERS: ProviderDef[] = [
       },
       { key: "public_key", label: "Public Key", secret: false },
     ],
-    // Cartão e boleto entram quando os adaptadores existirem no backend.
-    methods: ["pix"],
+    methods: ["pix", "card", "boleto"],
     environments: ["sandbox", "production"],
     live: true,
     oauth: true,
