@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
@@ -33,9 +33,39 @@ export const Route = createFileRoute("/_dash/integracoes")({
 
 const CATEGORIES = ["Todas", "Pagamentos", "E-commerce"] as const;
 
+// Result of "Conectar com Mercado Pago" (the backend sends ?mp=<result>).
+const OAUTH_RESULTS: Record<string, { ok: boolean; message: string }> = {
+  connected: {
+    ok: true,
+    message: "Mercado Pago conectado! Suas vendas com Pix já usam essa conta.",
+  },
+  denied: { ok: false, message: "A conexão foi cancelada no Mercado Pago." },
+  not_brazil: { ok: false, message: "Essa conta do Mercado Pago não é do Brasil." },
+  not_configured: {
+    ok: false,
+    message: "A conexão automática com o Mercado Pago ainda não está disponível.",
+  },
+  error: {
+    ok: false,
+    message: "Não foi possível concluir a conexão com o Mercado Pago. Tente de novo.",
+  },
+};
+
 function Integracoes() {
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("Todas");
   const { data: saved, isLoading, isError, refetch } = useIntegrations();
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const result = url.searchParams.get("mp");
+    if (!result) return;
+    const info = OAUTH_RESULTS[result] ?? OAUTH_RESULTS["error"]!;
+    if (info.ok) toast.success(info.message);
+    else toast.error(info.message);
+    url.searchParams.delete("mp");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    void refetch();
+  }, [refetch]);
 
   const [connect, setConnect] = useState<{
     provider: ProviderDef;

@@ -4,6 +4,13 @@
 import { admin, log } from "./http.ts";
 import { gatewayFor } from "./gateways/registry.ts";
 import { GatewayError, type PaymentGateway } from "./gateways/types.ts";
+import {
+  needsRefresh,
+  oauthConfig,
+  oauthCredentials,
+  refreshTokens,
+  splitFee,
+} from "./gateways/mercadopago-oauth.ts";
 
 type OrderForPayment = {
   id: string;
@@ -20,9 +27,16 @@ type OrderForPayment = {
   product: { id: string; name: string; unit_price: number };
   store_name: string;
   provider: string | null;
+  platform_fee_quote: number;
 };
 
-export async function loadGateway(userId: string, provider: string): Promise<PaymentGateway> {
+type Connection = { gateway: PaymentGateway; credentials: Record<string, string> };
+
+/**
+ * Loads the store's gateway. OAuth tokens close to expiring are renewed first;
+ * if renewal fails the current (still valid) token keeps being used.
+ */
+export async function loadConnection(userId: string, provider: string): Promise<Connection> {
   const { data, error } = await admin.rpc("pavox_get_integration_credentials", {
     p_user_id: userId,
     p_provider: provider,
@@ -31,9 +45,45 @@ export async function loadGateway(userId: string, provider: string): Promise<Pay
   if (error || !row || !row.credentials?.["access_token"]) {
     throw new GatewayError("invalid_credentials", "Integração não configurada.");
   }
-  const gateway = gatewayFor(provider, row.credentials, row.environment);
+  let credentials = row.credentials;
+  if (provider === "mercadopago" && needsRefresh(credentials)) {
+    credentials = await refreshStoredTokens(userId, provider, credentials);
+  }
+  const gateway = gatewayFor(provider, credentials, row.environment);
   if (!gateway) throw new GatewayError("unknown_error", `Gateway ${provider} não suportado.`);
-  return gateway;
+  return { gateway, credentials };
+}
+
+export async function loadGateway(userId: string, provider: string): Promise<PaymentGateway> {
+  return (await loadConnection(userId, provider)).gateway;
+}
+
+async function refreshStoredTokens(userId: string, provider: string, credentials: Record<string, string>) {
+  const config = oauthConfig();
+  if (!config) {
+    log("integration.refresh_failed", { store_id: userId, provider, reason: "oauth_not_configured" });
+    return credentials;
+  }
+  try {
+    const tokens = await refreshTokens(config, credentials["refresh_token"]!);
+    const next = oauthCredentials(tokens);
+    const { error } = await admin.rpc("pavox_update_integration_credentials", {
+      p_user_id: userId,
+      p_provider: provider,
+      p_credentials: next,
+      p_token_expires_at: tokens.expires_at,
+    });
+    if (error) throw new Error(error.message);
+    log("integration.refreshed", { store_id: userId, provider });
+    return next;
+  } catch (err) {
+    log("integration.refresh_failed", {
+      store_id: userId,
+      provider,
+      detail: err instanceof Error ? err.message : String(err),
+    });
+    return credentials;
+  }
 }
 
 async function orderForPayment(orderId: string): Promise<OrderForPayment | null> {
@@ -55,7 +105,10 @@ export async function chargeOrder(orderId: string) {
   if (order.gateway_payment_id || order.status !== "Pendente") return publicOrder(orderId);
   if (!order.provider) throw new GatewayError("invalid_credentials", "Nenhum gateway conectado para este método.");
 
-  const gateway = await loadGateway(order.user_id, order.provider);
+  const { gateway, credentials } = await loadConnection(order.user_id, order.provider);
+  // Fee fixed at charge time. With OAuth, Mercado Pago retains it (split);
+  // otherwise it is recorded for later billing when the order is approved.
+  const marketplaceFee = splitFee(credentials, Number(order.platform_fee_quote));
   const expiresAt = order.expires_at ? new Date(order.expires_at) : new Date(Date.now() + 30 * 60 * 1000);
   const pix = await gateway.createPix({
     orderId: order.id,
@@ -67,9 +120,15 @@ export async function chargeOrder(orderId: string) {
     notificationUrl: webhookUrl(order.provider, order.user_id),
     statementDescriptor: order.store_name.slice(0, 22),
     expiresAt,
+    marketplaceFee,
   });
 
-  log("payment.created", { order_id: order.id, provider: order.provider, gateway_payment_id: pix.paymentId });
+  log("payment.created", {
+    order_id: order.id,
+    provider: order.provider,
+    gateway_payment_id: pix.paymentId,
+    fee_collection: marketplaceFee ? "split" : "invoice",
+  });
 
   const { data, error } = await admin.rpc("pavox_attach_payment", {
     p_order_id: order.id,
@@ -82,6 +141,8 @@ export async function chargeOrder(orderId: string) {
       ticket_url: pix.ticketUrl,
       expires_at: pix.expiresAt,
     },
+    p_platform_fee: marketplaceFee,
+    p_fee_collection: marketplaceFee ? "split" : "invoice",
   });
   if (error) throw new Error(error.message);
   return data;

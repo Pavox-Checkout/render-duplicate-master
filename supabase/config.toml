@@ -15,3 +15,6 @@ verify_jwt = false
 # Authenticates the merchant in code. Needs the VERCEL_TOKEN secret.
 [functions.domains]
 verify_jwt = false
+
+[functions.mercadopago-oauth]
+verify_jwt = false

@@ -99,6 +99,13 @@
       "when": 1790033147372,
       "tag": "0012_custom_domains",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790033207372,
+      "tag": "0013_mercadopago_oauth_split",
+      "breakpoints": true
     }
   ]
 }

@@ -40,6 +40,8 @@ export type ProviderDef = {
   environments: Environment[];
   /** Backend adapter implemented: the integration can actually charge. */
   live: boolean;
+  /** Supports "Conectar com {name}" (OAuth) — no keys to paste, fee via split. */
+  oauth?: boolean;
 };
 
 /** A persisted integration as it is safely exposed to the client (no raw secrets). */
@@ -54,6 +56,9 @@ export type SavedIntegration = {
   lastTestedAt: string | null;
   lastTestStatus: string | null;
   accountLabel: string;
+  /** "oauth" = connected with the provider's login; "manual" = pasted keys. */
+  connectionType: "manual" | "oauth";
+  tokenExpiresAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -98,6 +103,7 @@ export const PROVIDERS: ProviderDef[] = [
     methods: ["pix"],
     environments: ["sandbox", "production"],
     live: true,
+    oauth: true,
   },
   {
     id: "asaas",

@@ -127,3 +127,20 @@ Deno.test("testConnection maps HTTP status and rejects test tokens in production
     ok.restore();
   }
 });
+
+Deno.test("createPix sends marketplace_fee only when a split fee is given", async () => {
+  const ok = {
+    status: 201,
+    body: { id: "ORD02", status: "action_required", transactions: { payments: [{ payment_method: { qr_code: "PIX" } }] } },
+  };
+  const mock = mockFetch([ok, structuredClone(ok)]);
+  try {
+    const gw = new MercadoPagoGateway({ access_token: "APP_USR-x" }, "production");
+    await gw.createPix({ ...pixInput, marketplaceFee: 0.2 });
+    await gw.createPix({ ...pixInput, marketplaceFee: null });
+    assertEquals(JSON.parse(String(mock.calls[0]!.init.body)).marketplace_fee, "0.20");
+    assertEquals("marketplace_fee" in JSON.parse(String(mock.calls[1]!.init.body)), false);
+  } finally {
+    mock.restore();
+  }
+});

@@ -35,6 +35,8 @@ export type PixInput = {
   notificationUrl: string;
   statementDescriptor: string;
   expiresAt: Date;
+  /** PAVOX fee retained by the gateway (split). Omitted when not applicable. */
+  marketplaceFee?: number | null;
 };
 
 export type PixResult = {

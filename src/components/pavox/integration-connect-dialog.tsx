@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { Check, ExternalLink, KeyRound, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -24,7 +24,7 @@ import {
   type ProviderDef,
   type SavedIntegration,
 } from "@/lib/payments/catalog";
-import { useSaveIntegration } from "@/lib/payments/use-integrations";
+import { useSaveIntegration, useStartMercadoPagoOAuth } from "@/lib/payments/use-integrations";
 
 const STEPS = ["Credenciais", "Métodos", "Revisão", "Concluído"] as const;
 
@@ -41,6 +41,9 @@ export function IntegrationConnectDialog({
 }) {
   const isEdit = Boolean(existing);
   const save = useSaveIntegration();
+  const startOAuth = useStartMercadoPagoOAuth();
+  // Providers with OAuth open on "Conectar com …"; pasting keys is the fallback.
+  const [manual, setManual] = useState(!provider.oauth || existing?.connectionType === "manual");
 
   const [step, setStep] = useState(0);
   const [environment, setEnvironment] = useState<Environment>(existing?.environment ?? "sandbox");
@@ -49,9 +52,9 @@ export function IntegrationConnectDialog({
     existing?.enabledMethods ?? provider.methods,
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const oauthPanel = Boolean(provider.oauth) && !manual && step === 0;
 
-  const setCred = (key: string, value: string) =>
-    setCredentials((c) => ({ ...c, [key]: value }));
+  const setCred = (key: string, value: string) => setCredentials((c) => ({ ...c, [key]: value }));
 
   const toggleMethod = (m: PaymentMethod) =>
     setMethods((list) => (list.includes(m) ? list.filter((x) => x !== m) : [...list, m]));
@@ -74,6 +77,14 @@ export function IntegrationConnectDialog({
       return;
     }
     setStep((s) => s + 1);
+  };
+
+  const connectWithProvider = async () => {
+    try {
+      await startOAuth.mutateAsync();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível iniciar a conexão.");
+    }
   };
 
   const submit = async () => {
@@ -111,9 +122,50 @@ export function IntegrationConnectDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Stepper step={step} />
+        {oauthPanel ? null : <Stepper step={step} />}
 
-        {step === 0 ? (
+        {oauthPanel ? (
+          <div className="space-y-4">
+            <div className="space-y-2 rounded-lg border border-border p-4 text-[13px]">
+              <p className="font-medium">Como funciona</p>
+              <ol className="list-decimal space-y-1 pl-4 text-muted-foreground">
+                <li>
+                  Você entra na sua conta {provider.name}, no site do {provider.name}.
+                </li>
+                <li>Autoriza a PAVOX a criar cobranças em seu nome.</li>
+                <li>Volta para cá já conectado. Não precisa copiar nenhuma chave.</li>
+              </ol>
+            </div>
+            <p className="flex items-start gap-2 rounded-lg bg-secondary px-3 py-2.5 text-[12px] text-muted-foreground">
+              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              Sua senha é digitada só no {provider.name}; a PAVOX nunca tem acesso a ela. A taxa do
+              seu plano é descontada automaticamente em cada venda aprovada.
+            </p>
+            <Button
+              className="w-full"
+              style={{ backgroundColor: provider.color }}
+              onClick={() => void connectWithProvider()}
+              disabled={startOAuth.isPending || startOAuth.isSuccess}
+            >
+              {startOAuth.isPending || startOAuth.isSuccess ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="h-4 w-4" />
+              )}
+              Conectar com {provider.name}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setManual(true)}
+              className="flex w-full items-center justify-center gap-1.5 text-[12.5px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Prefiro colar as chaves manualmente (avançado)
+            </button>
+          </div>
+        ) : null}
+
+        {step === 0 && !oauthPanel ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Ambiente</Label>
@@ -165,6 +217,18 @@ export function IntegrationConnectDialog({
               <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               As credenciais são armazenadas com segurança no servidor e nunca exibidas novamente.
             </p>
+            {provider.oauth ? (
+              <p className="text-[12px] text-muted-foreground">
+                Com chaves coladas, a taxa da PAVOX não é descontada automaticamente.{" "}
+                <button
+                  type="button"
+                  onClick={() => setManual(false)}
+                  className="font-medium text-foreground underline underline-offset-2"
+                >
+                  Conectar com {provider.name}
+                </button>
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -219,8 +283,8 @@ export function IntegrationConnectDialog({
             <p className="max-w-[360px] text-[13px] text-muted-foreground">
               Sua conta {provider.name} foi configurada no ambiente{" "}
               {ENVIRONMENT_LABELS[environment].toLowerCase()}. Os métodos{" "}
-              {methods.map((m) => PAYMENT_METHOD_LABELS[m]).join(", ")} ficam prontos para
-              roteamento. A verificação real com a API do gateway será ativada na próxima etapa.
+              {methods.map((m) => PAYMENT_METHOD_LABELS[m]).join(", ")} já estão disponíveis no seu
+              checkout.
             </p>
           </div>
         ) : null}
@@ -228,6 +292,10 @@ export function IntegrationConnectDialog({
         <DialogFooter>
           {step === 3 ? (
             <Button onClick={() => onOpenChange(false)}>Concluir</Button>
+          ) : oauthPanel ? (
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
           ) : (
             <div className="flex w-full items-center justify-between">
               <Button
