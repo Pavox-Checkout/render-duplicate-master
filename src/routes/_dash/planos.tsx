@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { CreditCard, Loader2, Receipt, Wallet, AlertCircle, CalendarClock } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import { CreditCard, Loader2, Receipt, Wallet, AlertCircle, CalendarClock, LockKeyhole } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { brl } from "@/lib/mock";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   BILLING_TYPE_LABEL,
   PLAN_STATUS_LABEL,
@@ -183,9 +195,7 @@ function Planos() {
             <p className="mt-1 text-[13px] text-muted-foreground">
               Cadastre uma forma de pagamento para cobranças automáticas da PAVOX.
             </p>
-            <Button className="mt-4" variant="outline" disabled>
-              Adicionar forma de pagamento
-            </Button>
+            <PaymentMethodDialog />
           </div>
         </section>
 
@@ -265,6 +275,105 @@ function Planos() {
         )}
       </section>
     </>
+  );
+}
+
+function PaymentMethodDialog() {
+  const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setNotice(null);
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setIsLoading(false);
+    setNotice(
+      "O provedor de pagamentos ainda não está conectado. O cartão não foi salvo. A tokenização segura será disponibilizada em uma próxima etapa.",
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="mt-4" variant="outline">
+          Adicionar forma de pagamento
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Adicionar cartão de crédito</DialogTitle>
+          <DialogDescription>
+            Cadastre uma forma de pagamento para cobranças automáticas futuras da PAVOX.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
+            <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>Seus dados serão tokenizados pelo provedor quando a integração estiver disponível.</span>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="cardholder-name">Nome impresso no cartão</Label>
+            <Input id="cardholder-name" name="cardholderName" autoComplete="cc-name" required />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="card-number">Número do cartão</Label>
+            <Input
+              id="card-number"
+              name="cardNumber"
+              inputMode="numeric"
+              autoComplete="cc-number"
+              placeholder="0000 0000 0000 0000"
+              maxLength={19}
+              required
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="card-expiry">Validade</Label>
+              <Input id="card-expiry" name="expiry" inputMode="numeric" autoComplete="cc-exp" placeholder="MM/AA" maxLength={5} required />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="card-cvv">CVV</Label>
+              <Input id="card-cvv" name="cvv" inputMode="numeric" autoComplete="cc-csc" maxLength={4} required />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="cardholder-document">CPF/CNPJ do titular</Label>
+            <Input id="cardholder-document" name="document" inputMode="numeric" required />
+          </div>
+
+          <label className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
+            <Checkbox name="automaticCharges" className="mt-0.5" />
+            <span className="flex flex-col gap-1">
+              <span className="font-medium">Usar este cartão para cobranças automáticas</span>
+              <span className="text-muted-foreground">
+                Este cartão poderá ser utilizado para cobranças automáticas de taxas e outros valores devidos à PAVOX.
+              </span>
+            </span>
+          </label>
+
+          {notice && (
+            <div role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900">
+              {notice}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isLoading}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isLoading ? "Preparando conexão..." : "Adicionar cartão"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
