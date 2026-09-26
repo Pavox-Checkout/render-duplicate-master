@@ -1,11 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/pavox/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,7 +26,10 @@ export const Route = createFileRoute("/_dash/conta")({
   head: () => ({
     meta: [
       { title: "Minha conta · PAVOX" },
-      { name: "description", content: "Dados pessoais, preferências e segurança da sua conta PAVOX." },
+      {
+        name: "description",
+        content: "Dados pessoais, preferências e segurança da sua conta PAVOX.",
+      },
       { property: "og:title", content: "Minha conta · PAVOX" },
       { property: "og:description", content: "Gerencie seu perfil na PAVOX." },
     ],
@@ -30,10 +43,61 @@ function Conta() {
   const company = profile?.company_name || "";
   const [cpf, setCpf] = useState("");
   const [savingCpf, setSavingCpf] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarDraftUrl, setAvatarDraftUrl] = useState<string | null>(null);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [avatarZoom, setAvatarZoom] = useState([1]);
+  const [avatarPosition, setAvatarPosition] = useState([50]);
+  const [avatarError, setAvatarError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const previousAvatarUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     setCpf(profile?.cpf ? maskCPF(profile.cpf) : "");
   }, [profile?.cpf]);
+
+  const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const supportedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Escolha um arquivo de imagem.");
+      return;
+    }
+    if (!supportedTypes.includes(file.type)) {
+      setAvatarError("Use uma imagem JPG, PNG ou WEBP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("A imagem deve ter no máximo 5 MB.");
+      return;
+    }
+
+    if (avatarDraftUrl) URL.revokeObjectURL(avatarDraftUrl);
+    const nextUrl = URL.createObjectURL(file);
+    previousAvatarUrlRef.current = avatarUrl;
+    setAvatarDraftUrl(nextUrl);
+    setAvatarUrl(nextUrl);
+    setAvatarError("");
+    setAvatarZoom([1]);
+    setAvatarPosition([50]);
+    setAvatarDialogOpen(true);
+  };
+
+  const cancelAvatarEdit = () => {
+    if (avatarDraftUrl) URL.revokeObjectURL(avatarDraftUrl);
+    setAvatarDraftUrl(null);
+    setAvatarUrl(previousAvatarUrlRef.current);
+    setAvatarDialogOpen(false);
+  };
+
+  const confirmAvatarEdit = () => {
+    setAvatarDraftUrl(null);
+    previousAvatarUrlRef.current = avatarUrl;
+    setAvatarDialogOpen(false);
+  };
 
   const saveCpf = async () => {
     const normalizedCpf = cpf.replace(/\D/g, "");
@@ -94,15 +158,27 @@ function Conta() {
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div className="surface p-5">
           <h2 className="text-base font-semibold">Perfil</h2>
-          <div className="mt-5 flex items-center gap-4">
-            <Avatar className="h-16 w-16">
+          <div className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <Avatar className="size-16">
+              {avatarUrl ? <AvatarImage src={avatarUrl} alt={`Foto de perfil de ${name}`} /> : null}
               <AvatarFallback className="bg-brand-gradient text-lg font-semibold text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <Button variant="outline" size="sm" onClick={() => toast("Envio de foto em breve")}>
-              Alterar foto
-            </Button>
+            <div className="flex flex-col items-start gap-1.5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={selectAvatar}
+              />
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                Alterar foto
+              </Button>
+              <p className="text-xs text-muted-foreground">JPG, PNG ou WEBP · até 5 MB</p>
+              {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
+            </div>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -150,7 +226,11 @@ function Conta() {
                 </div>
                 <Switch onCheckedChange={(v) => toast(v ? "2FA ativado" : "2FA desativado")} />
               </div>
-              <Button variant="outline" className="w-full" onClick={() => toast("Link enviado por e-mail")}>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => toast("Link enviado por e-mail")}
+              >
                 Alterar senha
               </Button>
             </div>
@@ -169,6 +249,62 @@ function Conta() {
           </div>
         </div>
       </div>
+
+      <Dialog open={avatarDialogOpen} onOpenChange={(open) => !open && cancelAvatarEdit()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajustar foto de perfil</DialogTitle>
+            <DialogDescription>
+              Faça um ajuste rápido antes de confirmar a nova prévia.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-5">
+            <div className="size-48 overflow-hidden rounded-full bg-muted ring-1 ring-border">
+              {avatarDraftUrl ? (
+                <img
+                  src={avatarDraftUrl}
+                  alt="Prévia da foto de perfil"
+                  className="size-full object-cover transition-transform"
+                  style={{
+                    transform: `scale(${avatarZoom[0]})`,
+                    objectPosition: `50% ${avatarPosition[0]}%`,
+                  }}
+                />
+              ) : null}
+            </div>
+            <div className="w-full max-w-xs space-y-4">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span>Zoom</span>
+                <Slider
+                  aria-label="Zoom da foto"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={avatarZoom}
+                  onValueChange={setAvatarZoom}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span>Posição vertical</span>
+                <Slider
+                  aria-label="Posição vertical da foto"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={avatarPosition}
+                  onValueChange={setAvatarPosition}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelAvatarEdit}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmAvatarEdit}>Confirmar prévia</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
