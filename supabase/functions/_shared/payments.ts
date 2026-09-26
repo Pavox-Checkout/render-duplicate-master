@@ -2,7 +2,8 @@
 // Order state only changes through pavox_apply_payment_status(), always
 // after reading the charge server-to-server from the gateway.
 import { admin, log } from "./http.ts";
-import { gatewayFor, providerSpec } from "./gateways/registry.ts";
+import QRCode from "npm:qrcode@1.5.4";
+import { gatewayFor, providerSpec, type GatewayDeps } from "./gateways/registry.ts";
 import {
   GatewayError,
   type Buyer,
@@ -52,9 +53,36 @@ export async function loadConnection(userId: string, provider: string): Promise<
   if (provider === "mercadopago" && needsRefresh(credentials)) {
     credentials = await refreshStoredTokens(userId, provider, credentials);
   }
-  const gateway = gatewayFor(provider, credentials, row.environment);
+  const gateway = gatewayFor(provider, credentials, row.environment, gatewayDeps(userId, provider));
   if (!gateway) throw new GatewayError("unknown_error", `Gateway ${provider} não suportado.`);
   return { gateway, credentials };
+}
+
+/** Mirror-product ids kept per merchant and gateway (gateway_product_refs). */
+function gatewayDeps(userId: string, provider: string): GatewayDeps {
+  return {
+    products: {
+      async get(key) {
+        const { data } = await admin
+          .from("gateway_product_refs")
+          .select("external_id")
+          .eq("user_id", userId)
+          .eq("provider", provider)
+          .eq("ref_key", key)
+          .maybeSingle();
+        return (data?.external_id as string | undefined) ?? null;
+      },
+      async put(key, externalId) {
+        const { error } = await admin
+          .from("gateway_product_refs")
+          .upsert(
+            { user_id: userId, provider, ref_key: key, external_id: externalId },
+            { onConflict: "user_id,provider,ref_key" },
+          );
+        if (error) log("gateway.product_ref_failed", { store_id: userId, provider, detail: error.message });
+      },
+    },
+  };
 }
 
 export async function loadGateway(userId: string, provider: string): Promise<PaymentGateway> {
@@ -103,8 +131,19 @@ export async function publicOrder(orderId: string) {
 
 const CHARGE_METHODS: ChargeMethod[] = ["pix", "card", "boleto"];
 
+/** PNG (base64, no prefix) of a Pix copia-e-cola, for gateways that only send the code. */
+export async function pixQrBase64(code: string): Promise<string> {
+  if (!code) return "";
+  try {
+    const url: string = await QRCode.toDataURL(code, { margin: 1, width: 320, errorCorrectionLevel: "M" });
+    return url.replace(/^data:image\/png;base64,/, "");
+  } catch {
+    return "";
+  }
+}
+
 /** What the buyer needs to see to pay (never card data). */
-function paymentData(method: ChargeMethod, result: ChargeResult, card?: CardData) {
+async function paymentData(method: ChargeMethod, result: ChargeResult, card?: CardData) {
   if (method === "card") {
     return {
       method,
@@ -125,7 +164,7 @@ function paymentData(method: ChargeMethod, result: ChargeResult, card?: CardData
   return {
     method,
     qr_code: result.qrCode ?? "",
-    qr_code_base64: result.qrCodeBase64 ?? "",
+    qr_code_base64: result.qrCodeBase64 || (await pixQrBase64(result.qrCode ?? "")),
     ticket_url: result.ticketUrl,
     expires_at: result.expiresAt,
   };
@@ -178,7 +217,7 @@ export async function chargeOrder(orderId: string, options: { card?: CardData } 
     p_order_id: order.id,
     p_gateway: order.provider,
     p_payment_id: result.paymentId,
-    p_payment_data: paymentData(method, result, options.card),
+    p_payment_data: await paymentData(method, result, options.card),
     p_platform_fee: marketplaceFee,
     p_fee_collection: marketplaceFee ? "split" : "invoice",
   });
@@ -316,6 +355,8 @@ export async function refundOrder(orderId: string, userId: string) {
 }
 
 export function webhookUrl(provider: string, userId: string) {
-  const slug = provider === "mercadopago" ? "mercadopago-webhook" : `${provider}-webhook`;
-  return `${Deno.env.get("SUPABASE_URL")}/functions/v1/${slug}?store=${userId}`;
+  const base = `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
+  // Gateways without a dedicated function share `gateway-webhook`.
+  if (providerSpec(provider)?.webhookPaymentId) return `${base}/gateway-webhook?provider=${provider}&store=${userId}`;
+  return `${base}/${provider}-webhook?store=${userId}`;
 }

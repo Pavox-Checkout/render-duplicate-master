@@ -20,6 +20,10 @@ verify_jwt = false
 [functions.asaas-webhook]
 verify_jwt = false
 
+# Called by HopySplit brands, Appmax and Garu; the charge is re-read from the API.
+[functions.gateway-webhook]
+verify_jwt = false
+
 [functions.mercadopago-oauth]
 verify_jwt = false
 
