@@ -39,8 +39,43 @@ export type ProviderDef = {
   oauth?: boolean;
   /** PAVOX registers the payment webhook on the account by itself. */
   autoWebhook?: boolean;
+  /** Notifications go to the shared `gateway-webhook` function. */
+  genericWebhook?: boolean;
+  /** Where the merchant registers the webhook URL (shown in "Gerenciar"). */
+  webhookHint?: string;
   referenceLogo?: { source: string; x: number; y: number };
 };
+
+// HopySplit white-label brands: same API, each with its own host (see the
+// backend registry). PAVOX sends the notification URL with every charge.
+const hopySplitBrand = (
+  id: string,
+  name: string,
+  color: string,
+  tag: string,
+  environments: Environment[] = ["sandbox", "production"],
+): ProviderDef => ({
+  id,
+  name,
+  category: "Pagamentos",
+  kind: "payment",
+  desc: `Pix e boleto com a sua conta ${name}.`,
+  color,
+  tag,
+  credentialFields: [
+    {
+      key: "secret_key",
+      label: "Chave secreta (Secret Key)",
+      secret: true,
+      hint: `No painel ${name}: Configurações › Credenciais de API.`,
+    },
+  ],
+  methods: ["pix", "boleto"],
+  environments,
+  live: true,
+  autoWebhook: true,
+  genericWebhook: true,
+});
 
 /** A persisted integration as it is safely exposed to the client (no raw secrets). */
 export type SavedIntegration = {
@@ -122,6 +157,56 @@ export const PROVIDERS: ProviderDef[] = [
     environments: ["sandbox", "production"],
     live: true,
     autoWebhook: true,
+  },
+  hopySplitBrand("beehive", "Beehive", "#F5B301", "BH"),
+  hopySplitBrand("axionpay", "Axion Pay", "#111827", "AX"),
+  hopySplitBrand("pagou", "Pagou", "#16A34A", "PG"),
+  hopySplitBrand("credwave", "CredWave", "#2563EB", "CW"),
+  hopySplitBrand("hopysplit", "HopySplit (teste)", "#7C3AED", "HS", ["sandbox"]),
+  {
+    id: "appmax",
+    name: "Appmax",
+    category: "Pagamentos",
+    kind: "payment",
+    desc: "Pix e boleto com a sua conta Appmax.",
+    color: "#0B5CFF",
+    tag: "AM",
+    credentialFields: [
+      {
+        key: "access_token",
+        label: "Token de acesso (access-token)",
+        secret: true,
+        hint: "No painel Appmax: Configurações › Integrações › Token da API.",
+      },
+    ],
+    methods: ["pix", "boleto"],
+    environments: ["sandbox", "production"],
+    live: true,
+    genericWebhook: true,
+    webhookHint:
+      "No painel Appmax, em Configurações › Webhooks, cadastre esta URL para os eventos de pedido.",
+  },
+  {
+    id: "garu",
+    name: "Garu Pay",
+    category: "Pagamentos",
+    kind: "payment",
+    desc: "Pix e boleto com a sua conta Garu.",
+    color: "#FF5A1F",
+    tag: "GR",
+    credentialFields: [
+      {
+        key: "api_key",
+        label: "Chave de API (sk_live_… ou sk_test_…)",
+        secret: true,
+        hint: "No painel Garu: API Keys. Use sk_test_ no ambiente de teste.",
+      },
+    ],
+    methods: ["pix", "boleto"],
+    environments: ["sandbox", "production"],
+    live: true,
+    genericWebhook: true,
+    webhookHint: "No painel Garu, em Webhooks, cadastre esta URL para os eventos de pagamento.",
   },
   {
     id: "pagarme",

@@ -34,6 +34,8 @@ type PublicCheckout = {
   payment_methods: string[];
   /** Methods whose gateway requires the buyer's CPF/CNPJ (e.g. boleto, Asaas). */
   document_required?: string[];
+  /** Methods whose gateway requires the buyer's phone (HopySplit brands, Garu). */
+  phone_required?: string[];
 };
 
 type PublicOrder = {
@@ -306,6 +308,7 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
         mode="published"
         availableMethods={data.payment_methods}
         documentRequiredMethods={data.document_required ?? ["boleto"]}
+        phoneRequiredMethods={data.phone_required ?? []}
         onSubmit={(s) => void submit(s)}
         submitting={submitting}
         cardSlot={

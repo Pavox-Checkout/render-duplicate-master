@@ -27,8 +27,11 @@ type PaymentMethod = "pix" | "card" | "boleto";
 type PaymentRoutingSectionProps = {
   availableGateways?: ProviderDef[];
   compatibility?: Partial<Record<PaymentMethod, (gateway: ProviderDef) => boolean>>;
-  selectedGateways?: Partial<Record<PaymentMethod, string>>;
-  onSelectedGatewaysChange?: (selected: Partial<Record<PaymentMethod, string>>) => void;
+  /** Gateway chosen per method, as saved in the database (absent = automatic). */
+  savedGateways?: Partial<Record<PaymentMethod, string>>;
+  /** Persists the changed methods (null = back to automatic). Resolves true on success. */
+  onSave?: (changes: Partial<Record<PaymentMethod, string | null>>) => Promise<boolean>;
+  saving?: boolean;
 };
 
 const NONE_GATEWAY = "__none__";
@@ -62,18 +65,16 @@ const routingMethods: Array<{
 export function PaymentRoutingSection({
   availableGateways = [],
   compatibility,
-  selectedGateways: controlledSelectedGateways,
-  onSelectedGatewaysChange,
+  savedGateways = {},
+  onSave,
+  saving = false,
 }: PaymentRoutingSectionProps) {
-  const [localSelectedGateways, setLocalSelectedGateways] = useState<
-    Partial<Record<PaymentMethod, string>>
-  >({});
-  const selectedGateways = controlledSelectedGateways ?? localSelectedGateways;
-  const updateSelectedGateways = (next: Partial<Record<PaymentMethod, string>>) => {
-    if (onSelectedGatewaysChange) onSelectedGatewaysChange(next);
-    else setLocalSelectedGateways(next);
-  };
-  const [saved, setSaved] = useState(false);
+  // Pending edits on top of what is saved; NONE_GATEWAY = automatic.
+  const [edits, setEdits] = useState<Partial<Record<PaymentMethod, string>>>({});
+  const selectedGateways: Partial<Record<PaymentMethod, string>> = { ...savedGateways, ...edits };
+  const changed = routingMethods.filter(
+    ({ id }) => id in edits && (edits[id] ?? NONE_GATEWAY) !== (savedGateways[id] ?? NONE_GATEWAY),
+  );
 
   const gatewayOptions = useMemo(
     () =>
@@ -86,7 +87,7 @@ export function PaymentRoutingSection({
     [availableGateways, compatibility],
   );
 
-  const hasChanges = Object.keys(selectedGateways).length > 0;
+  const hasChanges = changed.length > 0;
 
   return (
     <section className="border-t border-border/70 pt-8" aria-labelledby="payment-routing-title">
@@ -117,20 +118,10 @@ export function PaymentRoutingSection({
         <Settings2 className="size-4 text-primary" aria-hidden="true" />
         <AlertTitle>Gateway selecionado por método</AlertTitle>
         <AlertDescription>
-          Cartão inclui pagamentos de crédito e débito. A disponibilidade de cada gateway será
-          definida pelos dados reais da conta.
+          Só aparecem gateways conectados e com o método ativo. Em "Automático", o checkout usa o
+          primeiro gateway que você conectou para aquele método.
         </AlertDescription>
       </Alert>
-
-      {Object.values(selectedGateways).length === routingMethods.length &&
-        Object.values(selectedGateways).every((gatewayId) => gatewayId === NONE_GATEWAY) && (
-          <Alert variant="destructive" className="mb-5">
-            <AlertTitle>Nenhum método de pagamento está ativo.</AlertTitle>
-            <AlertDescription>
-              Configure pelo menos um método para permitir pagamentos.
-            </AlertDescription>
-          </Alert>
-        )}
 
       <div className="grid gap-4 xl:grid-cols-3">
         {routingMethods.map((method) => (
@@ -139,27 +130,31 @@ export function PaymentRoutingSection({
             method={method}
             gateways={gatewayOptions[method.id]}
             selectedGateway={selectedGateways[method.id]}
-            onSelect={(gatewayId) => {
-              setSaved(false);
-              updateSelectedGateways({ ...selectedGateways, [method.id]: gatewayId });
-            }}
+            onSelect={(gatewayId) =>
+              setEdits((current) => ({ ...current, [method.id]: gatewayId }))
+            }
           />
         ))}
       </div>
 
       <div className="mt-5 flex flex-col gap-2 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-end">
-        <Button
-          variant="ghost"
-          disabled={!hasChanges}
-          onClick={() => {
-            updateSelectedGateways({});
-            setSaved(false);
-          }}
-        >
+        <Button variant="ghost" disabled={!hasChanges || saving} onClick={() => setEdits({})}>
           Cancelar
         </Button>
-        <Button disabled={!hasChanges} onClick={() => setSaved(true)}>
-          {saved ? "Alterações registradas localmente" : "Salvar alterações"}
+        <Button
+          disabled={!hasChanges || saving || !onSave}
+          onClick={async () => {
+            if (!onSave) return;
+            const next = Object.fromEntries(
+              changed.map(({ id }) => [
+                id,
+                edits[id] === NONE_GATEWAY ? null : (edits[id] ?? null),
+              ]),
+            ) as Partial<Record<PaymentMethod, string | null>>;
+            if (await onSave(next)) setEdits({});
+          }}
+        >
+          {saving ? "Salvando..." : "Salvar alterações"}
         </Button>
       </div>
     </section>
@@ -174,11 +169,11 @@ function PaymentRoutingCard({
 }: {
   method: (typeof routingMethods)[number];
   gateways: ProviderDef[];
-  selectedGateway?: string;
+  selectedGateway?: string | undefined;
   onSelect: (gatewayId: string) => void;
 }) {
   const selected = gateways.find((gateway) => gateway.id === selectedGateway);
-  const isDisabled = selectedGateway === NONE_GATEWAY;
+  const isDisabled = !selected;
   const hasGateways = gateways.length > 0;
 
   return (
@@ -200,7 +195,7 @@ function PaymentRoutingCard({
             variant={selected ? "default" : isDisabled ? "outline" : "secondary"}
             className="rounded-full"
           >
-            {selected ? "Configurado" : isDisabled ? "Não utilizado" : "Não configurado"}
+            {selected ? "Escolhido" : hasGateways ? "Automático" : "Sem gateway"}
           </Badge>
         </div>
         <div>
@@ -209,14 +204,18 @@ function PaymentRoutingCard({
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-end gap-3">
-        <Select value={selectedGateway} onValueChange={onSelect} disabled={!hasGateways}>
+        <Select
+          value={selected ? selected.id : NONE_GATEWAY}
+          onValueChange={onSelect}
+          disabled={!hasGateways}
+        >
           <SelectTrigger aria-label={`Gateway para ${method.label}`}>
             <SelectValue
               placeholder={hasGateways ? "Selecionar gateway" : "Nenhum gateway configurado"}
             />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NONE_GATEWAY}>Nenhum</SelectItem>
+            <SelectItem value={NONE_GATEWAY}>Automático</SelectItem>
             {gateways.map((gateway) => (
               <SelectItem key={gateway.id} value={gateway.id}>
                 <span className="flex items-center gap-2">
@@ -235,9 +234,9 @@ function PaymentRoutingCard({
               neste método.
             </span>
           </div>
-        ) : isDisabled ? (
+        ) : isDisabled && hasGateways ? (
           <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">
-            Este método de pagamento não está sendo utilizado.
+            Automático: usa o primeiro gateway conectado com este método.
           </div>
         ) : (
           <div className="rounded-lg border border-dashed p-3 text-xs leading-5 text-muted-foreground">

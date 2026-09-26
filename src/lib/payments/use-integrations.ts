@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  getProvider,
   type Environment,
   type IntegrationStatus,
   type JsonValue,
@@ -126,10 +127,39 @@ export function useStartMercadoPagoOAuth() {
   });
 }
 
-/** Public URL the merchant registers as the gateway webhook. */
+/** Public URL the merchant registers as the gateway webhook (same as the backend's webhookUrl). */
 export function integrationWebhookUrl(provider: string, userId: string) {
-  const base = import.meta.env["VITE_SUPABASE_URL"] as string;
-  return `${base}/functions/v1/${provider}-webhook?store=${userId}`;
+  const base = `${import.meta.env["VITE_SUPABASE_URL"] as string}/functions/v1`;
+  if (getProvider(provider)?.genericWebhook) {
+    return `${base}/gateway-webhook?provider=${provider}&store=${userId}`;
+  }
+  return `${base}/${provider}-webhook?store=${userId}`;
+}
+
+/**
+ * Picks the gateway that processes a payment method at checkout
+ * (`null` = automatic: the oldest connected gateway for that method).
+ */
+export function useSetPaymentRoute() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { method: PaymentMethod; provider: string | null }) => {
+      const { error } = await supabase.rpc("pavox_set_payment_route", {
+        p_method: input.method,
+        p_provider: input.provider,
+      });
+      if (error) {
+        throw new Error(
+          error.message.includes("gateway_not_available")
+            ? "Esse gateway não está conectado ou não tem esse método ativo."
+            : "Não foi possível salvar o roteamento. Tente novamente.",
+        );
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
 }
 
 export function useSaveIntegration() {
@@ -143,7 +173,10 @@ export function useSaveIntegration() {
       methods: PaymentMethod[];
       credentials: Record<string, string>;
     }): Promise<SavedIntegration> => {
-      const result = await invokeIntegrations<{ integration: IntegrationRow }>({ action: "save", ...input });
+      const result = await invokeIntegrations<{ integration: IntegrationRow }>({
+        action: "save",
+        ...input,
+      });
       return mapRow(result.integration);
     },
     onSuccess: () => {
@@ -177,10 +210,11 @@ export function useSetIntegrationStatus() {
 export function useTestIntegration() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      provider: string;
-    }): Promise<{ result: string; message: string }> =>
-      invokeIntegrations<{ result: string; message: string }>({ action: "test", provider: input.provider }),
+    mutationFn: async (input: { provider: string }): Promise<{ result: string; message: string }> =>
+      invokeIntegrations<{ result: string; message: string }>({
+        action: "test",
+        provider: input.provider,
+      }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEY });
     },

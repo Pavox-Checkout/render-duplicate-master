@@ -1,16 +1,11 @@
-import { useMemo, useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  KeyRound,
-  Search,
-  ShieldCheck,
-  Webhook,
-  X,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertCircle, Clock, Search } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
+import { EmptyState } from "@/components/pavox/empty-state";
+import { IntegrationConnectDialog } from "@/components/pavox/integration-connect-dialog";
+import { IntegrationManageDialog } from "@/components/pavox/integration-manage-dialog";
+import { IntegrationStatusBadge } from "@/components/pavox/integration-status-badge";
 import {
   PaymentRoutingSection,
   type PaymentMethod,
@@ -18,40 +13,132 @@ import {
 import { ProviderLogo } from "@/components/pavox/provider-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UI_GATEWAYS } from "@/lib/payments/integration-ui-catalog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  UI_GATEWAYS,
-  UI_PAYMENT_METHODS,
-  getUiGateway,
-} from "@/lib/payments/integration-ui-catalog";
-import type { ProviderDef } from "@/lib/payments/catalog";
+  PAYMENT_METHOD_LABELS,
+  PROVIDERS,
+  type ProviderDef,
+  type SavedIntegration,
+} from "@/lib/payments/catalog";
+import { useIntegrations, useSetPaymentRoute } from "@/lib/payments/use-integrations";
 import { cn } from "@/lib/utils";
+
+// Result of "Conectar com Mercado Pago" (the backend sends ?mp=<result>).
+const OAUTH_RESULTS: Record<string, { ok: boolean; message: string }> = {
+  connected: { ok: true, message: "Mercado Pago conectado! Suas vendas já usam essa conta." },
+  denied: { ok: false, message: "A conexão foi cancelada no Mercado Pago." },
+  not_brazil: { ok: false, message: "Essa conta do Mercado Pago não é do Brasil." },
+  not_configured: {
+    ok: false,
+    message: "A conexão automática com o Mercado Pago ainda não está disponível.",
+  },
+  error: {
+    ok: false,
+    message: "Não foi possível concluir a conexão com o Mercado Pago. Tente de novo.",
+  },
+};
+
+const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// Catalog names already served by a real adapter (same company / API).
+const LIVE_ALIASES: Record<string, string[]> = {
+  asaas: ["asaassandbox"],
+  beehive: ["beehivepay", "beehive"],
+  axionpay: ["axionpay"],
+  pagou: ["pagou"],
+  credwave: ["credwave"],
+  appmax: ["appmax"],
+  garu: ["garupay"],
+};
+
+const LIVE_PROVIDERS: ProviderDef[] = PROVIDERS.filter((p) => p.kind === "payment" && p.live).map(
+  (provider) => {
+    // Reuse the catalog artwork when the brand has one.
+    const aliases = LIVE_ALIASES[provider.id] ?? [norm(provider.name)];
+    const art = UI_GATEWAYS.find((g) => aliases.includes(norm(g.name)) && g.referenceLogo);
+    return art?.referenceLogo ? { ...provider, referenceLogo: art.referenceLogo } : provider;
+  },
+);
+
+const TAKEN = new Set(Object.values(LIVE_ALIASES).flat());
+const COMING_SOON: ProviderDef[] = [
+  ...PROVIDERS.filter((p) => p.kind === "payment" && !p.live),
+  ...UI_GATEWAYS.filter((g) => !TAKEN.has(norm(g.name))),
+];
 
 export function IntegrationHub() {
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<ProviderDef | null>(null);
-  const [selectedGateways, setSelectedGateways] = useState<Partial<Record<PaymentMethod, string>>>(
-    {},
-  );
-  const filtered = useMemo(
-    () => UI_GATEWAYS.filter((gateway) => gateway.name.toLowerCase().includes(query.toLowerCase())),
-    [query],
-  );
+  const { data: saved, isLoading, isError, refetch } = useIntegrations();
+  const setRoute = useSetPaymentRoute();
+  const [connect, setConnect] = useState<{
+    provider: ProviderDef;
+    existing?: SavedIntegration;
+  } | null>(null);
+  const [manage, setManage] = useState<SavedIntegration | null>(null);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const result = url.searchParams.get("mp");
+    if (!result) return;
+    const info = OAUTH_RESULTS[result] ?? OAUTH_RESULTS["error"]!;
+    if (info.ok) toast.success(info.message);
+    else toast.error(info.message);
+    url.searchParams.delete("mp");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    void refetch();
+  }, [refetch]);
+
+  const savedByProvider = useMemo(() => {
+    const map = new Map<string, SavedIntegration>();
+    (saved ?? []).forEach((integration) => map.set(integration.provider, integration));
+    return map;
+  }, [saved]);
+
+  const matches = (p: ProviderDef) => norm(p.name).includes(norm(query));
+  const live = LIVE_PROVIDERS.filter(matches);
+  const soon = COMING_SOON.filter(matches);
+
+  // Routing: connected gateways and the method each one was chosen for.
+  const connected = LIVE_PROVIDERS.filter((p) => savedByProvider.get(p.id)?.status === "connected");
+  const savedRoutes = useMemo(() => {
+    const routes: Partial<Record<PaymentMethod, string>> = {};
+    for (const integration of saved ?? []) {
+      const primary = integration.routing["primary"];
+      if (integration.status !== "connected" || !Array.isArray(primary)) continue;
+      for (const method of primary) {
+        if (method === "pix" || method === "card" || method === "boleto")
+          routes[method] = integration.provider;
+      }
+    }
+    return routes;
+  }, [saved]);
+  const compatibility = useMemo(() => {
+    const supports = (method: PaymentMethod) => (gateway: ProviderDef) =>
+      savedByProvider.get(gateway.id)?.enabledMethods.includes(method) ?? false;
+    return { pix: supports("pix"), card: supports("card"), boleto: supports("boleto") };
+  }, [savedByProvider]);
+
+  const saveRoutes = async (changes: Partial<Record<PaymentMethod, string | null>>) => {
+    try {
+      for (const [method, provider] of Object.entries(changes)) {
+        await setRoute.mutateAsync({ method: method as PaymentMethod, provider: provider ?? null });
+      }
+      toast.success("Roteamento salvo. O checkout já usa essa escolha.");
+      return true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível salvar o roteamento.");
+      return false;
+    }
+  };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Integrações"
-        subtitle="Organize os gateways da sua operação e prepare cada conexão para uma implementação segura."
+        subtitle="Conecte suas próprias contas de gateway. A PAVOX orquestra os pagamentos — as contas são suas."
       />
+
       <div
         id="gateway-catalog"
         className="scroll-mt-6 surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -59,7 +146,7 @@ export function IntegrationHub() {
         <div>
           <p className="text-sm font-semibold">Catálogo de gateways</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {UI_GATEWAYS.length} provedores disponíveis para configuração.
+            {LIVE_PROVIDERS.length} disponíveis para conectar · {COMING_SOON.length} em breve
           </p>
         </div>
         <div className="relative w-full sm:max-w-xs">
@@ -73,238 +160,163 @@ export function IntegrationHub() {
           />
         </div>
       </div>
-      <PaymentRoutingSection
-        availableGateways={UI_GATEWAYS}
-        selectedGateways={selectedGateways}
-        onSelectedGatewaysChange={setSelectedGateways}
-      />
-      {filtered.length ? (
+
+      {isError ? (
+        <EmptyState
+          icon={AlertCircle}
+          title="Não foi possível carregar as integrações"
+          description="Verifique sua conexão e tente novamente."
+          action={
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Tentar novamente
+            </Button>
+          }
+        />
+      ) : isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((gateway) => (
-            <GatewayCard
-              key={gateway.id}
-              gateway={gateway}
-              onConfigure={() => setSelected(gateway)}
-            />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[180px] rounded-xl" />
           ))}
         </div>
       ) : (
-        <div className="surface py-16 text-center">
-          <p className="font-medium">Nenhum gateway encontrado</p>
-          <p className="mt-1 text-sm text-muted-foreground">Tente buscar por outro nome.</p>
-        </div>
+        <>
+          {live.length ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {live.map((provider) => {
+                const integration = savedByProvider.get(provider.id);
+                return (
+                  <LiveGatewayCard
+                    key={provider.id}
+                    provider={provider}
+                    integration={integration}
+                    onConnect={() => setConnect({ provider })}
+                    onManage={() => integration && setManage(integration)}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
+
+          <PaymentRoutingSection
+            availableGateways={connected}
+            compatibility={compatibility}
+            savedGateways={savedRoutes}
+            onSave={saveRoutes}
+            saving={setRoute.isPending}
+          />
+
+          {soon.length ? (
+            <section className="space-y-3 border-t border-border/70 pt-8">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold">Em breve</h2>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Estes gateways ainda não têm integração na PAVOX. Nenhuma conexão é feita com eles
+                por enquanto.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {soon.map((gateway) => (
+                  <div
+                    key={gateway.id}
+                    className="flex items-center gap-3 rounded-xl border border-border p-3 opacity-80"
+                  >
+                    <ProviderLogo provider={gateway} className="h-9 w-9 rounded-lg" />
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
+                      {gateway.name}
+                    </span>
+                    <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                      Em breve
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {!live.length && !soon.length ? (
+            <div className="surface py-16 text-center">
+              <p className="font-medium">Nenhum gateway encontrado</p>
+              <p className="mt-1 text-sm text-muted-foreground">Tente buscar por outro nome.</p>
+            </div>
+          ) : null}
+        </>
       )}
-      <GatewayConfigPanel gateway={selected} onClose={() => setSelected(null)} />
+
+      {connect ? (
+        <IntegrationConnectDialog
+          provider={connect.provider}
+          existing={connect.existing}
+          open
+          onOpenChange={(open) => {
+            if (!open) setConnect(null);
+          }}
+        />
+      ) : null}
+
+      {manage ? (
+        <IntegrationManageDialog
+          integration={manage}
+          open
+          onOpenChange={(open) => {
+            if (!open) setManage(null);
+          }}
+          onEdit={(provider, existing) => {
+            setManage(null);
+            setConnect({ provider, existing });
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
-function GatewayCard({ gateway, onConfigure }: { gateway: ProviderDef; onConfigure: () => void }) {
+function LiveGatewayCard({
+  provider,
+  integration,
+  onConnect,
+  onManage,
+}: {
+  provider: ProviderDef;
+  integration?: SavedIntegration | undefined;
+  onConnect: () => void;
+  onManage: () => void;
+}) {
+  const isConnected = Boolean(integration && integration.status !== "not_connected");
   return (
-    <article className="surface group flex min-h-[164px] flex-col p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-lift)]">
+    <article className="surface group flex min-h-[180px] flex-col p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-lift)]">
       <div className="flex items-start justify-between gap-3">
-        <ProviderLogo provider={gateway} className="h-11 w-11 rounded-xl" />
-        <span className="rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-          Não configurado
-        </span>
+        <ProviderLogo provider={provider} className="h-11 w-11 rounded-xl" />
+        <IntegrationStatusBadge status={integration?.status ?? "not_connected"} />
       </div>
-      <h3 className="mt-4 text-[15px] font-semibold">{gateway.name}</h3>
-      <p className="mt-1 text-[13px] text-muted-foreground">{gateway.desc}</p>
+      <h3 className="mt-4 text-[15px] font-semibold">{provider.name}</h3>
+      <p className="mt-1 text-[13px] text-muted-foreground">{provider.desc}</p>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {(isConnected ? integration!.enabledMethods : provider.methods).map((method) => (
+          <span
+            key={method}
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[11px] font-medium",
+              isConnected
+                ? "bg-secondary text-foreground"
+                : "border border-dashed border-border text-muted-foreground",
+            )}
+          >
+            {PAYMENT_METHOD_LABELS[method]}
+          </span>
+        ))}
+      </div>
       <div className="mt-auto pt-4">
-        <Button variant="outline" size="sm" className="w-full" onClick={onConfigure}>
-          Configurar <ChevronRight className="ml-auto h-4 w-4" />
-        </Button>
+        {isConnected ? (
+          <Button variant="outline" size="sm" className="w-full" onClick={onManage}>
+            Gerenciar
+          </Button>
+        ) : (
+          <Button size="sm" className="w-full" onClick={onConnect}>
+            Conectar
+          </Button>
+        )}
       </div>
     </article>
-  );
-}
-
-function GatewayConfigPanel({
-  gateway,
-  onClose,
-}: {
-  gateway: ProviderDef | null;
-  onClose: () => void;
-}) {
-  const [showSecret, setShowSecret] = useState(false);
-  const [additional, setAdditional] = useState(false);
-  const [methods, setMethods] = useState<string[]>([]);
-  const [installments, setInstallments] = useState(false);
-  const [saved, setSaved] = useState(false);
-  if (!gateway) return null;
-  const toggle = (method: string) =>
-    setMethods((current) =>
-      current.includes(method) ? current.filter((item) => item !== method) : [...current, method],
-    );
-  return (
-    <Dialog open={Boolean(gateway)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto p-0 sm:max-w-2xl">
-        <div className="border-b border-border bg-gradient-to-br from-primary/[0.08] to-transparent p-6 pr-12">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <ProviderLogo provider={gateway} className="h-12 w-12 rounded-2xl" />
-              <div>
-                <DialogTitle>{gateway.name}</DialogTitle>
-                <DialogDescription className="mt-1">
-                  Configuração preparada para integração futura.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-        </div>
-        <div className="space-y-5 p-6">
-          <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/[0.05] p-3 text-xs text-muted-foreground">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <span>
-              Nenhuma credencial foi cadastrada. Esta tela é apenas a estrutura visual para o time
-              técnico conectar o gateway posteriormente.
-            </span>
-          </div>
-          <section className="space-y-3">
-            <SectionTitle icon={KeyRound} title="Credenciais" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Chave pública" placeholder="A definir pelo desenvolvedor" />
-              <div className="space-y-2">
-                <Label>Chave secreta</Label>
-                <div className="relative">
-                  <Input
-                    type={showSecret ? "text" : "password"}
-                    placeholder="A definir pelo desenvolvedor"
-                    disabled
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowSecret(!showSecret)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    aria-label={showSecret ? "Ocultar chave" : "Mostrar chave"}
-                  >
-                    {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-          <section className="space-y-3">
-            <SectionTitle title="Métodos de pagamento" />
-            <p className="text-xs text-muted-foreground">
-              A disponibilidade de cada método será definida pelo adaptador do gateway.
-            </p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {UI_PAYMENT_METHODS.map(([id, label]) => (
-                <label
-                  key={id}
-                  className={cn(
-                    "flex items-center justify-between rounded-lg border p-3 text-sm",
-                    methods.includes(id) && "border-primary/50 bg-primary/[0.04]",
-                  )}
-                >
-                  <span>{label}</span>
-                  <Switch
-                    checked={methods.includes(id)}
-                    onCheckedChange={() => toggle(id)}
-                    aria-label={label}
-                  />
-                </label>
-              ))}
-            </div>
-          </section>
-          <section className="space-y-3">
-            <SectionTitle title="Parcelamento" />
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Permitir parcelamento</p>
-                <p className="text-xs text-muted-foreground">
-                  Valores e regras serão definidos posteriormente.
-                </p>
-              </div>
-              <Switch checked={installments} onCheckedChange={setInstallments} />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Número máximo de parcelas"
-                placeholder="Não definido"
-                disabled={!installments}
-              />
-              <Field label="Juros / taxa (%)" placeholder="Não definido" disabled={!installments} />
-            </div>
-          </section>
-          <section className="overflow-hidden rounded-xl border">
-            <button
-              type="button"
-              onClick={() => setAdditional(!additional)}
-              className="flex w-full items-center justify-between p-4 text-left"
-            >
-              <span className="text-sm font-semibold">Configurações adicionais</span>
-              {additional ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </button>
-            {additional && (
-              <div className="border-t px-4 py-5 text-xs text-muted-foreground">
-                Nenhum parâmetro adicional definido. Este espaço está reservado para configurações
-                específicas deste gateway.
-              </div>
-            )}
-          </section>
-          <section className="space-y-3">
-            <SectionTitle icon={Webhook} title="Webhook" />
-            <div className="rounded-xl border border-dashed p-4">
-              <p className="text-sm font-medium">Disponível após integração</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                A URL, o token e os eventos serão exibidos quando o backend estiver conectado.
-              </p>
-            </div>
-          </section>
-          <section className="space-y-3">
-            <SectionTitle title="Status da integração" />
-            <div className="flex items-center justify-between rounded-xl border p-4">
-              <div>
-                <p className="text-sm font-medium">Não configurado</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Este estado não altera pagamentos nem o checkout.
-                </p>
-              </div>
-              <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
-            </div>
-          </section>
-          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
-            <Button variant="ghost" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button onClick={() => setSaved(true)}>
-              {saved ? "Alterações registradas localmente" : "Salvar configuração"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Field({
-  label,
-  placeholder,
-  disabled = false,
-}: {
-  label: string;
-  placeholder: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Input placeholder={placeholder} disabled={disabled} />
-    </div>
-  );
-}
-function SectionTitle({ icon: Icon, title }: { icon?: typeof KeyRound; title: string }) {
-  return (
-    <div className="flex items-center gap-2 text-sm font-semibold">
-      {Icon ? <Icon className="h-4 w-4 text-primary" /> : null}
-      {title}
-    </div>
   );
 }
