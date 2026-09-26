@@ -625,6 +625,7 @@ export type Database = {
         }
         Update: {
           company_name?: string
+          cpf?: string | null
           created_at?: string
           email?: string
           full_name?: string

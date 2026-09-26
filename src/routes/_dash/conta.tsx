@@ -44,12 +44,17 @@ function Conta() {
     setSavingCpf(true);
     const userId = authUser?.id;
     if (!userId) {
+      setSavingCpf(false);
       toast.error("Sua sessão expirou. Entre novamente para salvar o CPF.");
       return;
     }
 
-    setSavingCpf(true);
-    const { error } = await supabase.from("profiles").update({ cpf: normalizedCpf }).eq("id", userId);
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ cpf: normalizedCpf })
+      .eq("id", userId)
+      .select("id, cpf")
+      .maybeSingle();
     setSavingCpf(false);
     if (error) {
       console.error("[v0] Falha ao salvar CPF", {
@@ -63,6 +68,11 @@ function Conta() {
       } else {
         toast.error("Não foi possível salvar o CPF.");
       }
+      return;
+    }
+    if (!data || data.id !== userId || data.cpf !== normalizedCpf) {
+      console.error("[v0] Atualização de CPF sem linha retornada", { userId, data });
+      toast.error("Não foi possível confirmar o CPF salvo.");
       return;
     }
     toast.success("CPF salvo com sucesso.");
