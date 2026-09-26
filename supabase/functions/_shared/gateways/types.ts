@@ -60,7 +60,7 @@ export type ChargeInput = {
   notificationUrl: string;
   statementDescriptor: string;
   expiresAt: Date;
-  /** PAVOX fee retained by the gateway (split). Omitted when not applicable. */
+  /** PAVOX fee retained by the gateway (split: MP marketplace_fee, Asaas split). Omitted when not applicable. */
   marketplaceFee?: number | null;
 };
 

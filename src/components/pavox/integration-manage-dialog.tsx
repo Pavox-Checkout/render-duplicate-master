@@ -62,7 +62,11 @@ export function IntegrationManageDialog({
   const isActive = integration.status === "connected";
   const isOAuth = integration.connectionType === "oauth";
   // OAuth connections use the PAVOX application's webhook — nothing to configure.
-  const webhookUrl = user && !isOAuth ? integrationWebhookUrl(integration.provider, user.id) : "";
+  // Providers with autoWebhook get it registered by PAVOX when connecting.
+  const webhookUrl =
+    user && !isOAuth && !provider.autoWebhook
+      ? integrationWebhookUrl(integration.provider, user.id)
+      : "";
 
   const onTest = async () => {
     try {
@@ -151,6 +155,13 @@ export function IntegrationManageDialog({
               />
             ))}
           </dl>
+
+          {provider.autoWebhook ? (
+            <p className="rounded-lg border border-border p-3 text-[12.5px] text-muted-foreground">
+              O aviso de pagamento (webhook) foi configurado automaticamente na sua conta{" "}
+              {provider.name}. Pedidos pagos são confirmados na hora.
+            </p>
+          ) : null}
 
           {webhookUrl ? (
             <div className="space-y-1.5 rounded-lg border border-border p-3 text-[12.5px]">

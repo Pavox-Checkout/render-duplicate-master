@@ -7,18 +7,21 @@
 //
 // Secrets never come back in any response — only status and masked hints.
 import { admin, CORS_HEADERS, error, json, log, str } from "../_shared/http.ts";
-import { gatewayFor, providerSpec } from "../_shared/gateways/registry.ts";
+import { gatewayFor, providerSpec, SetupError } from "../_shared/gateways/registry.ts";
 import type { ConnectionStatus } from "../_shared/gateways/types.ts";
 import { loadConnection, webhookUrl } from "../_shared/payments.ts";
 
 const CONNECTION_MESSAGES: Record<ConnectionStatus, { status: number; message: string }> = {
   connected: { status: 200, message: "Conexão verificada com o gateway." },
-  invalid_credentials: { status: 422, message: "Credenciais inválidas. Confira o Access Token." },
+  invalid_credentials: { status: 422, message: "Credenciais inválidas. Confira a chave copiada do gateway." },
   expired_credentials: { status: 422, message: "Credenciais expiradas. Gere novas credenciais no gateway." },
   permission_error: { status: 422, message: "A conta não tem permissão para receber pagamentos no Brasil." },
   gateway_unavailable: { status: 503, message: "O gateway não respondeu. Tente novamente em instantes." },
   rate_limited: { status: 429, message: "Muitas tentativas. Aguarde um minuto e tente de novo." },
-  environment_mismatch: { status: 422, message: "Esta credencial é de teste. Use as credenciais de produção." },
+  environment_mismatch: {
+    status: 422,
+    message: "Esta credencial é de teste (sandbox). Use as credenciais de produção ou escolha o ambiente de teste.",
+  },
   unknown_error: { status: 502, message: "Não foi possível validar as credenciais agora." },
 };
 
@@ -109,12 +112,30 @@ Deno.serve(async (req) => {
   }
 
   const masked = Object.fromEntries(Object.entries(credentials).map(([k, v]) => [k, mask(v)]));
+
+  // Provider-specific setup (e.g. Asaas: register the PAVOX webhook).
+  let extra: Record<string, string> = {};
+  if (spec.onConnect) {
+    const { data: user } = await admin.auth.admin.getUserById(userId);
+    try {
+      extra = await spec.onConnect(credentials, environment, {
+        webhookUrl: webhookUrl(provider, userId),
+        email: user?.user?.email ?? "",
+        methods,
+      });
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      log("integration.failed", { store_id: userId, provider, status: "setup_error", detail });
+      if (err instanceof SetupError) return error("setup_failed", detail, 422);
+      return error("setup_failed", "Não foi possível concluir a conexão com o gateway.", 502);
+    }
+  }
   const { data: integration, error: saveError } = await admin.rpc("pavox_save_integration", {
     p_user_id: userId,
     p_provider: provider,
     p_environment: environment,
     p_methods: methods,
-    p_credentials: credentials,
+    p_credentials: { ...credentials, ...extra },
     p_masked: masked,
     p_account_label: result.accountLabel ?? "",
     p_connection_type: "manual",

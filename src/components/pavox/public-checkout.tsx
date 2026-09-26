@@ -32,6 +32,8 @@ type PublicCheckout = {
   store: { slug: string; name: string };
   product: PublicProduct | null;
   payment_methods: string[];
+  /** Methods whose gateway requires the buyer's CPF/CNPJ (e.g. boleto, Asaas). */
+  document_required?: string[];
 };
 
 type PublicOrder = {
@@ -303,6 +305,7 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
         device={mobile ? "mobile" : "desktop"}
         mode="published"
         availableMethods={data.payment_methods}
+        documentRequiredMethods={data.document_required ?? ["boleto"]}
         onSubmit={(s) => void submit(s)}
         submitting={submitting}
         cardSlot={

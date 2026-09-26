@@ -2,7 +2,7 @@
 // Order state only changes through pavox_apply_payment_status(), always
 // after reading the charge server-to-server from the gateway.
 import { admin, log } from "./http.ts";
-import { gatewayFor } from "./gateways/registry.ts";
+import { gatewayFor, providerSpec } from "./gateways/registry.ts";
 import {
   GatewayError,
   type Buyer,
@@ -11,13 +11,7 @@ import {
   type ChargeResult,
   type PaymentGateway,
 } from "./gateways/types.ts";
-import {
-  needsRefresh,
-  oauthConfig,
-  oauthCredentials,
-  refreshTokens,
-  splitFee,
-} from "./gateways/mercadopago-oauth.ts";
+import { needsRefresh, oauthConfig, oauthCredentials, refreshTokens } from "./gateways/mercadopago-oauth.ts";
 import { emailConfig, orderEmail, sendEmail } from "./email.ts";
 
 type OrderForPayment = {
@@ -50,7 +44,8 @@ export async function loadConnection(userId: string, provider: string): Promise<
     p_provider: provider,
   });
   const row = data as { environment: string; status: string; credentials: Record<string, string> } | null;
-  if (error || !row || !row.credentials?.["access_token"]) {
+  const spec = providerSpec(provider);
+  if (error || !row || !spec || spec.requiredCredentials.some((key) => !row.credentials?.[key])) {
     throw new GatewayError("invalid_credentials", "Integração não configurada.");
   }
   let credentials = row.credentials;
@@ -150,9 +145,10 @@ export async function chargeOrder(orderId: string, options: { card?: CardData } 
   if (method === "card" && !options.card) throw new GatewayError("invalid_request", "Dados do cartão ausentes.");
 
   const { gateway, credentials } = await loadConnection(order.user_id, order.provider);
-  // Fee fixed at charge time. With OAuth, Mercado Pago retains it (split);
-  // otherwise it is recorded for later billing when the order is approved.
-  const marketplaceFee = splitFee(credentials, Number(order.platform_fee_quote));
+  // Fee fixed at charge time. When the gateway can retain it (Mercado Pago via
+  // OAuth, Asaas with a PAVOX wallet) it goes as split; otherwise it is
+  // recorded for later billing when the order is approved.
+  const marketplaceFee = providerSpec(order.provider)?.splitFee(credentials, Number(order.platform_fee_quote)) ?? null;
   const expiresAt = order.expires_at ? new Date(order.expires_at) : new Date(Date.now() + 30 * 60 * 1000);
   const result = await gateway.createCharge({
     method,
