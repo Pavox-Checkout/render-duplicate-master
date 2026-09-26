@@ -602,27 +602,30 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          company_name: string
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          store_slug: string
-          updated_at: string
-        }
-        Insert: {
-          company_name?: string
-          created_at?: string
-          email?: string
-          full_name?: string
-          id: string
+  profiles: {
+  Row: {
+  company_name: string
+  cpf: string | null
+  created_at: string
+  email: string
+  full_name: string
+  id: string
+  store_slug: string
+  updated_at: string
+  }
+  Insert: {
+  company_name?: string
+  cpf?: string | null
+  created_at?: string
+  email?: string
+  full_name?: string
+  id: string
           store_slug: string
           updated_at?: string
         }
         Update: {
           company_name?: string
+          cpf?: string | null
           created_at?: string
           email?: string
           full_name?: string
