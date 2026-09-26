@@ -204,6 +204,7 @@ export type Database = {
           currency: string
           customer_id: string | null
           discount: number
+          emails_sent: Json
           expires_at: string | null
           fee_collection: string | null
           gateway: string | null
@@ -232,6 +233,7 @@ export type Database = {
           currency?: string
           customer_id?: string | null
           discount?: number
+          emails_sent?: Json
           expires_at?: string | null
           fee_collection?: string | null
           gateway?: string | null
@@ -260,6 +262,7 @@ export type Database = {
           currency?: string
           customer_id?: string | null
           discount?: number
+          emails_sent?: Json
           expires_at?: string | null
           fee_collection?: string | null
           gateway?: string | null

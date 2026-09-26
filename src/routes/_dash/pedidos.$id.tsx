@@ -1,9 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Copy, Mail, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FunctionsHttpError } from "@supabase/supabase-js";
+import { ArrowLeft, Copy, Loader2, Mail, RotateCcw } from "lucide-react";
 import { StatusBadge } from "@/components/pavox/status-badge";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { brl } from "@/lib/mock";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,6 +35,30 @@ export const Route = createFileRoute("/_dash/pedidos/$id")({
   }),
 });
 
+const METHOD_LABELS: Record<string, string> = {
+  pix: "Pix",
+  card: "Cartão de crédito",
+  boleto: "Boleto",
+};
+
+/** Merchant order actions run on the backend (Edge Function `orders`). */
+async function orderAction(action: "refund" | "resend_receipt", orderId: string) {
+  const { data, error } = await supabase.functions.invoke("orders", { body: { action, orderId } });
+  if (error) {
+    let message = "Não foi possível falar com o servidor. Tente novamente.";
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const payload = (await error.context.json()) as { message?: string };
+        if (payload?.message) message = payload.message;
+      } catch {
+        // keep the generic message
+      }
+    }
+    throw new Error(message);
+  }
+  return data as { message: string };
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 py-2.5 text-[13.5px]">
@@ -34,6 +70,26 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function PedidoDetalhe() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
+  const [confirmRefund, setConfirmRefund] = useState(false);
+  const refund = useMutation({
+    mutationFn: () => orderAction("refund", id),
+    onSuccess: (res) => {
+      toast.success(res.message);
+      setConfirmRefund(false);
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Não foi possível reembolsar."),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+  const resend = useMutation({
+    mutationFn: () => orderAction("resend_receipt", id),
+    onSuccess: (res) => toast.success(res.message),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Não foi possível reenviar."),
+  });
   const { data: order, isLoading } = useQuery({
     queryKey: ["orders", id],
     queryFn: async () => {
@@ -82,11 +138,29 @@ function PedidoDetalhe() {
               >
                 <Copy className="h-4 w-4" /> Copiar ID
               </Button>
-              {/* Sem backend ainda: desabilitados em vez de fingir sucesso. */}
-              <Button variant="outline" disabled title="Em breve">
-                <Mail className="h-4 w-4" /> Reenviar recibo
+              <Button
+                variant="outline"
+                disabled={order.status !== "Aprovado" || resend.isPending}
+                title={
+                  order.status !== "Aprovado" ? "Disponível para pedidos aprovados" : undefined
+                }
+                onClick={() => resend.mutate()}
+              >
+                {resend.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
+                Reenviar recibo
               </Button>
-              <Button variant="outline" disabled title="Em breve">
+              <Button
+                variant="outline"
+                disabled={order.status !== "Aprovado" || refund.isPending}
+                title={
+                  order.status !== "Aprovado" ? "Disponível para pedidos aprovados" : undefined
+                }
+                onClick={() => setConfirmRefund(true)}
+              >
                 <RotateCcw className="h-4 w-4" /> Reembolsar
               </Button>
             </div>
@@ -96,7 +170,10 @@ function PedidoDetalhe() {
             <div className="surface p-5">
               <h2 className="text-base font-semibold">Resumo</h2>
               <div className="mt-4 divide-y divide-border">
-                <Row label="Produto" value={String((order.product_snapshot as { name?: string } | null)?.name ?? "—")} />
+                <Row
+                  label="Produto"
+                  value={String((order.product_snapshot as { name?: string } | null)?.name ?? "—")}
+                />
                 <Row label="Subtotal" value={brl(Number(order.subtotal))} />
                 <Row label="Desconto" value={brl(Number(order.discount))} />
                 <Row label="Total" value={brl(Number(order.amount))} />
@@ -106,17 +183,31 @@ function PedidoDetalhe() {
               </div>
               <h2 className="mt-6 text-base font-semibold">Cliente</h2>
               <div className="mt-2 divide-y divide-border">
-                <Row label="Nome" value={String((order.buyer as { name?: string } | null)?.name ?? "—")} />
-                <Row label="E-mail" value={String((order.buyer as { email?: string } | null)?.email ?? "—")} />
+                <Row
+                  label="Nome"
+                  value={String((order.buyer as { name?: string } | null)?.name ?? "—")}
+                />
+                <Row
+                  label="E-mail"
+                  value={String((order.buyer as { email?: string } | null)?.email ?? "—")}
+                />
               </div>
             </div>
             <div className="surface p-5">
               <h2 className="text-base font-semibold">Pagamento</h2>
               <div className="mt-3 divide-y divide-border">
-                <Row label="Método" value={order.payment_method === "pix" ? "Pix" : order.payment_method || "—"} />
+                <Row
+                  label="Método"
+                  value={METHOD_LABELS[order.payment_method ?? ""] ?? (order.payment_method || "—")}
+                />
                 <Row label="Status" value={order.status} />
-                <Row label="Gateway" value={order.gateway === "mercadopago" ? "Mercado Pago" : order.gateway || "—"} />
-                {order.paid_at ? <Row label="Pago em" value={new Date(order.paid_at).toLocaleString("pt-BR")} /> : null}
+                <Row
+                  label="Gateway"
+                  value={order.gateway === "mercadopago" ? "Mercado Pago" : order.gateway || "—"}
+                />
+                {order.paid_at ? (
+                  <Row label="Pago em" value={new Date(order.paid_at).toLocaleString("pt-BR")} />
+                ) : null}
                 {order.gateway_payment_id ? (
                   <div className="flex items-center justify-between gap-4 py-2.5 text-[13.5px]">
                     <span className="text-muted-foreground">ID no gateway</span>
@@ -136,6 +227,34 @@ function PedidoDetalhe() {
               </div>
             </div>
           </div>
+          <AlertDialog
+            open={confirmRefund}
+            onOpenChange={(o) => !refund.isPending && setConfirmRefund(o)}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reembolsar {brl(Number(order.amount))}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O valor total volta para o comprador pelo mesmo meio de pagamento, direto pelo
+                  Mercado Pago. Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={refund.isPending}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={refund.isPending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    refund.mutate();
+                  }}
+                >
+                  {refund.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Reembolsar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       )}
     </>

@@ -262,6 +262,27 @@ export class MercadoPagoGateway implements PaymentGateway {
     };
   }
 
+  async refund(orderId: string): Promise<{ status: NormalizedPaymentStatus }> {
+    // Empty body = full refund. Same order → same key, so a retry never refunds twice.
+    const res = await this.request(`/v1/orders/${encodeURIComponent(orderId)}/refund`, {
+      method: "POST",
+      headers: { "X-Idempotency-Key": `refund-${orderId}` },
+    });
+    const data = (await res.json().catch(() => ({}))) as MpOrder;
+    if (!res.ok) {
+      const mpError = data.errors?.[0];
+      const detail =
+        [mpError?.code, mpError?.message ?? data.message, ...(mpError?.details ?? [])]
+          .filter(Boolean)
+          .join(" | ") || `HTTP ${res.status}`;
+      if (res.status === 401 || res.status === 403 || res.status === 429 || res.status >= 500) {
+        throw new GatewayError(connectionStatusFor(res.status), detail, res.status);
+      }
+      throw new GatewayError("payment_rejected", detail, res.status);
+    }
+    return { status: normalize(data.status) };
+  }
+
   async getPayment(orderId: string): Promise<PaymentInfo> {
     const res = await this.request(`/v1/orders/${encodeURIComponent(orderId)}`);
     if (!res.ok) {

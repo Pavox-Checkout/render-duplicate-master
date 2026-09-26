@@ -18,6 +18,7 @@ import {
   refreshTokens,
   splitFee,
 } from "./gateways/mercadopago-oauth.ts";
+import { emailConfig, orderEmail, sendEmail } from "./email.ts";
 
 type OrderForPayment = {
   id: string;
@@ -238,7 +239,84 @@ export async function syncOrder(orderId: string, source: string, payload: Record
       source,
     });
   }
+  // The transition happens once (events are deduplicated), and the e-mail is
+  // claimed per order, so the buyer gets exactly one message per state.
+  if (result === "order_aprovado") await notifyBuyer(order.id, "paid");
+  if (result === "order_reembolsado") await notifyBuyer(order.id, "refunded");
   return result;
+}
+
+export type NotifyResult = "sent" | "already_sent" | "not_configured" | "no_email" | "failed";
+
+/**
+ * E-mails the buyer about a paid/refunded order. Never throws: a failed e-mail
+ * must not undo a payment. `force` re-sends (merchant "Reenviar recibo").
+ */
+export async function notifyBuyer(
+  orderId: string,
+  kind: "paid" | "refunded",
+  options: { force?: boolean } = {},
+): Promise<NotifyResult> {
+  const config = emailConfig();
+  if (!config) {
+    log("email.skipped", { order_id: orderId, kind, reason: "not_configured" });
+    return "not_configured";
+  }
+  try {
+    const order = await orderForPayment(orderId);
+    const to = order?.buyer?.email ?? "";
+    if (!order || !to) return "no_email";
+
+    const { data: claimed, error: claimError } = await admin.rpc("pavox_claim_order_email", {
+      p_order_id: orderId,
+      p_kind: kind,
+      p_force: options.force ?? false,
+    });
+    if (claimError) throw new Error(claimError.message);
+    if (!claimed) return "already_sent";
+
+    const { data: row } = await admin.from("orders").select("payment_data").eq("id", orderId).maybeSingle();
+    const installments = Number((row?.payment_data as { installments?: number } | null)?.installments ?? 1);
+    const msg = orderEmail({
+      kind,
+      storeName: order.store_name,
+      buyerName: order.buyer.name,
+      buyerEmail: to,
+      reference: order.reference,
+      productName: order.product.name,
+      amount: Number(order.amount),
+      method: order.payment_method,
+      installments,
+    });
+    try {
+      const messageId = await sendEmail(config, { to, toName: order.buyer.name, senderName: order.store_name, ...msg });
+      log("email.sent", { order_id: orderId, kind, message_id: messageId });
+      return "sent";
+    } catch (err) {
+      // Let a later attempt (e.g. "Reenviar recibo") try again.
+      await admin.rpc("pavox_release_order_email", { p_order_id: orderId, p_kind: kind });
+      throw err;
+    }
+  } catch (err) {
+    log("email.failed", { order_id: orderId, kind, detail: err instanceof Error ? err.message : String(err) });
+    return "failed";
+  }
+}
+
+/** Full refund of an approved order that belongs to `userId`. */
+export async function refundOrder(orderId: string, userId: string) {
+  const order = await orderForPayment(orderId);
+  if (!order || order.user_id !== userId) throw new GatewayError("invalid_request", "order_not_found");
+  if (order.status === "Reembolsado") return publicOrder(orderId);
+  if (order.status !== "Aprovado" || !order.gateway || !order.gateway_payment_id) {
+    throw new GatewayError("invalid_request", "order_not_refundable");
+  }
+  const gateway = await loadGateway(order.user_id, order.gateway);
+  const result = await gateway.refund(order.gateway_payment_id);
+  log("payment.refund_requested", { order_id: orderId, gateway_payment_id: order.gateway_payment_id, status: result.status });
+  // Re-read from the gateway and apply (same path as the webhook).
+  await syncOrder(orderId, "refund");
+  return publicOrder(orderId);
 }
 
 export function webhookUrl(provider: string, userId: string) {

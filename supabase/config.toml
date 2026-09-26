@@ -18,3 +18,7 @@ verify_jwt = false
 
 [functions.mercadopago-oauth]
 verify_jwt = false
+
+# Merchant order actions (refund, resend receipt); authenticates in code.
+[functions.orders]
+verify_jwt = false
