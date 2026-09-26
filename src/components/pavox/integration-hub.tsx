@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
+import { PaymentRoutingSection } from "@/components/pavox/payment-routing-section";
 import { ProviderLogo } from "@/components/pavox/provider-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,10 @@ export function IntegrationHub() {
         title="Integrações"
         subtitle="Organize os gateways da sua operação e prepare cada conexão para uma implementação segura."
       />
-      <div className="surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        id="gateway-catalog"
+        className="scroll-mt-6 surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div>
           <p className="text-sm font-semibold">Catálogo de gateways</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -79,6 +83,7 @@ export function IntegrationHub() {
           <p className="mt-1 text-sm text-muted-foreground">Tente buscar por outro nome.</p>
         </div>
       )}
+      <PaymentRoutingSection />
       <GatewayConfigPanel gateway={selected} onClose={() => setSelected(null)} />
     </div>
   );
