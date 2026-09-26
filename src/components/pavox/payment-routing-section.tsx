@@ -31,6 +31,8 @@ type PaymentRoutingSectionProps = {
   onSelectedGatewaysChange?: (selected: Partial<Record<PaymentMethod, string>>) => void;
 };
 
+const NONE_GATEWAY = "__none__";
+
 const routingMethods: Array<{
   id: PaymentMethod;
   label: string;
@@ -120,6 +122,16 @@ export function PaymentRoutingSection({
         </AlertDescription>
       </Alert>
 
+      {Object.values(selectedGateways).length === routingMethods.length &&
+        Object.values(selectedGateways).every((gatewayId) => gatewayId === NONE_GATEWAY) && (
+          <Alert variant="destructive" className="mb-5">
+            <AlertTitle>Nenhum método de pagamento está ativo.</AlertTitle>
+            <AlertDescription>
+              Configure pelo menos um método para permitir pagamentos.
+            </AlertDescription>
+          </Alert>
+        )}
+
       <div className="grid gap-4 xl:grid-cols-3">
         {routingMethods.map((method) => (
           <PaymentRoutingCard
@@ -166,6 +178,7 @@ function PaymentRoutingCard({
   onSelect: (gatewayId: string) => void;
 }) {
   const selected = gateways.find((gateway) => gateway.id === selectedGateway);
+  const isDisabled = selectedGateway === NONE_GATEWAY;
   const hasGateways = gateways.length > 0;
 
   return (
@@ -175,6 +188,7 @@ function PaymentRoutingCard({
       className={cn(
         "flex min-h-[278px] flex-col transition-colors",
         selected && "border-primary/40",
+        isDisabled && "border-muted-foreground/30 bg-muted/10",
       )}
     >
       <CardHeader className="gap-3">
@@ -182,8 +196,11 @@ function PaymentRoutingCard({
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary/[0.08] text-sm font-bold text-primary">
             {method.label === "Cartão" ? "CC" : method.label.slice(0, 2)}
           </div>
-          <Badge variant={selected ? "default" : "secondary"} className="rounded-full">
-            {selected ? "Configurado" : "Não configurado"}
+          <Badge
+            variant={selected ? "default" : isDisabled ? "outline" : "secondary"}
+            className="rounded-full"
+          >
+            {selected ? "Configurado" : isDisabled ? "Não utilizado" : "Não configurado"}
           </Badge>
         </div>
         <div>
@@ -199,6 +216,7 @@ function PaymentRoutingCard({
             />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value={NONE_GATEWAY}>Nenhum</SelectItem>
             {gateways.map((gateway) => (
               <SelectItem key={gateway.id} value={gateway.id}>
                 <span className="flex items-center gap-2">
@@ -216,6 +234,10 @@ function PaymentRoutingCard({
               <strong className="font-semibold text-foreground">{selected.name}</strong> será usado
               neste método.
             </span>
+          </div>
+        ) : isDisabled ? (
+          <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">
+            Este método de pagamento não está sendo utilizado.
           </div>
         ) : (
           <div className="rounded-lg border border-dashed p-3 text-xs leading-5 text-muted-foreground">
