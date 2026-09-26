@@ -1,6 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
-import { CreditCard, Loader2, Receipt, Wallet, AlertCircle, CalendarClock, LockKeyhole } from "lucide-react";
+import {
+  CreditCard,
+  Loader2,
+  Receipt,
+  Wallet,
+  AlertCircle,
+  CalendarClock,
+  LockKeyhole,
+  Copy,
+  CheckCircle2,
+} from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { Button } from "@/components/ui/button";
@@ -8,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { brl } from "@/lib/mock";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +38,7 @@ import {
   useBillingRecords,
   useSubscription,
   useTransactionFees,
+  PLAN_CATALOG,
 } from "@/lib/billing";
 
 export const Route = createFileRoute("/_dash/planos")({
@@ -141,6 +153,20 @@ function Planos() {
           <Button variant="outline" disabled aria-disabled="true">
             Gerenciar plano
           </Button>
+        </div>
+      </section>
+
+      <section className="surface p-5" aria-labelledby="alterar-plano">
+        <h2 id="alterar-plano" className="text-base font-semibold">
+          Planos PAVOX
+        </h2>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          Escolha Growth ou Pro e pague a primeira mensalidade via PIX no Asaas Sandbox.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {PLAN_CATALOG.filter((plan) => plan.monthlyPrice > 0).map((plan) => (
+            <PlanPixDialog key={plan.slug} plan={plan} />
+          ))}
         </div>
       </section>
 
@@ -278,6 +304,85 @@ function Planos() {
   );
 }
 
+function PlanPixDialog({ plan }: { plan: (typeof PLAN_CATALOG)[number] }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [payment, setPayment] = useState<{
+    pix: { encodedImage: string; payload: string };
+    plan: { name: string; amount: number };
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const createPix = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.functions.invoke("asaas-plan-pix", {
+      body: { planSlug: plan.slug },
+    });
+    setLoading(false);
+    if (error || data?.error) return;
+    setPayment(data.payment);
+  };
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        setOpen(value);
+        if (value && !payment) void createPix();
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant={plan.highlight ? "default" : "outline"} className="justify-between">
+          <span>Assinar {plan.name}</span>
+          <span>{brl(plan.monthlyPrice)}/mês</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Pagamento PIX · {plan.name}</DialogTitle>
+          <DialogDescription>
+            Use o QR Code para pagar a mensalidade no Asaas Sandbox. O plano só é ativado após a
+            confirmação.
+          </DialogDescription>
+        </DialogHeader>
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : payment ? (
+          <div className="space-y-4">
+            <img
+              src={`data:image/png;base64,${payment.pix.encodedImage}`}
+              alt="QR Code PIX da mensalidade"
+              className="mx-auto h-52 w-52 rounded-lg border p-2"
+            />
+            <p className="text-center text-sm font-semibold">{brl(payment.plan.amount)}</p>
+            <div className="flex gap-2">
+              <Input readOnly value={payment.pix.payload} aria-label="Código PIX copia e cola" />
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => {
+                  void navigator.clipboard.writeText(payment.pix.payload);
+                  setCopied(true);
+                }}
+                aria-label="Copiar código PIX"
+              >
+                {copied ? <CheckCircle2 /> : <Copy />}
+              </Button>
+            </div>
+            <p className="text-center text-xs text-muted-foreground">
+              Após o pagamento, o webhook confirma e atualiza seu plano automaticamente.
+            </p>
+          </div>
+        ) : (
+          <p className="py-6 text-sm text-destructive">
+            Não foi possível gerar o PIX. Cadastre CPF/CNPJ e tente novamente.
+          </p>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PaymentMethodDialog() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -312,7 +417,9 @@ function PaymentMethodDialog() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
             <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <span>Seus dados serão tokenizados pelo provedor quando a integração estiver disponível.</span>
+            <span>
+              Seus dados serão tokenizados pelo provedor quando a integração estiver disponível.
+            </span>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -334,11 +441,26 @@ function PaymentMethodDialog() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="card-expiry">Validade</Label>
-              <Input id="card-expiry" name="expiry" inputMode="numeric" autoComplete="cc-exp" placeholder="MM/AA" maxLength={5} required />
+              <Input
+                id="card-expiry"
+                name="expiry"
+                inputMode="numeric"
+                autoComplete="cc-exp"
+                placeholder="MM/AA"
+                maxLength={5}
+                required
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="card-cvv">CVV</Label>
-              <Input id="card-cvv" name="cvv" inputMode="numeric" autoComplete="cc-csc" maxLength={4} required />
+              <Input
+                id="card-cvv"
+                name="cvv"
+                inputMode="numeric"
+                autoComplete="cc-csc"
+                maxLength={4}
+                required
+              />
             </div>
           </div>
           <div className="flex flex-col gap-2">
@@ -351,19 +473,28 @@ function PaymentMethodDialog() {
             <span className="flex flex-col gap-1">
               <span className="font-medium">Usar este cartão para cobranças automáticas</span>
               <span className="text-muted-foreground">
-                Este cartão poderá ser utilizado para cobranças automáticas de taxas e outros valores devidos à PAVOX.
+                Este cartão poderá ser utilizado para cobranças automáticas de taxas e outros
+                valores devidos à PAVOX.
               </span>
             </span>
           </label>
 
           {notice && (
-            <div role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900">
+            <div
+              role="status"
+              className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900"
+            >
               {notice}
             </div>
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
