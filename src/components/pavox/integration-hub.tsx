@@ -10,7 +10,6 @@ import {
   Webhook,
   X,
 } from "lucide-react";
-import { ActiveGatewaysSummary } from "@/components/pavox/active-gateways-summary";
 import { PageHeader } from "@/components/pavox/page-header";
 import {
   PaymentRoutingSection,
@@ -74,14 +73,6 @@ export function IntegrationHub() {
           />
         </div>
       </div>
-      <ActiveGatewaysSummary
-        selectedGateways={selectedGateways}
-        gateways={UI_GATEWAYS}
-        onChangeGateway={(method) => {
-          document.getElementById("payment-routing-title")?.scrollIntoView({ behavior: "smooth" });
-          document.getElementById(`routing-${method}`)?.focus();
-        }}
-      />
       <PaymentRoutingSection
         availableGateways={UI_GATEWAYS}
         selectedGateways={selectedGateways}
