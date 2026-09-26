@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashRouteImport } from './routes/_dash'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as ConfirmarEmailRouteImport } from './routes/confirmar-email'
 import { Route as LoginRouteImport } from './routes/login'
@@ -26,6 +27,12 @@ import { Route as DashPavoxAiRouteImport } from './routes/_dash/pavox-ai'
 import { Route as DashPlanosRouteImport } from './routes/_dash/planos'
 import { Route as DashRecuperacaoRouteImport } from './routes/_dash/recuperacao'
 import { Route as DashVendasRouteImport } from './routes/_dash/vendas'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAssinaturasRouteImport } from './routes/admin/assinaturas'
+import { Route as AdminAtividadeRouteImport } from './routes/admin/atividade'
+import { Route as AdminIntegracoesRouteImport } from './routes/admin/integracoes'
+import { Route as AdminLojistasRouteImport } from './routes/admin/lojistas'
+import { Route as AdminTransacoesRouteImport } from './routes/admin/transacoes'
 import { Route as PlanosSelecionarRouteImport } from './routes/planos.selecionar'
 import { Route as DashCheckoutsIndexRouteImport } from './routes/_dash/checkouts.index'
 import { Route as DashCheckoutsIdRouteImport } from './routes/_dash/checkouts.$id'
@@ -59,6 +66,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const DashRoute = DashRouteImport.update({
   id: '/_dash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CadastroRoute = CadastroRouteImport.update({
@@ -135,6 +147,36 @@ const DashVendasRoute = DashVendasRouteImport.update({
   id: '/vendas',
   path: '/vendas',
   getParentRoute: () => DashRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAssinaturasRoute = AdminAssinaturasRouteImport.update({
+  id: '/assinaturas',
+  path: '/assinaturas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAtividadeRoute = AdminAtividadeRouteImport.update({
+  id: '/atividade',
+  path: '/atividade',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIntegracoesRoute = AdminIntegracoesRouteImport.update({
+  id: '/integracoes',
+  path: '/integracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLojistasRoute = AdminLojistasRouteImport.update({
+  id: '/lojistas',
+  path: '/lojistas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTransacoesRoute = AdminTransacoesRouteImport.update({
+  id: '/transacoes',
+  path: '/transacoes',
+  getParentRoute: () => AdminRoute,
 } as any)
 const PlanosSelecionarRoute = PlanosSelecionarRouteImport.update({
   id: '/planos/selecionar',
@@ -269,6 +311,7 @@ const CStoreCheckoutRoute = CStoreCheckoutRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/confirmar-email': typeof ConfirmarEmailRoute
   '/login': typeof LoginRoute
@@ -284,7 +327,13 @@ export interface FileRoutesByFullPath {
   '/planos': typeof DashPlanosRoute
   '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
+  '/admin/assinaturas': typeof AdminAssinaturasRoute
+  '/admin/atividade': typeof AdminAtividadeRoute
+  '/admin/integracoes': typeof AdminIntegracoesRoute
+  '/admin/lojistas': typeof AdminLojistasRoute
+  '/admin/transacoes': typeof AdminTransacoesRoute
   '/planos/selecionar': typeof PlanosSelecionarRoute
+  '/admin/': typeof AdminIndexRoute
   '/checkouts/$id': typeof DashCheckoutsIdRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/marketing/ab-testing': typeof DashMarketingAbTestingRoute
@@ -327,7 +376,13 @@ export interface FileRoutesByTo {
   '/planos': typeof DashPlanosRoute
   '/recuperacao': typeof DashRecuperacaoRoute
   '/vendas': typeof DashVendasRoute
+  '/admin/assinaturas': typeof AdminAssinaturasRoute
+  '/admin/atividade': typeof AdminAtividadeRoute
+  '/admin/integracoes': typeof AdminIntegracoesRoute
+  '/admin/lojistas': typeof AdminLojistasRoute
+  '/admin/transacoes': typeof AdminTransacoesRoute
   '/planos/selecionar': typeof PlanosSelecionarRoute
+  '/admin': typeof AdminIndexRoute
   '/checkouts/$id': typeof DashCheckoutsIdRoute
   '/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/marketing/ab-testing': typeof DashMarketingAbTestingRoute
@@ -357,6 +412,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_dash': typeof DashRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/confirmar-email': typeof ConfirmarEmailRoute
   '/login': typeof LoginRoute
@@ -372,7 +428,13 @@ export interface FileRoutesById {
   '/_dash/planos': typeof DashPlanosRoute
   '/_dash/recuperacao': typeof DashRecuperacaoRoute
   '/_dash/vendas': typeof DashVendasRoute
+  '/admin/assinaturas': typeof AdminAssinaturasRoute
+  '/admin/atividade': typeof AdminAtividadeRoute
+  '/admin/integracoes': typeof AdminIntegracoesRoute
+  '/admin/lojistas': typeof AdminLojistasRoute
+  '/admin/transacoes': typeof AdminTransacoesRoute
   '/planos/selecionar': typeof PlanosSelecionarRoute
+  '/admin/': typeof AdminIndexRoute
   '/_dash/checkouts/$id': typeof DashCheckoutsIdRoute
   '/_dash/checkouts/novo': typeof DashCheckoutsNovoRoute
   '/_dash/marketing/ab-testing': typeof DashMarketingAbTestingRoute
@@ -402,6 +464,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/cadastro'
     | '/confirmar-email'
     | '/login'
@@ -417,7 +480,13 @@ export interface FileRouteTypes {
     | '/planos'
     | '/recuperacao'
     | '/vendas'
+    | '/admin/assinaturas'
+    | '/admin/atividade'
+    | '/admin/integracoes'
+    | '/admin/lojistas'
+    | '/admin/transacoes'
     | '/planos/selecionar'
+    | '/admin/'
     | '/checkouts/$id'
     | '/checkouts/novo'
     | '/marketing/ab-testing'
@@ -460,7 +529,13 @@ export interface FileRouteTypes {
     | '/planos'
     | '/recuperacao'
     | '/vendas'
+    | '/admin/assinaturas'
+    | '/admin/atividade'
+    | '/admin/integracoes'
+    | '/admin/lojistas'
+    | '/admin/transacoes'
     | '/planos/selecionar'
+    | '/admin'
     | '/checkouts/$id'
     | '/checkouts/novo'
     | '/marketing/ab-testing'
@@ -489,6 +564,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_dash'
+    | '/admin'
     | '/cadastro'
     | '/confirmar-email'
     | '/login'
@@ -504,7 +580,13 @@ export interface FileRouteTypes {
     | '/_dash/planos'
     | '/_dash/recuperacao'
     | '/_dash/vendas'
+    | '/admin/assinaturas'
+    | '/admin/atividade'
+    | '/admin/integracoes'
+    | '/admin/lojistas'
+    | '/admin/transacoes'
     | '/planos/selecionar'
+    | '/admin/'
     | '/_dash/checkouts/$id'
     | '/_dash/checkouts/novo'
     | '/_dash/marketing/ab-testing'
@@ -534,6 +616,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashRoute: typeof DashRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   CadastroRoute: typeof CadastroRoute
   ConfirmarEmailRoute: typeof ConfirmarEmailRoute
   LoginRoute: typeof LoginRoute
@@ -555,6 +638,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof DashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cadastro': {
@@ -661,6 +751,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/vendas'
       preLoaderRoute: typeof DashVendasRouteImport
       parentRoute: typeof DashRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/assinaturas': {
+      id: '/admin/assinaturas'
+      path: '/assinaturas'
+      fullPath: '/admin/assinaturas'
+      preLoaderRoute: typeof AdminAssinaturasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/atividade': {
+      id: '/admin/atividade'
+      path: '/atividade'
+      fullPath: '/admin/atividade'
+      preLoaderRoute: typeof AdminAtividadeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/integracoes': {
+      id: '/admin/integracoes'
+      path: '/integracoes'
+      fullPath: '/admin/integracoes'
+      preLoaderRoute: typeof AdminIntegracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/lojistas': {
+      id: '/admin/lojistas'
+      path: '/lojistas'
+      fullPath: '/admin/lojistas'
+      preLoaderRoute: typeof AdminLojistasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/transacoes': {
+      id: '/admin/transacoes'
+      path: '/transacoes'
+      fullPath: '/admin/transacoes'
+      preLoaderRoute: typeof AdminTransacoesRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/planos/selecionar': {
       id: '/planos/selecionar'
@@ -918,9 +1050,30 @@ const DashRouteChildren: DashRouteChildren = {
 
 const DashRouteWithChildren = DashRoute._addFileChildren(DashRouteChildren)
 
+interface AdminRouteChildren {
+  AdminAssinaturasRoute: typeof AdminAssinaturasRoute
+  AdminAtividadeRoute: typeof AdminAtividadeRoute
+  AdminIntegracoesRoute: typeof AdminIntegracoesRoute
+  AdminLojistasRoute: typeof AdminLojistasRoute
+  AdminTransacoesRoute: typeof AdminTransacoesRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAssinaturasRoute: AdminAssinaturasRoute,
+  AdminAtividadeRoute: AdminAtividadeRoute,
+  AdminIntegracoesRoute: AdminIntegracoesRoute,
+  AdminLojistasRoute: AdminLojistasRoute,
+  AdminTransacoesRoute: AdminTransacoesRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashRoute: DashRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   CadastroRoute: CadastroRoute,
   ConfirmarEmailRoute: ConfirmarEmailRoute,
   LoginRoute: LoginRoute,
