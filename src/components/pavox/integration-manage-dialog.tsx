@@ -59,7 +59,9 @@ export function IntegrationManageDialog({
   if (!provider) return null;
 
   const isActive = integration.status === "connected";
-  const webhookUrl = user ? integrationWebhookUrl(integration.provider, user.id) : "";
+  const isOAuth = integration.connectionType === "oauth";
+  // OAuth connections use the PAVOX application's webhook — nothing to configure.
+  const webhookUrl = user && !isOAuth ? integrationWebhookUrl(integration.provider, user.id) : "";
 
   const onTest = async () => {
     try {
@@ -78,9 +80,10 @@ export function IntegrationManageDialog({
       setConfirmOpen(false);
       onOpenChange(false);
     } catch (err) {
-      const msg = err instanceof Error && err.message.includes("integration_not_verified")
-        ? "Teste a conexão com sucesso antes de reativar."
-        : "Não foi possível atualizar a integração.";
+      const msg =
+        err instanceof Error && err.message.includes("integration_not_verified")
+          ? "Teste a conexão com sucesso antes de reativar."
+          : "Não foi possível atualizar a integração.";
       toast.error(msg);
     }
   };
@@ -124,10 +127,24 @@ export function IntegrationManageDialog({
                 </div>
               }
             />
-            {integration.accountLabel ? <Row label="Conta" value={integration.accountLabel} /> : null}
+            {integration.accountLabel ? (
+              <Row label="Conta" value={integration.accountLabel} />
+            ) : null}
+            <Row
+              label="Conexão"
+              value={isOAuth ? `Pelo login do ${provider.name}` : "Chaves coladas manualmente"}
+            />
+            <Row
+              label="Taxa PAVOX"
+              value={
+                isOAuth
+                  ? "Descontada automaticamente em cada venda"
+                  : "Não descontada automaticamente"
+              }
+            />
             <Row label="Conectado em" value={formatDate(integration.createdAt)} />
             <Row label="Atualizado em" value={formatDate(integration.updatedAt)} />
-            {provider.credentialFields.map((field) => (
+            {(isOAuth ? [] : provider.credentialFields).map((field) => (
               <Row
                 key={field.key}
                 label={field.label}
@@ -144,11 +161,15 @@ export function IntegrationManageDialog({
             <div className="space-y-1.5 rounded-lg border border-border p-3 text-[12.5px]">
               <p className="font-medium">URL de notificações (webhook)</p>
               <p className="text-muted-foreground">
-                No painel do {provider.name}, em Suas integrações › Webhooks, cadastre esta URL com o evento
-                <strong> Order (Mercado Pago)</strong>. Assim os pedidos pagos são confirmados na hora.
+                No painel do {provider.name}, em Suas integrações › Webhooks, cadastre esta URL com
+                o evento
+                <strong> Order (Mercado Pago)</strong>. Assim os pedidos pagos são confirmados na
+                hora.
               </p>
               <div className="flex items-center gap-2">
-                <code className="min-w-0 flex-1 truncate rounded bg-secondary px-2 py-1 font-mono text-[11.5px]">{webhookUrl}</code>
+                <code className="min-w-0 flex-1 truncate rounded bg-secondary px-2 py-1 font-mono text-[11.5px]">
+                  {webhookUrl}
+                </code>
                 <Button
                   variant="outline"
                   size="sm"
@@ -164,7 +185,12 @@ export function IntegrationManageDialog({
           ) : null}
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => void onTest()} disabled={test.isPending}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void onTest()}
+              disabled={test.isPending}
+            >
               {test.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -177,13 +203,9 @@ export function IntegrationManageDialog({
                 </>
               )}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(provider, integration)}
-            >
+            <Button variant="outline" size="sm" onClick={() => onEdit(provider, integration)}>
               <Pencil className="h-4 w-4" />
-              Editar configuração
+              {isOAuth ? "Reconectar" : "Editar configuração"}
             </Button>
             <div className="ml-auto">
               {isActive ? (

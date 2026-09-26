@@ -1,7 +1,13 @@
 // Mercado Pago notifications (topic "Order").
 //
-// URL configured by the merchant in their Mercado Pago application:
-//   {SUPABASE_URL}/functions/v1/mercadopago-webhook?store={user_id}
+// URLs:
+//   {SUPABASE_URL}/functions/v1/mercadopago-webhook            — PAVOX application
+//     (stores connected with "Conectar com Mercado Pago"/OAuth)
+//   {SUPABASE_URL}/functions/v1/mercadopago-webhook?store={id} — a merchant's own
+//     application (stores connected by pasting credentials)
+//
+// Mercado Pago order ids are globally unique, so the order is found by id; the
+// optional `store` only narrows the lookup.
 //
 // The notification is treated as a hint only: the order is re-read from the
 // Mercado Pago API with the merchant's own credentials before anything changes.
@@ -31,7 +37,7 @@ Deno.serve(async (req) => {
 
   log("webhook.received", { provider: "mercadopago", type, resource_id: resourceId, store });
 
-  if (!UUID_RE.test(store) || !resourceId || resourceId.length > 64) {
+  if ((store && !UUID_RE.test(store)) || !resourceId || resourceId.length > 64) {
     log("webhook.invalid", { provider: "mercadopago", reason: "missing_store_or_id" });
     return json({ ok: true, ignored: "invalid" });
   }
@@ -40,13 +46,13 @@ Deno.serve(async (req) => {
     return json({ ok: true, ignored: type });
   }
 
-  const { data: order, error } = await admin
+  let query = admin
     .from("orders")
     .select("id")
-    .eq("user_id", store)
     .eq("gateway", "mercadopago")
-    .eq("gateway_payment_id", resourceId)
-    .maybeSingle();
+    .eq("gateway_payment_id", resourceId);
+  if (store) query = query.eq("user_id", store);
+  const { data: order, error } = await query.maybeSingle();
   if (error) {
     log("webhook.error", { provider: "mercadopago", detail: error.message });
     return json({ ok: false }, 500); // Mercado Pago retries.

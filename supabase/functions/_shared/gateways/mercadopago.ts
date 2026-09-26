@@ -138,6 +138,7 @@ export class MercadoPagoGateway implements PaymentGateway {
       external_reference: input.orderId,
       total_amount: money(input.amount),
       description: input.description.slice(0, 250),
+      ...(input.marketplaceFee ? { marketplace_fee: money(input.marketplaceFee) } : {}),
       transactions: {
         payments: [
           {

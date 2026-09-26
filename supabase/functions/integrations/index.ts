@@ -9,7 +9,7 @@
 import { admin, CORS_HEADERS, error, json, log, str } from "../_shared/http.ts";
 import { gatewayFor, providerSpec } from "../_shared/gateways/registry.ts";
 import type { ConnectionStatus } from "../_shared/gateways/types.ts";
-import { webhookUrl } from "../_shared/payments.ts";
+import { loadConnection, webhookUrl } from "../_shared/payments.ts";
 
 const CONNECTION_MESSAGES: Record<ConnectionStatus, { status: number; message: string }> = {
   connected: { status: 200, message: "Conexão verificada com o gateway." },
@@ -60,7 +60,8 @@ Deno.serve(async (req) => {
   if (body["action"] === "test") {
     const stored = await storedCredentials(userId, provider);
     if (!stored) return error("not_found", "Integração não encontrada.", 404);
-    const gateway = gatewayFor(provider, stored.credentials, stored.environment)!;
+    // Same path as a charge: an OAuth token close to expiring is renewed here.
+    const { gateway } = await loadConnection(userId, provider);
     const result = await gateway.testConnection();
     const { data: integration } = await admin.rpc("pavox_record_integration_test", {
       p_user_id: userId,
@@ -88,7 +89,10 @@ Deno.serve(async (req) => {
   const typed = (body["credentials"] && typeof body["credentials"] === "object"
     ? body["credentials"]
     : {}) as Record<string, unknown>;
-  const previous = (await storedCredentials(userId, provider))?.credentials ?? {};
+  const stored = (await storedCredentials(userId, provider))?.credentials ?? {};
+  // Switching from "Conectar com Mercado Pago" to manual keys: the OAuth token
+  // is not reused as if it were a pasted key.
+  const previous = stored["oauth"] === "true" ? {} : stored;
   const credentials: Record<string, string> = {};
   for (const key of spec.requiredCredentials) {
     const value = str(typed[key], 512).trim() || previous[key] || "";
@@ -113,6 +117,7 @@ Deno.serve(async (req) => {
     p_credentials: credentials,
     p_masked: masked,
     p_account_label: result.accountLabel ?? "",
+    p_connection_type: "manual",
   });
   if (saveError) {
     log("integration.failed", { store_id: userId, provider, status: "save_error", detail: saveError.message });

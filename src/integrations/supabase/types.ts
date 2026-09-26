@@ -205,6 +205,7 @@ export type Database = {
           customer_id: string | null
           discount: number
           expires_at: string | null
+          fee_collection: string | null
           gateway: string | null
           gateway_payment_id: string | null
           id: string
@@ -232,6 +233,7 @@ export type Database = {
           customer_id?: string | null
           discount?: number
           expires_at?: string | null
+          fee_collection?: string | null
           gateway?: string | null
           gateway_payment_id?: string | null
           id?: string
@@ -259,6 +261,7 @@ export type Database = {
           customer_id?: string | null
           discount?: number
           expires_at?: string | null
+          fee_collection?: string | null
           gateway?: string | null
           gateway_payment_id?: string | null
           id?: string
@@ -304,6 +307,9 @@ export type Database = {
       payment_integrations: {
         Row: {
           account_label: string
+          connection_type: string
+          external_account_id: string | null
+          token_expires_at: string | null
           created_at: string
           credentials: Json
           credentials_masked: Json
@@ -321,6 +327,9 @@ export type Database = {
         }
         Insert: {
           account_label?: string
+          connection_type?: string
+          external_account_id?: string | null
+          token_expires_at?: string | null
           created_at?: string
           credentials?: Json
           credentials_masked?: Json
@@ -338,6 +347,9 @@ export type Database = {
         }
         Update: {
           account_label?: string
+          connection_type?: string
+          external_account_id?: string | null
+          token_expires_at?: string | null
           created_at?: string
           credentials?: Json
           credentials_masked?: Json

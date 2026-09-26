@@ -91,10 +91,10 @@ Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta 
 - Prioridade: 🟠 alta
 
 ### 9. Taxa da PAVOX por venda
-- Estado atual: 🟡 parcial — `orders.platform_fee` calculada na aprovação (`pavox_platform_fee`, % do plano, 2 casas); cobrança do lojista ainda não existe
-- Problema: modelo de cobrança da taxa ainda não definido (fatura posterior × split).
-- Solução: `calculatePlatformFee` central em basis points; registrar no pedido ao confirmar pagamento.
-- Prioridade: 🟠 alta — **decisão de negócio pendente**
+- Estado atual: 🟡 parcial — decisão: **split no Mercado Pago com a taxa do plano**. Lojista conectado por "Conectar com Mercado Pago" (OAuth): a taxa (`pavox_platform_fee`) é fixada na cobrança e enviada como `marketplace_fee`; o pedido registra `fee_collection = 'split'`. Chaves coladas manualmente não permitem split: taxa registrada com `fee_collection = 'invoice'`, sem cobrança automática.
+- Arquivos: `_shared/gateways/mercadopago-oauth.ts` (`splitFee`), `_shared/payments.ts`, migration `0013_mercadopago_oauth_split.sql`
+- Pendente: validar o split com uma venda real de um lojista diferente da conta dona da aplicação PAVOX; cobrar (ou migrar para OAuth) os lojistas com chaves manuais; a conta dona da aplicação não paga taxa a si mesma.
+- Prioridade: 🟠 alta
 
 ## 🟡 Média
 
@@ -148,6 +148,15 @@ Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta 
 - Edge Functions: `public-checkout` (cria pedido + Pix, consulta status), `integrations` (salva/testa no gateway), `mercadopago-webhook`.
 - Testes: `supabase/functions/_shared/gateways/mercadopago_test.ts` (4 testes, API simulada); dry-runs das migrations 0010 e 0011 no banco (desfeitos); chamadas reais às Edge Functions via `pg_net` (400/404/401/409 esperados); E2E da página pública no navegador com respostas simuladas.
 - Pendente: compra sandbox real com credenciais de teste do lojista (gera o Order ID pedido pelo Mercado Pago), confirmação por webhook real, formato exato da resposta Orders validado em produção.
+
+## Sprint 4 — Conectar com Mercado Pago (OAuth) e split
+
+- Aplicação **PAVOX** no Mercado Pago (App ID 751778378668882), redirect `…/functions/v1/mercadopago-oauth`, webhook da aplicação sem `?store=` (tópico Order).
+- Migration `0013_mercadopago_oauth_split.sql`: `payment_integrations.connection_type/external_account_id/token_expires_at`, tabela `integration_oauth_states` (hash do state, uso único, 10 min), `pavox_consume_oauth_state`, `pavox_update_integration_credentials`, `orders.fee_collection`, taxa fixada em `pavox_attach_payment` e mantida na aprovação quando é split.
+- Edge Functions: `mercadopago-oauth` (início autenticado + retorno do Mercado Pago), renovação automática do token 30 dias antes de vencer (`loadConnection`), `marketplace_fee` no `POST /v1/orders`, webhook encontra o pedido pelo ID do Mercado Pago.
+- Front: botão "Conectar com Mercado Pago" (chaves manuais como opção avançada), aviso do resultado em `/integracoes?mp=…`, "Gerenciar" mostra o tipo de conexão e a taxa.
+- Testes: 14 testes Deno (OAuth, renovação, split, allowlist de retorno, `marketplace_fee`); dry-run da migration; `state` falso recusado e início sem login → 401 nas funções publicadas.
+- Pendente: secret `MP_CLIENT_SECRET` (usuária cola no Supabase); fluxo OAuth completo no navegador; renovação para lojistas sem vendas por 5+ meses (hoje só renova ao vender/testar).
 
 ## Histórico
 

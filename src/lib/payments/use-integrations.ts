@@ -20,7 +20,7 @@ const QUERY_KEY = ["payment-integrations"] as const;
 // Columns the browser may read. Secrets live in Supabase Vault and are only
 // reachable by the backend (Edge Function `integrations`).
 const SAFE_FIELDS =
-  "id, provider, environment, status, enabled_payment_methods, credentials_masked, routing, last_tested_at, last_test_status, account_label, created_at, updated_at";
+  "id, provider, environment, status, enabled_payment_methods, credentials_masked, routing, last_tested_at, last_test_status, account_label, connection_type, token_expires_at, created_at, updated_at";
 
 type IntegrationRow = {
   id: string;
@@ -33,6 +33,8 @@ type IntegrationRow = {
   last_tested_at: string | null;
   last_test_status: string | null;
   account_label?: string | null;
+  connection_type?: string | null;
+  token_expires_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -65,6 +67,8 @@ function mapRow(row: IntegrationRow): SavedIntegration {
     lastTestedAt: row.last_tested_at,
     lastTestStatus: row.last_test_status,
     accountLabel: row.account_label ?? "",
+    connectionType: row.connection_type === "oauth" ? "oauth" : "manual",
+    tokenExpiresAt: row.token_expires_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -84,8 +88,8 @@ export function useIntegrations() {
   });
 }
 
-async function invokeIntegrations<T>(body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("integrations", { body });
+async function invokeFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke(name, { body });
   if (error) {
     let message = "Não foi possível falar com o servidor. Tente novamente.";
     if (error instanceof FunctionsHttpError) {
@@ -99,6 +103,27 @@ async function invokeIntegrations<T>(body: Record<string, unknown>): Promise<T> 
     throw new Error(message);
   }
   return data as T;
+}
+
+function invokeIntegrations<T>(body: Record<string, unknown>): Promise<T> {
+  return invokeFunction<T>("integrations", body);
+}
+
+/**
+ * "Conectar com Mercado Pago": asks the backend for the authorization URL and
+ * sends the browser there. Mercado Pago brings the merchant back to
+ * /integracoes?mp=<result> after the login.
+ */
+export function useStartMercadoPagoOAuth() {
+  return useMutation({
+    mutationFn: async () => {
+      const { url } = await invokeFunction<{ url: string }>("mercadopago-oauth", {
+        action: "start",
+        returnTo: window.location.origin,
+      });
+      window.location.assign(url);
+    },
+  });
 }
 
 /** Public URL the merchant registers as the gateway webhook. */
