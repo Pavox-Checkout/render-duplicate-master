@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Download, Receipt, Search } from "lucide-react";
+import { ChevronRight, Download, Receipt, Search } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { StatusBadge } from "@/components/pavox/status-badge";
 import { EmptyState } from "@/components/pavox/empty-state";
@@ -27,6 +27,12 @@ export const Route = createFileRoute("/_dash/pedidos/")({
 });
 
 const filters = ["Todos", "Aprovados", "Pendentes", "Recusados", "Reembolsados"] as const;
+const METHOD_LABELS: Record<string, string> = {
+  pix: "Pix",
+  card: "Cartão de crédito",
+  boleto: "Boleto",
+};
+
 const mapStatus: Record<string, string> = {
   Aprovados: "Aprovado",
   Pendentes: "Pendente",
@@ -37,6 +43,7 @@ const mapStatus: Record<string, string> = {
 function Pedidos() {
   const [filter, setFilter] = useState<string>("Todos");
   const [q, setQ] = useState("");
+  const navigate = useNavigate();
   const { data: orders = [], isLoading } = useOrders();
 
   const rows = orders.filter((o) => {
@@ -110,19 +117,38 @@ function Pedidos() {
                     <th className="px-5 py-2.5 font-medium">Status</th>
                     <th className="px-5 py-2.5 font-medium">Método</th>
                     <th className="px-5 py-2.5 font-medium">Data</th>
+                    <th className="w-10 px-3 py-2.5" />
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((o) => (
-                    <tr key={o.id} className="border-b border-border/70 last:border-0 hover:bg-secondary/40">
-                      <td className="px-5 py-3 font-medium">#{o.reference || o.id.slice(0, 8)}</td>
+                    <tr
+                      key={o.id}
+                      onClick={() => navigate({ to: "/pedidos/$id", params: { id: o.id } })}
+                      className="cursor-pointer border-b border-border/70 last:border-0 hover:bg-secondary/40"
+                    >
+                      <td className="px-5 py-3 font-medium">
+                        <Link
+                          to="/pedidos/$id"
+                          params={{ id: o.id }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:underline"
+                        >
+                          #{o.reference || o.id.slice(0, 8)}
+                        </Link>
+                      </td>
                       <td className="px-5 py-3 font-semibold">{brl(Number(o.amount))}</td>
                       <td className="px-5 py-3">
                         <StatusBadge status={o.status} />
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground">{o.payment_method || "—"}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {METHOD_LABELS[o.payment_method] ?? (o.payment_method || "—")}
+                      </td>
                       <td className="px-5 py-3 text-muted-foreground">
                         {new Date(o.created_at).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        <ChevronRight className="h-4 w-4" />
                       </td>
                     </tr>
                   ))}
