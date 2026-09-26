@@ -891,6 +891,7 @@ export type Database = {
       }
       pavox_admin_merchant: { Args: { p_merchant_id: string }; Returns: Json }
       pavox_admin_add_note: { Args: { p_merchant_id: string; p_body: string }; Returns: string }
+      pavox_set_payment_route: { Args: { p_method: string; p_provider: string | null }; Returns: undefined }
       create_public_order: {
         Args: {
           p_buyer: Json

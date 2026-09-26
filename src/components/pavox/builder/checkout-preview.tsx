@@ -163,6 +163,8 @@ type Props = {
   availableMethods?: string[];
   /** Checkout público real: métodos cujo gateway exige CPF/CNPJ (boleto; Asaas). */
   documentRequiredMethods?: string[];
+  /** Checkout público real: métodos cujo gateway exige telefone. */
+  phoneRequiredMethods?: string[];
   /** Checkout público real: envia os dados ao backend (cria o pedido). */
   onSubmit?: (submission: CheckoutSubmission) => void;
   submitting?: boolean;
@@ -176,6 +178,7 @@ export function CheckoutPreview({
   mode = "design",
   availableMethods,
   documentRequiredMethods,
+  phoneRequiredMethods,
   onSubmit,
   submitting = false,
   cardSlot,
@@ -231,6 +234,7 @@ export function CheckoutPreview({
   };
 
   const docRequired = live && (method === "boleto" || (documentRequiredMethods ?? []).includes(method));
+  const phoneRequired = live && (phoneRequiredMethods ?? []).includes(method);
 
   const identityFields = useMemo<RuntimeField[]>(() => {
     if (identity === "pj") {
@@ -239,15 +243,16 @@ export function CheckoutPreview({
         { id: "fantasia", label: "Nome fantasia (opcional)", placeholder: "Nome comercial", required: false },
         { id: "cnpj", label: "CNPJ", placeholder: "00.000.000/0000-00", mask: maskCNPJ, validate: vCNPJ, required: true },
         { id: "email", label: "E-mail", placeholder: "Digite seu e-mail", type: "email", validate: vEmail, required: true },
-        { id: "phone", label: "Celular/WhatsApp", placeholder: "(00) 00000-0000", type: "tel", mask: maskPhone, validate: vPhone, required: c.fields.required.includes("phone") },
+        { id: "phone", label: "Celular/WhatsApp", placeholder: "(00) 00000-0000", type: "tel", mask: maskPhone, validate: vPhone, required: c.fields.required.includes("phone") || phoneRequired },
       ];
     }
-    // Boleto (e gateways como o Asaas) exigem CPF mesmo quando o lojista deixou o campo opcional.
+    // Boleto e alguns gateways exigem CPF (e telefone) mesmo quando o lojista deixou o campo opcional.
     return CUSTOMER_FIELDS.filter((f) => c.fields.customer.includes(f)).map((f) => ({
       ...PF_META[f],
-      required: c.fields.required.includes(f) || (docRequired && f === "doc"),
+      required:
+        c.fields.required.includes(f) || (docRequired && f === "doc") || (phoneRequired && f === "phone"),
     }));
-  }, [identity, c.fields.customer, c.fields.required, docRequired]);
+  }, [identity, c.fields.customer, c.fields.required, docRequired, phoneRequired]);
 
   const addressFields = useMemo<RuntimeField[]>(
     () =>
@@ -263,16 +268,19 @@ export function CheckoutPreview({
 
   // Boleto / CPF obrigatório: pede só o que ainda não foi pedido nas outras etapas.
   const boletoFields = useMemo<RuntimeField[]>(() => {
-    if (!docRequired) return [];
+    if (!docRequired && !phoneRequired) return [];
     const asked = new Set([
       ...identityFields.map((f) => f.id),
       ...(c.product.kind === "physical" ? addressFields.map((f) => f.id) : []),
     ]);
-    const needed = method === "boleto" ? BOLETO_FIELDS : [PF_META.doc];
+    const needed = [
+      ...(docRequired ? (method === "boleto" ? BOLETO_FIELDS : [PF_META.doc]) : []),
+      ...(phoneRequired ? [PF_META.phone] : []),
+    ];
     return needed
       .filter((f) => !asked.has(f.id) && !(f.id === "doc" && identity === "pj"))
       .map((f) => ({ ...f, required: true }));
-  }, [docRequired, method, identityFields, addressFields, c.product.kind, identity]);
+  }, [docRequired, phoneRequired, method, identityFields, addressFields, c.product.kind, identity]);
 
   const paymentFields = useMemo(() => [...cardFields, ...boletoFields], [cardFields, boletoFields]);
 
@@ -722,7 +730,7 @@ export function CheckoutPreview({
         {method === "pix" && boletoFields.length > 0 ? (
           <div className="space-y-2">
             <p className="text-[12px]" style={{ color: col.textMuted }}>
-              Para gerar o Pix precisamos do seu CPF.
+              Para gerar o Pix precisamos destes dados.
             </p>
             {FieldGrid(boletoFields)}
           </div>
