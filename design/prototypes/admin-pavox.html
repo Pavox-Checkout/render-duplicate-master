@@ -46,7 +46,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .mtop { position: sticky; top: 40px; z-index: 30; background: var(--navy); color: #fff; padding: 10px 16px 0; }
 .mtop .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 40px; }
 .mtop img { height: 22px; width: auto; display: block; }
-.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--hl); color: var(--navy); font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: transparent; border: 1px solid var(--on-navy-2); color: #fff; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .mtabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 6px -16px 0; padding: 0 12px; }
 .mtabs a { flex: none; padding: 10px 10px 12px; color: var(--on-navy-2); text-decoration: none; font-weight: 700; font-size: 14px; border-bottom: 3px solid transparent; }
 .mtabs a[aria-current="page"] { color: #fff; border-bottom-color: #7fa6ff; }
@@ -70,7 +70,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .attn .t { font-weight: 800; color: var(--navy); }
 .attn a { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--bad); text-decoration: none; }
 .attn a:hover { text-decoration: underline; }
-.attn a .c { background: #fbeceb; padding: 0 6px; border-radius: 4px; }
+.attn a .c { background: var(--hl); color: var(--navy); padding: 0 6px; border-radius: 3px 6px 4px 7px; }
 .attn .none { display: inline-flex; gap: 6px; align-items: center; color: var(--ok); font-weight: 700; }
 .fig { display: grid; gap: 22px; padding: 22px 0; border-bottom: 1px solid var(--rule); }
 .fig .lbl { font-size: 14.5px; font-weight: 600; color: var(--ink-2); }
@@ -109,8 +109,11 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .search svg { position: absolute; left: 12px; top: 11px; color: var(--ink-3); }
 .list { border-top: 1.5px solid var(--navy); }
 .lrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); color: inherit; text-decoration: none; }
+button.lrow[aria-current="true"] { background: var(--blue-wash); box-shadow: -8px 0 0 var(--blue-wash), 8px 0 0 var(--blue-wash); }
 a.lrow:hover, button.lrow:hover { background: var(--blue-wash); box-shadow: -8px 0 0 var(--blue-wash), 8px 0 0 var(--blue-wash); }
 button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); background: none; text-align: left; }
+.lrow > span:first-child .a, .lrow > span:nth-child(2) .a, .lrow > span > .b { display: block; }
+.lrow br { display: none; }
 .lrow .a { font-weight: 700; font-size: 15px; color: var(--navy); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lrow .b { font-size: 13px; color: var(--ink-3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lrow .r { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -119,6 +122,8 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
 .st svg { width: 13px; height: 13px; stroke-width: 2.4; }
 .st.ok { color: var(--ok); } .st.bad { color: var(--bad); } .st.wait { color: var(--warn); } .st.off { color: var(--ink-3); }
 .thead { display: none; }
+.dayrule { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 0 6px; border-bottom: 1.5px solid var(--navy); font-size: 12.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--navy); }
+.dayrule span + span { text-transform: none; letter-spacing: 0; font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; font-size: 14px; color: var(--ink-2); }
 .pager div { display: flex; gap: 6px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--rule-2); background: #fff; color: var(--navy); font-weight: 700; font-size: 14px; }
@@ -133,6 +138,7 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
 .sheet-wrap.open { display: block; }
 .sheet-wrap .scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, .4); }
 .sheet { position: absolute; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: var(--ground); overflow: auto; padding: 20px 22px 40px; box-shadow: -24px 0 48px -16px rgba(0,0,0,.35); animation: sheet .35s var(--ease-out) both; }
+.sheet h2:focus { outline: none; }
 .sheet h2 { margin: 6px 0 2px; font-family: var(--display); color: var(--navy); font-size: 28px; letter-spacing: -0.03em; line-height: 1.05; }
 .sheet .close { float: right; width: 40px; height: 40px; border-radius: 10px; border: 1.5px solid var(--rule-2); background: #fff; display: grid; place-items: center; color: var(--navy); }
 .sheet .sec { padding: 16px 0; border-bottom: 1px solid var(--rule); }
@@ -144,6 +150,8 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
 .notes { list-style: none; margin: 0; padding: 0; }
 .notes li { padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
 .notes li small { display: block; color: var(--ink-3); font-size: 12.5px; margin-bottom: 2px; }
+.sheet .sec:last-child { border-bottom: 0; }
+.notes li:last-child { border-bottom: 0; }
 .notes li.fresh { animation: fresh 1.6s var(--ease-out) both; }
 .noteform { display: grid; gap: 8px; margin-top: 12px; }
 .noteform textarea { width: 100%; min-height: 88px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--rule-2); background: #fff; font-size: 15px; resize: vertical; }
@@ -151,13 +159,19 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
 .noteform .err { color: var(--bad); font-size: 13.5px; font-weight: 600; }
 .ro { font-size: 14px; color: var(--ink-2); padding: 10px 12px; border-radius: 8px; background: #edf0f5; }
 
+@media (min-width: 1024px) {
+  .sheet-wrap { inset: 40px 0 0 auto; width: 480px; }
+  .sheet-wrap .scrim { display: none; }
+  .sheet { width: 480px; box-shadow: -1px 0 0 var(--rule-2), -18px 0 36px -24px rgba(0,0,0,.25); }
+  body.pane-open .main { padding-right: 520px; }
+}
 @keyframes sheet { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fresh { 0% { background: var(--hl); } 100% { background: transparent; } }
 
 @media (min-width: 760px) {
   .main { padding: 28px 28px 64px; }
   .filters { margin: 0; padding: 2px 0; }
-  .kv { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kv { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
   .shell { grid-template-columns: 236px minmax(0, 1fr); }
@@ -175,13 +189,14 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
   .list.cols .lrow .s, .list.cols .thead .s { text-align: left; }
   .list.cols .lrow .r, .list.cols .thead .r { text-align: right; }
   .list.cols .lrow .mo, .list.cols .thead .mo { display: block; }
+  .mob { display: none; }
 }
 @media (max-width: 1023.98px) {
   .list .mo { display: none; }
   .lrow > :first-child { grid-column: 1; grid-row: 1 / span 2; }
-  .lrow > .s { grid-column: 2; grid-row: 1; text-align: right; }
-  .lrow > .r { grid-column: 2; grid-row: 2; }
-  .kv div:nth-child(n+5) { display: none; }
+  .lrow > .r { grid-column: 2; grid-row: 1; }
+  .lrow > .s { grid-column: 2; grid-row: 2; text-align: right; }
+  .lrow { align-items: start; }
   .kv div { padding: 8px 10px 8px 0; }
   .kv dd { font-size: 19px; }
   .fig { gap: 14px; padding: 16px 0; }
@@ -244,7 +259,7 @@ const MERCH = STORES.map((s, i) => {
   const plan = rnd() < 0.55 ? "Free" : rnd() < 0.7 ? "Growth" : "Pro";
   const created = NOW.getTime() - Math.floor(rnd() * 120 + (i < 3 ? 0 : 5)) * DAY - Math.floor(rnd() * DAY);
   const status = plan === "Free" ? "active" : rnd() < 0.85 ? "active" : pick(["past_due", "canceled"]);
-  return { id: "m" + i, name: s, owner: OWNERS[i], email: OWNERS[i].toLowerCase().normalize("NFD").replace(/[^a-z ]/g, "").replace(" ", ".") + "@email.com", slug: s.toLowerCase().normalize("NFD").replace(/[^a-z ]/g, "").replace(/ /g, "-"), created, plan, status, checkouts: Math.floor(rnd() * (plan === "Free" ? 4 : 9)), periodEnd: NOW.getTime() + Math.floor(rnd() * 28 + 2) * DAY, notes: [] };
+  return { id: "m" + i, name: s, owner: OWNERS[i], email: OWNERS[i].toLowerCase().normalize("NFD").replace(/[^a-z ]/g, "").replace(" ", ".") + "@email.com", slug: s.toLowerCase().normalize("NFD").replace(/[^a-z ]/g, "").replace(/ /g, "-"), created, plan, status, checkouts: Math.floor(rnd() * (plan === "Free" ? 4 : 9)), periodEnd: NOW.getTime() + (status === "past_due" ? -Math.floor(rnd() * 8 + 2) : status === "canceled" ? -Math.floor(rnd() * 20 + 5) : Math.floor(rnd() * 28 + 2)) * DAY, notes: [] };
 });
 MERCH[3].notes.push({ t: NOW.getTime() - 3 * DAY, body: "Pediu ajuda para conectar o Asaas. Enviado o passo a passo por e-mail.", by: "suporte@pavox.com" });
 MERCH[7].notes.push({ t: NOW.getTime() - 9 * DAY, body: "Mensalidade em atraso. Avisado por WhatsApp.", by: "financeiro@pavox.com" });
@@ -264,10 +279,12 @@ for (let d = 89; d >= 0; d--) {
 }
 TX.sort((a, b) => b.t - a.t);
 const INTEG = [];
-MERCH.forEach((m) => { const k = 1 + (rnd() < 0.4 ? 1 : 0); for (let j = 0; j < k; j++) { const p = j ? "mercadopago" : pick(GWS); const st = rnd() < 0.08 ? "error" : rnd() < 0.05 ? "disabled" : "connected"; INTEG.push({ id: "i" + INTEG.length, merchant: m.name, provider: p, env: rnd() < 0.85 ? "production" : "sandbox", status: st, methods: p === "mercadopago" ? ["pix", "card", "boleto"] : p === "fastpay" ? ["pix"] : ["pix", "boleto"], tested: NOW.getTime() - Math.floor(rnd() * 20) * DAY, test: st === "error" ? "failed" : "passed" }); } });
+MERCH.forEach((m) => { const first = pick(GWS); const k = 1 + (rnd() < 0.4 && first !== "mercadopago" ? 1 : 0); for (let j = 0; j < k; j++) { const p = j ? "mercadopago" : first; const st = rnd() < 0.08 ? "error" : rnd() < 0.05 ? "disabled" : "connected"; INTEG.push({ id: "i" + INTEG.length, merchant: m.name, provider: p, env: rnd() < 0.85 ? "production" : "sandbox", status: st, methods: p === "mercadopago" ? ["pix", "card", "boleto"] : p === "fastpay" ? ["pix"] : ["pix", "boleto"], tested: NOW.getTime() - Math.floor(rnd() * 20) * DAY, test: st === "error" ? "failed" : "passed" }); } });
 const EVENTS = [];
+const usedTx = new Set();
 for (let k = 0; k < 90; k++) {
-  const tx = TX[Math.floor(rnd() * 200)];
+  let ti; do { ti = Math.floor(rnd() * 200); } while (usedTx.has(ti)); usedTx.add(ti);
+  const tx = TX[ti];
   const rej = rnd() < 0.05;
   EVENTS.push({ id: "e" + k, t: tx.t + 200000, source: "webhook", provider: tx.gateway, action: tx.status === "Aprovado" ? "payment.approved" : "payment.updated", status: rej ? "rejected" : "processed", result: rej ? "Assinatura do webhook inválida" : "Pedido atualizado", order: tx.ref, merchant: tx.merchant, actor: null });
 }
@@ -304,8 +321,7 @@ function pageVisao() {
       <div><div class="lbl">Volume aprovado</div><div class="big tnum"><small>R$</small>${volume.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div></div>
       <dl class="kv"><div><dt>Taxas registradas</dt><dd>${brl(fees)}</dd></div><div><dt>Pedidos pagos</dt><dd>${num(paid.length)}<span>de ${num(tx.length)}</span></dd></div>
         <div><dt>Pedidos pendentes</dt><dd>${num(pending)}</dd></div><div><dt>Lojistas</dt><dd>${num(MERCH.length)}<span>${newM} novos</span></dd></div>
-        <div><dt>Checkouts publicados</dt><dd>${num(pub)}</dd></div><div><dt>Integrações com erro</dt><dd>${a.errs}</dd></div>
-        <div><dt>Webhooks rejeitados</dt><dd>${a.rej}</dd></div><div><dt>Ticket médio</dt><dd>${brl(paid.length ? volume / paid.length : 0)}</dd></div></dl>
+        <div><dt>Checkouts publicados</dt><dd>${num(pub)}</dd></div><div><dt>Ticket médio</dt><dd>${brl(paid.length ? volume / paid.length : 0)}</dd></div></dl>
     </section>
     ${chart()}
     <section class="block" style="border-bottom:0"><div class="block-head"><div><h2>Últimas transações</h2></div><a href="#transacoes" style="font-weight:700">Ver todas</a></div>${txList(TX.slice(0, 6), false)}</section>`;
@@ -360,17 +376,30 @@ function pager(total) {
 }
 const slice = (a) => a.slice((st.page - 1) * PAGE, st.page * PAGE);
 const match = (...f) => !st.q || f.some((x) => String(x || "").toLowerCase().includes(st.q.toLowerCase()));
-function txList(rows, cols = true) {
-  const head = `<div class="thead"><span>Pedido</span><span class="mo">Cliente</span><span class="mo">Pagamento</span><span class="s">Status</span><span class="r mo">Taxa PAVOX</span><span class="r">Valor</span></div>`;
-  return `<div class="list cols" style="--cols: minmax(0,1.4fr) minmax(0,1fr) 150px 120px 110px 110px">${head}${rows.map((t) => `<div class="lrow"><span style="min-width:0"><span class="a">${esc(t.merchant)}</span><br><span class="b">${t.ref} · ${dt(t.t)}</span></span>
-    <span class="mo b">${esc(t.customer)}</span><span class="mo b">${L(t.method)} · ${GWNAME[t.gateway]}</span><span class="s">${stat(t.status)}</span><span class="r mo b">${t.fee ? brl(t.fee) : "—"}</span><span class="r">${brl(t.amount)}</span></div>`).join("") || '<div class="empty">Nenhuma transação com esse filtro.</div>'}</div>`;
+const hm = (t) => new Date(t).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const dayKey = (t) => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+function dayName(k) { const t0 = dayKey(NOW.getTime()); return k === t0 ? "Hoje" : k === t0 - DAY ? "Ontem" : new Date(k).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit" }); }
+function amt(t) {
+  if (t.status === "Aprovado") return `<span>+ ${brl(t.amount)}</span>`;
+  if (t.status === "Reembolsado") return `<span style="color:var(--bad)">− ${brl(t.amount)}</span>`;
+  if (t.status === "Pendente") return `<span style="font-style:italic;color:var(--ink-2);font-weight:600">${brl(t.amount)}</span>`;
+  return `<span style="color:var(--ink-3);text-decoration:line-through;font-weight:500">${brl(t.amount)}</span>`;
+}
+function txList(rows, grouped = true, all = rows) {
+  const cols = "--cols: 56px minmax(0,1.4fr) minmax(0,1fr) 150px 120px 100px 120px";
+  const head = `<div class="thead"><span class="mo">Hora</span><span>Pedido</span><span class="mo">Cliente</span><span class="mo">Pagamento</span><span class="s">Status</span><span class="r mo">Taxa PAVOX</span><span class="r">Valor</span></div>`;
+  const row = (t) => `<div class="lrow"><span class="mo b tnum">${hm(t.t)}</span><span style="min-width:0"><span class="a">${esc(t.merchant)}</span><br><span class="b">${t.ref}<span class="mob"> · ${hm(t.t)}${t.fee ? ` · taxa ${brl(t.fee)}` : ""}</span></span></span><span class="mo b">${esc(t.customer)}</span><span class="mo b">${L(t.method)} · ${GWNAME[t.gateway]}</span><span class="s">${stat(t.status)}</span><span class="r mo b">${t.fee ? brl(t.fee) : "—"}</span><span class="r">${amt(t)}</span></div>`;
+  if (!rows.length) return '<div class="list"><div class="empty">Nenhuma transação com esse filtro.</div></div>';
+  if (!grouped) return `<div class="list cols" style="${cols}">${head}${rows.map(row).join("")}</div>`;
+  const groups = new Map(); rows.forEach((t) => { const k = dayKey(t.t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); });
+  return `<div class="list cols" style="${cols}">${head}${[...groups].map(([k, g]) => { const day = all.filter((t) => dayKey(t.t) === k && t.status === "Aprovado"); return `<div class="dayrule"><span>${dayName(k)}</span><span class="tnum">aprovado ${brl(day.reduce((a, t) => a + t.amount, 0))} · taxas ${brl(day.reduce((a, t) => a + t.fee, 0))}</span></div>${g.map(row).join("")}`; }).join("")}</div>`;
 }
 function pageTransacoes() {
   const s = since(); let rows = TX.filter((t) => t.t >= s);
   const count = (f) => rows.filter((t) => f === "todos" || t.status === f).length;
   const fs = [["todos", "Todas", count("todos")], ["Aprovado", "Aprovadas", count("Aprovado")], ["Pendente", "Pendentes", count("Pendente")], ["Recusado", "Recusadas", count("Recusado")], ["Expirado", "Expiradas", count("Expirado")], ["Reembolsado", "Reembolsadas", count("Reembolsado")]];
   rows = rows.filter((t) => (st.filter === "todos" || t.status === st.filter) && match(t.ref, t.merchant, t.customer));
-  return `<div class="pagehead"><div><h1>Transações</h1><p>Pedidos de todos os lojistas, com a taxa PAVOX registrada.</p></div>${periodSeg()}</div>${toolbar(fs, "Pedido, lojista ou cliente")}${txList(slice(rows))}${pager(rows.length)}`;
+  return `<div class="pagehead"><div><h1>Transações</h1><p>Pedidos de todos os lojistas, com a taxa PAVOX registrada.</p></div>${periodSeg()}</div>${toolbar(fs, "Pedido, lojista ou cliente")}${txList(slice(rows), true, rows)}${pager(rows.length)}`;
 }
 function pageLojistas() {
   const fs = [["todos", "Todos", MERCH.length], ["active", "Ativos", MERCH.filter((m) => m.status === "active").length], ["past_due", "Em atraso", MERCH.filter((m) => m.status === "past_due").length], ["canceled", "Cancelados", MERCH.filter((m) => m.status === "canceled").length]];
@@ -384,7 +413,7 @@ function pageAssinaturas() {
   const rows = MERCH.filter((m) => (st.filter === "todos" || m.status === st.filter) && match(m.name, m.plan));
   return `<div class="pagehead"><div><h1>Assinaturas</h1><p>Plano, mensalidade e taxa de cada lojista.</p></div></div>${toolbar(fs, "Lojista ou plano")}
     <div class="list cols" style="--cols: minmax(0,1.5fr) 90px 120px 110px 120px 120px"><div class="thead"><span>Lojista</span><span class="mo">Plano</span><span class="r mo">Mensalidade</span><span class="r mo">Taxa</span><span class="s">Status</span><span class="r">Fim do período</span></div>
-    ${slice(rows).map((m) => `<button type="button" class="lrow" data-merchant="${m.id}"><span style="min-width:0"><span class="a">${esc(m.name)}</span><br><span class="b">Plano ${m.plan} · ${PLANS[m.plan][1].toLocaleString("pt-BR")}% por venda</span></span><span class="mo b">${m.plan}</span><span class="r mo tnum">${PLANS[m.plan][0] ? brl(PLANS[m.plan][0]) : "R$ 0"}</span><span class="r mo b">${PLANS[m.plan][1].toLocaleString("pt-BR")}%</span><span class="s">${stat(m.status)}</span><span class="r b">${m.plan === "Free" ? "—" : d0(m.periodEnd)}</span></button>`).join("")}</div>${pager(rows.length)}`;
+    ${slice(rows).map((m) => `<button type="button" class="lrow" data-merchant="${m.id}"><span style="min-width:0"><span class="a">${esc(m.name)}</span><br><span class="b">${esc(m.owner)} · ${esc(m.email)}</span></span><span class="mo b">${m.plan}</span><span class="r mo tnum">${PLANS[m.plan][0] ? brl(PLANS[m.plan][0]) : "R$ 0"}</span><span class="r mo b">${PLANS[m.plan][1].toLocaleString("pt-BR")}%</span><span class="s">${stat(m.status)}</span><span class="r b">${m.plan === "Free" ? "—" : d0(m.periodEnd)}</span></button>`).join("")}</div>${pager(rows.length)}`;
 }
 function pageIntegracoes() {
   const fs = [["todos", "Todas", INTEG.length], ["connected", "Conectadas", INTEG.filter((i) => i.status === "connected").length], ["error", "Com erro", INTEG.filter((i) => i.status === "error").length], ["disabled", "Desativadas", INTEG.filter((i) => i.status === "disabled").length]];
@@ -399,8 +428,8 @@ function pageAtividade() {
   const fs = [["todos", "Tudo", base.length], ["webhook", "Webhooks", base.filter((e) => e.source === "webhook").length], ["rejected", "Rejeitados", base.filter((e) => e.status === "rejected").length], ["admin", "Ações do time", base.filter((e) => e.source === "admin").length]];
   const rows = base.filter((e) => (st.filter === "todos" || e.source === st.filter || e.status === st.filter) && match(e.merchant, e.order, e.action));
   return `<div class="pagehead"><div><h1>Atividade</h1><p>Webhooks recebidos dos gateways e ações do time PAVOX.</p></div>${periodSeg()}</div>${toolbar(fs, "Lojista, pedido ou evento")}
-    <div class="list cols" style="--cols: 120px minmax(0,1.4fr) 130px 130px minmax(0,1fr)"><div class="thead"><span>Quando</span><span>Evento</span><span class="mo">Origem</span><span class="s">Status</span><span class="mo">Resultado</span></div>
-    ${slice(rows).map((e) => `<div class="lrow"><span class="b tnum">${dt(e.t)}</span><span style="min-width:0"><span class="a">${esc(e.action)}</span><br><span class="b">${esc(e.merchant)}${e.order ? " · " + e.order : ""}${e.actor ? " · " + esc(e.actor) : ""}</span></span><span class="mo b">${L(e.source)}${e.provider ? " · " + GWNAME[e.provider] : ""}</span><span class="s">${stat(e.status)}</span><span class="mo b">${esc(e.result)}</span></div>`).join("") || '<div class="empty">Nenhum evento com esse filtro.</div>'}</div>${pager(rows.length)}`;
+    <div class="list cols" style="--cols: 56px minmax(0,1.3fr) 190px 120px minmax(0,1fr)"><div class="thead"><span>Hora</span><span>Evento</span><span class="mo">Origem</span><span class="s">Status</span><span class="mo">Resultado</span></div>
+    ${slice(rows).map((e, i, arr) => `${!i || dayKey(arr[i - 1].t) !== dayKey(e.t) ? `<div class="dayrule"><span>${dayName(dayKey(e.t))}</span><span class="tnum">${rows.filter((x) => dayKey(x.t) === dayKey(e.t)).length} eventos</span></div>` : ""}<div class="lrow"><span class="b tnum">${hm(e.t)}</span><span style="min-width:0"><span class="a">${esc(e.action)}</span><br><span class="b">${esc(e.merchant)}${e.order ? " · " + e.order : ""}${e.actor ? " · " + esc(e.actor) : ""}</span></span><span class="mo b">${L(e.source)}${e.provider ? " · " + GWNAME[e.provider] : ""}</span><span class="s">${stat(e.status)}</span><span class="mo b">${esc(e.result)}</span></div>`).join("") || '<div class="empty">Nenhum evento com esse filtro.</div>'}</div>${pager(rows.length)}`;
 }
 
 /* ---------- lojista sheet ---------- */
@@ -410,17 +439,20 @@ function openSheet(id) {
   const tx = TX.filter((t) => t.mid === id), paid = tx.filter((t) => t.status === "Aprovado");
   const notes = m.notes.slice().sort((a, b) => b.t - a.t);
   document.getElementById("sheetBody").innerHTML = `<button type="button" class="close" data-close aria-label="Fechar">${I.x}</button>
-    <div class="b" style="color:var(--ink-3);font-size:13px">Lojista · /c/${esc(m.slug)}</div><h2 id="sh-h">${esc(m.name)}</h2><div>${stat(m.status)} <span class="b" style="color:var(--ink-3);font-size:13px">· plano ${m.plan}</span></div>
+    <h2 id="sh-h" tabindex="-1">${esc(m.name)}</h2><div>${stat(m.status)} <span style="color:var(--ink-3);font-size:13px">· plano ${m.plan} · /c/${esc(m.slug)}</span></div>
     <div class="sec"><h3>Cadastro</h3><dl class="dl"><div><dt>Responsável</dt><dd>${esc(m.owner)}</dd></div><div><dt>E-mail</dt><dd>${esc(m.email)}</dd></div><div><dt>Cadastro</dt><dd>${d0(m.created)}</dd></div><div><dt>Mensalidade</dt><dd>${PLANS[m.plan][0] ? brl(PLANS[m.plan][0]) : "R$ 0"} · taxa ${PLANS[m.plan][1].toLocaleString("pt-BR")}%</dd></div></dl></div>
     <div class="sec"><h3>Pedidos · todo o histórico</h3><dl class="dl"><div><dt>Pedidos</dt><dd class="tnum">${num(tx.length)}</dd></div><div><dt>Volume aprovado</dt><dd class="tnum">${brl(paid.reduce((a, t) => a + t.amount, 0))}</dd></div><div><dt>Checkouts publicados</dt><dd class="tnum">${m.checkouts}</dd></div></dl></div>
     <div class="sec"><h3>Notas internas</h3>
       ${st.role === "admin" ? `<form class="noteform" id="noteform" novalidate><label class="sr-only" for="note">Nova nota</label><textarea id="note" placeholder="Registre o acompanhamento deste lojista…"></textarea>${st.noteErr ? `<div class="err" role="alert">${st.noteErr}</div>` : ""}<div><button class="btn primary" type="submit">Adicionar nota</button></div></form>` : `<p class="ro">Seu acesso é somente leitura. Peça a um administrador para registrar notas.</p>`}
       <ul class="notes">${notes.length ? notes.map((n) => `<li class="${st.fresh === n.t ? "fresh" : ""}"><small>${dt(n.t)} · ${esc(n.by)}</small>${esc(n.body)}</li>`).join("") : '<li style="color:var(--ink-3)">Nenhuma nota ainda.</li>'}</ul></div>`;
   const w = document.getElementById("sheet"); w.classList.add("open"); w.setAttribute("aria-hidden", "false");
-  (document.getElementById("note") || w.querySelector(".close")).focus();
+  const desk = matchMedia("(min-width: 1024px)").matches, body = document.getElementById("sheetBody");
+  if (desk) { body.setAttribute("role", "complementary"); body.removeAttribute("aria-modal"); document.body.classList.add("pane-open"); } else { body.setAttribute("role", "dialog"); body.setAttribute("aria-modal", "true"); }
+  document.getElementById("sh-h").focus();
+  document.querySelectorAll("[data-merchant]").forEach((b) => b.setAttribute("aria-current", String(b.dataset.merchant === id)));
   st.fresh = null;
 }
-function closeSheet() { const w = document.getElementById("sheet"); w.classList.remove("open"); w.setAttribute("aria-hidden", "true"); const back = document.querySelector(`[data-merchant="${st.sheet}"]`); st.sheet = null; st.noteErr = ""; back?.focus(); }
+function closeSheet() { document.body.classList.remove("pane-open"); document.querySelectorAll("[data-merchant]").forEach((b) => b.removeAttribute("aria-current")); const w = document.getElementById("sheet"); w.classList.remove("open"); w.setAttribute("aria-hidden", "true"); const back = document.querySelector(`[data-merchant="${st.sheet}"]`); st.sheet = null; st.noteErr = ""; back?.focus(); }
 
 /* ---------- render ---------- */
 function render() {
