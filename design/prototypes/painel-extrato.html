@@ -566,7 +566,7 @@ function wireChart() {
     const box = svg.getBoundingClientRect(), sc = box.width / m.W;
     const px = (m.x(h) / m.W) * 100, py = m.y(v) * sc;
     overlay.insertAdjacentHTML("beforeend", `<span style="position:absolute;left:calc(${px}% - 5px);top:${py - 5}px;width:10px;height:10px;border-radius:50%;background:${color};box-shadow:0 0 0 2px var(--ground)"></span>
-      <span style="position:absolute;left:calc(${px}% + 9px);top:${py - 9}px;font-size:12.5px;font-weight:${muted ? 600 : 700};color:${muted ? "var(--ink-2)" : "var(--ink)"};white-space:nowrap">${text}</span>`);
+      <span style="position:absolute;left:calc(${px}% + 9px);top:${py - 9}px;font-size:12.5px;font-weight:${muted ? 600 : 700};color:${muted ? "var(--ink-2)" : "var(--ink)"};white-space:nowrap;padding:0 3px;border-radius:4px;background:var(--ground);box-shadow:0 0 0 2px var(--ground)">${text}</span>`);
   };
   const tl = m.today[m.today.length - 1], yl = m.yest[m.yest.length - 1];
   put(tl[0], tl[1], "var(--pen)", "Hoje");
