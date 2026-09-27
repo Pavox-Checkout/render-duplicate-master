@@ -443,7 +443,7 @@ function screen() {
     body = `${head}${total}<div class="perf"></div><div class="${st.anim === "feed" ? "feed" : ""}">
       <p class="scr-title">${paid ? "Pagamento confirmado" : "Pague com Pix"}</p>
       <div class="qrbox ${paid ? "spent" : ""}"><div class="q">${QR}</div>${paid ? `<div class="stamp ${st.anim === "stamp" ? "land" : ""}"><b>PAGO</b><small>${now.toLocaleDateString("pt-BR")} ${hhmm()}</small></div>` : ""}</div>
-      ${paid ? `<p class="wait">O banco confirmou. O recibo vai para o e-mail do comprador.</p><button type="button" class="pay" data-act="again">Ver de novo</button>`
+      ${paid ? `<p class="wait">O banco confirmou. O recibo vai para o <span style="white-space:nowrap">e-mail</span> do comprador.</p><button type="button" class="pay" data-act="again">Ver de novo</button>`
              : `<p class="wait">Aguardando o banco<span class="dots"></span></p>`}</div>`;
   }
   document.getElementById("screen").innerHTML = `<div class="bar"><span>Sua loja</span><span class="st">${I.lock} Compra segura</span></div><div class="paper">${body}</div>`;
@@ -520,7 +520,7 @@ function renderPlans(v) {
   document.getElementById("plans").innerHTML = PLANS.map((p, i) => `<div class="plan ${p.rec ? "recd" : ""}">
     <div class="hd"><h3>${p.name}</h3>${p.rec ? '<span class="rec">Recomendado</span>' : ""}</div>
     <div class="price tnum">R$ ${p.price ? brl(p.price) : "0"} <small>/mês</small></div>
-    <div class="fee">${p.fee.toLocaleString("pt-BR")}% por venda aprovada · ${p.checkouts}</div>
+    <div class="fee">${p.fee.toLocaleString("pt-BR")}% por venda aprovada<br><span style="font-weight:500;color:var(--ink-3)">${p.checkouts}</span></div>
     <div class="cost">Vendendo R$ ${brl(v)}: <b>R$ ${brl(costs[i])}</b> no mês<br><span class="cheap" style="visibility:${costs[i] === min && v > 0 ? "visible" : "hidden"}">${I.check}menor custo para esse volume</span></div>
     <a class="btn ${i === 0 ? "" : "ghost"}" href="#comecar" style="justify-self:start">${i === 0 ? "Começar grátis" : `Começar no ${p.name}`}</a>
     <ul>${p.yes.map((f) => `<li>${I.check}${f}</li>`).join("")}${p.no.map((f) => `<li class="no">${I.x}Sem ${f}</li>`).join("")}</ul>
