@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Eye, EyeOff, KeyRound, Plus } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { webhookEvents } from "@/lib/mock";
 import { toast } from "sonner";
 import { ThemeSegmentedControl } from "@/components/pavox/theme-toggle";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_dash/configuracoes")({
   component: Configuracoes,
@@ -31,6 +33,38 @@ function Configuracoes() {
   const [apiKey, setApiKey] = useState("pvx_live_9f2c8a1d4b7e6350a1c2");
   const [visible, setVisible] = useState(false);
   const { resolvedTheme } = useTheme();
+  const { user: authUser } = useAuth();
+  const [companyData, setCompanyData] = useState({ legalName: "", cnpj: "", checkoutName: "", supportEmail: "" });
+  const [savingCompany, setSavingCompany] = useState(false);
+
+  useEffect(() => {
+    const metadata = authUser?.user_metadata as Record<string, unknown> | undefined;
+    setCompanyData({
+      legalName: typeof metadata?.legal_name === "string" ? metadata.legal_name : "",
+      cnpj: typeof metadata?.cnpj === "string" ? metadata.cnpj : "",
+      checkoutName: typeof metadata?.checkout_name === "string" ? metadata.checkout_name : "",
+      supportEmail: typeof metadata?.support_email === "string" ? metadata.support_email : "",
+    });
+  }, [authUser?.id, authUser?.user_metadata]);
+
+  const saveCompany = async () => {
+    if (!authUser) return;
+    setSavingCompany(true);
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        legal_name: companyData.legalName.trim(),
+        cnpj: companyData.cnpj.trim(),
+        checkout_name: companyData.checkoutName.trim(),
+        support_email: companyData.supportEmail.trim(),
+      },
+    });
+    setSavingCompany(false);
+    if (error) {
+      toast.error("Não foi possível salvar os dados da empresa.");
+      return;
+    }
+    toast.success("Dados da empresa salvos");
+  };
 
   return (
     <>
@@ -66,23 +100,23 @@ function Configuracoes() {
           <div className="surface space-y-4 p-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Razão social</Label>
-                <Input defaultValue="Loja Demo Comércio Digital LTDA" />
+                <Label htmlFor="legal-name">Razão social</Label>
+                <Input id="legal-name" value={companyData.legalName} onChange={(event) => setCompanyData((current) => ({ ...current, legalName: event.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>CNPJ</Label>
-                <Input defaultValue="42.118.905/0001-77" />
+                <Label htmlFor="company-cnpj">CNPJ</Label>
+                <Input id="company-cnpj" value={companyData.cnpj} onChange={(event) => setCompanyData((current) => ({ ...current, cnpj: event.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Nome exibido no checkout</Label>
-                <Input defaultValue="Loja Demo" />
+                <Label htmlFor="checkout-name">Nome exibido no checkout</Label>
+                <Input id="checkout-name" value={companyData.checkoutName} onChange={(event) => setCompanyData((current) => ({ ...current, checkoutName: event.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>E-mail de suporte</Label>
-                <Input defaultValue="suporte@lojademo.com" />
+                <Label htmlFor="support-email">E-mail de suporte</Label>
+                <Input id="support-email" type="email" value={companyData.supportEmail} onChange={(event) => setCompanyData((current) => ({ ...current, supportEmail: event.target.value }))} />
               </div>
             </div>
-            <Button onClick={() => toast.success("Dados da empresa salvos")}>Salvar</Button>
+            <Button onClick={() => void saveCompany()} disabled={savingCompany || !authUser}>{savingCompany ? "Salvando..." : "Salvar"}</Button>
           </div>
         </TabsContent>
 
