@@ -17,8 +17,15 @@ async function asa(path: string, init: RequestInit = {}) {
     headers: { access_token: key(), "Content-Type": "application/json", ...(init.headers || {}) },
   });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(body?.errors?.[0]?.description || `Asaas HTTP ${response.status}`);
+  if (!response.ok) {
+    const message = body?.errors?.[0]?.description || `Asaas HTTP ${response.status}`;
+    console.error("[asaas-plan-pix] Asaas request failed", {
+      path,
+      status: response.status,
+      message,
+    });
+    throw new Error(message);
+  }
   return body;
 }
 
@@ -36,7 +43,7 @@ Deno.serve(async (req) => {
     const [{ data: profile }, { data: plan }, { data: existing }] = await Promise.all([
       admin
         .from("profiles")
-        .select("full_name,company_name,email,cpf_cnpj,document")
+        .select("full_name,company_name,email,cpf")
         .eq("id", uid)
         .maybeSingle(),
       admin
@@ -62,9 +69,9 @@ Deno.serve(async (req) => {
     if (!profile || !plan) return error("not_found", "Usuário ou plano não encontrado.", 404);
     if (existing?.gateway_payment_id && existing.payment_data?.pix?.payload)
       return json({ payment: existing.payment_data, billingId: existing.id });
-    const doc = String(profile.cpf_cnpj || profile.document || "").replace(/\D/g, "");
-    if (![11, 14].includes(doc.length))
-      return error("document_required", "Cadastre seu CPF ou CNPJ antes de pagar.", 422);
+    const doc = String(profile.cpf || "").replace(/\D/g, "");
+    if (doc.length !== 11)
+      return error("document_required", "Cadastre seu CPF antes de pagar.", 422);
     const customer = await asa("/customers", {
       method: "POST",
       body: JSON.stringify({
