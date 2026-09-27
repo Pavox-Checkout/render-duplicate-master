@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_dash/conta")({
 });
 
 function Conta() {
-  const { user: authUser, profile } = useAuth();
+  const { user: authUser, profile, refreshProfile } = useAuth();
   const name = profile?.full_name || authUser?.email?.split("@")[0] || "";
   const email = profile?.email || authUser?.email || "";
   const company = profile?.company_name || "";
@@ -51,10 +51,24 @@ function Conta() {
   const [avatarError, setAvatarError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previousAvatarUrlRef = useRef<string | null>(null);
+  const avatarFileRef = useRef<File | null>(null);
 
   useEffect(() => {
     setCpf(profile?.cpf ? maskCPF(profile.cpf) : "");
   }, [profile?.cpf]);
+
+  useEffect(() => {
+    let active = true;
+    const path = authUser?.user_metadata?.avatar_path;
+    if (!authUser || typeof path !== "string" || !path) {
+      setAvatarUrl(null);
+      return () => { active = false; };
+    }
+    void supabase.storage.from("product-images").createSignedUrl(path, 60 * 60 * 24).then(({ data }) => {
+      if (active) setAvatarUrl(data?.signedUrl ?? null);
+    });
+    return () => { active = false; };
+  }, [authUser?.id, authUser?.user_metadata?.avatar_path]);
 
   const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -77,6 +91,7 @@ function Conta() {
 
     if (avatarDraftUrl) URL.revokeObjectURL(avatarDraftUrl);
     const nextUrl = URL.createObjectURL(file);
+    avatarFileRef.current = file;
     previousAvatarUrlRef.current = avatarUrl;
     setAvatarDraftUrl(nextUrl);
     setAvatarUrl(nextUrl);
@@ -113,33 +128,44 @@ function Conta() {
       return;
     }
 
+    let avatarPath = authUser.user_metadata?.avatar_path;
+    if (avatarFileRef.current) {
+      const extension = avatarFileRef.current.type.split("/")[1] || "jpg";
+      avatarPath = `${userId}/avatar.${extension}`;
+      const { error: uploadError } = await supabase.storage.from("product-images").upload(avatarPath, avatarFileRef.current, {
+        contentType: avatarFileRef.current.type,
+        cacheControl: "3600",
+        upsert: true,
+      });
+      if (uploadError) {
+        setSavingCpf(false);
+        toast.error("Não foi possível salvar a foto de perfil.");
+        return;
+      }
+    }
+
     const { data, error } = await supabase
       .from("profiles")
       .update({ cpf: normalizedCpf })
       .eq("id", userId)
       .select("id, cpf")
       .maybeSingle();
+    if (error || !data || data.id !== userId || data.cpf !== normalizedCpf) {
+      setSavingCpf(false);
+      if (error?.code === "23505") toast.error("Este CPF já está vinculado a outra conta PAVOX.");
+      else toast.error("Não foi possível salvar o CPF.");
+      return;
+    }
+
+    const { error: metadataError } = await supabase.auth.updateUser({ data: { avatar_path: avatarPath } });
     setSavingCpf(false);
-    if (error) {
-      console.error("[v0] Falha ao salvar CPF", {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-      });
-      if (error.code === "23505") {
-        toast.error("Este CPF já está vinculado a outra conta PAVOX.");
-      } else {
-        toast.error("Não foi possível salvar o CPF.");
-      }
+    if (metadataError) {
+      toast.error("Não foi possível salvar a foto de perfil.");
       return;
     }
-    if (!data || data.id !== userId || data.cpf !== normalizedCpf) {
-      console.error("[v0] Atualização de CPF sem linha retornada", { userId, data });
-      toast.error("Não foi possível confirmar o CPF salvo.");
-      return;
-    }
-    toast.success("CPF salvo com sucesso.");
+    avatarFileRef.current = null;
+    await refreshProfile();
+    toast.success("Alterações salvas com sucesso.");
   };
 
   const initials =

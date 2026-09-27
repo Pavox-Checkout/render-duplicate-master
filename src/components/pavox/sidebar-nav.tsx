@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   Building2,
@@ -24,11 +24,12 @@ import {
 import { PavoxLogo } from "./logo";
 import { useAdminAccess } from "@/lib/admin/data";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { usePavoxAiAccess } from "@/lib/pavox-ai/access";
 import { MARKETING_ITEMS } from "@/lib/marketing-nav";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -162,6 +163,30 @@ export function SidebarNav({
   const email = profile?.email || user?.email || "";
   const name = profile?.full_name || email.split("@")[0] || "Minha conta";
   const company = profile?.company_name || "Sua empresa";
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const avatarPath = user?.user_metadata?.avatar_path;
+
+    if (!avatarPath || typeof avatarPath !== "string") {
+      setAvatarUrl(null);
+      return () => {
+        active = false;
+      };
+    }
+
+    void supabase.storage
+      .from("product-images")
+      .createSignedUrl(avatarPath, 60 * 60 * 24)
+      .then(({ data }) => {
+        if (active) setAvatarUrl(data?.signedUrl ?? null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -207,6 +232,7 @@ export function SidebarNav({
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">
+              {avatarUrl ? <AvatarImage src={avatarUrl} alt={`Foto de perfil de ${name}`} /> : null}
               <AvatarFallback className="bg-brand-gradient text-[12px] font-semibold text-primary-foreground">
                 {initialsOf(name, email)}
               </AvatarFallback>
