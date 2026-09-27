@@ -76,12 +76,14 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [tipsOpen, setTipsOpen] = useState(false);
+  const [intelligenceOpen, setIntelligenceOpen] = useState(true);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [previewMode, setPreviewMode] = useState<"design" | "test">("design");
   const first = useRef(true);
 
   const config = state.config;
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  const displayName = typeof user?.user_metadata?.checkout_name === "string" ? user.user_metadata.checkout_name : "";
   const url = profile?.store_slug ? publicCheckoutUrl(profile.store_slug, checkout.slug) : "";
 
   const invalidate = useCallback(() => {
@@ -263,18 +265,28 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
           </div>
 
           {/* pavox intelligence */}
-          <div className="shrink-0 border-t border-border bg-accent/40 p-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <p className="text-[12.5px] font-semibold">Pavox Intelligence</p>
+          {intelligenceOpen ? (
+            <div className="relative shrink-0 border-t border-border bg-accent/40 p-3">
+              <button
+                type="button"
+                aria-label="Fechar Pavox Intelligence"
+                className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                onClick={() => setIntelligenceOpen(false)}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+              <div className="flex items-center gap-2 pr-5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <p className="text-[12.5px] font-semibold">Pavox Intelligence</p>
+              </div>
+              <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+                {RECOMMENDATIONS.length} recomendações de conversão
+              </p>
+              <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => setTipsOpen(true)}>
+                Ver recomendações
+              </Button>
             </div>
-            <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-              {RECOMMENDATIONS.length} recomendações de conversão
-            </p>
-            <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => setTipsOpen(true)}>
-              Ver recomendações
-            </Button>
-          </div>
+          ) : null}
         </div>
 
         {/* PREVIEW — permanece visível, com scroll independente e próprio */}
@@ -349,7 +361,7 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
                 device === "desktop" && "max-w-full rounded-xl border border-border",
               )}
             >
-              <CheckoutPreview config={config} device={device} mode={previewMode === "test" ? "test" : "design"} />
+              <CheckoutPreview config={config} displayName={displayName} device={device} mode={previewMode === "test" ? "test" : "design"} />
             </div>
             </div>
           </div>
@@ -367,7 +379,7 @@ export function BuilderEditor({ checkout }: { checkout: CheckoutRecord }) {
             </Button>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <CheckoutPreview config={config} device="desktop" mode="published" />
+            <CheckoutPreview config={config} displayName={displayName} device="desktop" mode="published" />
           </div>
         </DialogContent>
       </Dialog>
