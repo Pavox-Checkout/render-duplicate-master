@@ -50,6 +50,9 @@ const LIVE_ALIASES: Record<string, string[]> = {
   credwave: ["credwave"],
   appmax: ["appmax"],
   garu: ["garupay"],
+  pagouv2: ["pagouv2", "pagouai"],
+  fastpay: ["fastpaybrasil"],
+  blackcat: ["blackcatv2"],
 };
 
 const LIVE_PROVIDERS: ProviderDef[] = PROVIDERS.filter((p) => p.kind === "payment" && p.live).map(

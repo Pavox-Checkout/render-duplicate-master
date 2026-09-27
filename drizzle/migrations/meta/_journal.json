@@ -162,6 +162,13 @@
       "when": 1790033687372,
       "tag": "0021_more_gateways_routing",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790120087372,
+      "tag": "0022_gateways_pagouv2_fastpay_blackcat_stripe_pagarme",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,8 @@
 // Single place where a provider id becomes an adapter.
 import { AppmaxGateway, webhookOrderId as appmaxWebhookId, type AppmaxCredentials } from "./appmax.ts";
 import { AsaasGateway, asaasSplitFee, type AsaasCredentials } from "./asaas.ts";
+import { BlackcatGateway, webhookSaleId as blackcatWebhookId, type BlackcatCredentials } from "./blackcat.ts";
+import { FastPayGateway, webhookChargeId as fastPayWebhookId, type FastPayCredentials } from "./fastpay.ts";
 import { GaruGateway, webhookChargeId as garuWebhookId, type GaruCredentials, type ProductRefStore } from "./garu.ts";
 import {
   HOPYSPLIT_SANDBOX_URL,
@@ -11,6 +13,9 @@ import {
 } from "./hopysplit.ts";
 import { MercadoPagoGateway, type MercadoPagoCredentials } from "./mercadopago.ts";
 import { splitFee as mercadoPagoSplitFee } from "./mercadopago-oauth.ts";
+import { PagarmeGateway, webhookOrderId as pagarmeWebhookId, type PagarmeCredentials } from "./pagarme.ts";
+import { PagouV2Gateway, webhookTransactionId as pagouWebhookId, type PagouV2Credentials } from "./pagouv2.ts";
+import { StripeGateway, webhookIntentId as stripeWebhookId, type StripeCredentials } from "./stripe.ts";
 import type { PaymentGateway } from "./types.ts";
 
 /** A connection step failed for a reason the merchant can fix (shown as is). */
@@ -137,6 +142,61 @@ PROVIDERS["garu"] = {
   create: (credentials, environment, deps) =>
     new GaruGateway(credentials as unknown as GaruCredentials, environment, deps?.products),
   webhookPaymentId: garuWebhookId,
+  splitFee: noSplit,
+};
+
+PROVIDERS["pagouv2"] = {
+  displayName: "Pagou",
+  requiredCredentials: ["api_token"],
+  methods: ["pix", "boleto"],
+  create: (credentials, environment) => new PagouV2Gateway(credentials as unknown as PagouV2Credentials, environment),
+  webhookPaymentId: pagouWebhookId,
+  splitFee: noSplit,
+};
+
+PROVIDERS["fastpay"] = {
+  displayName: "FastPay",
+  requiredCredentials: ["secret_key"],
+  methods: ["pix"],
+  // Same host for test and live: the key decides.
+  create: (credentials) => new FastPayGateway(credentials as unknown as FastPayCredentials),
+  webhookPaymentId: fastPayWebhookId,
+  splitFee: noSplit,
+};
+
+PROVIDERS["blackcat"] = {
+  displayName: "Blackcat",
+  requiredCredentials: ["api_key"],
+  methods: ["pix"],
+  create: (credentials) => new BlackcatGateway(credentials as unknown as BlackcatCredentials),
+  webhookPaymentId: blackcatWebhookId,
+  splitFee: noSplit,
+};
+
+PROVIDERS["stripe"] = {
+  displayName: "Stripe",
+  requiredCredentials: ["secret_key"],
+  methods: ["pix", "boleto"],
+  create: (credentials, environment) => new StripeGateway(credentials as unknown as StripeCredentials, environment),
+  webhookPaymentId: stripeWebhookId,
+  splitFee: noSplit,
+  onConnect: async (credentials, environment, ctx) => {
+    try {
+      await new StripeGateway(credentials as unknown as StripeCredentials, environment).ensureWebhook(ctx.webhookUrl);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new SetupError(`Não foi possível configurar o aviso de pagamento (webhook) no Stripe: ${detail}`);
+    }
+    return {};
+  },
+};
+
+PROVIDERS["pagarme"] = {
+  displayName: "Pagar.me",
+  requiredCredentials: ["secret_key"],
+  methods: ["pix", "boleto"],
+  create: (credentials, environment) => new PagarmeGateway(credentials as unknown as PagarmeCredentials, environment),
+  webhookPaymentId: pagarmeWebhookId,
   splitFee: noSplit,
 };
 

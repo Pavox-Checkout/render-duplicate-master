@@ -54,6 +54,11 @@ export function errorMessage(data: unknown, status: number): string {
   for (const key of ["message", "text", "error", "detail"]) {
     if (typeof d[key] === "string" && d[key]) return d[key] as string;
   }
+  const nested = d["error"];
+  if (nested && typeof nested === "object") {
+    const text = (nested as Record<string, unknown>)["message"];
+    if (typeof text === "string" && text) return text;
+  }
   return `HTTP ${status}`;
 }
 
