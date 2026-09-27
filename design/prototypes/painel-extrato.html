@@ -317,7 +317,6 @@ dialog .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2
   .block { padding: 16px 0; }
   .cap-long { display: none; }
   .block-head { margin-bottom: 8px; }
-  .chart svg { max-height: 200px; }
   .delta { margin-top: 6px; font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -520,7 +519,7 @@ function chartSvg() {
   const main = document.getElementById("main");
   const cs = main ? getComputedStyle(main) : null;
   const W = Math.max(300, Math.round(main ? main.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) : 1000));
-  const H = 240, L = 52, R = 62, T = 12, B = 26;
+  const H = innerWidth < 1024 ? 190 : 240, L = 52, R = 62, T = 12, B = 26;
   const max = niceMax(Math.max(...yest.map((p) => p[1]), ...today.map((p) => p[1])) * 1.05);
   const x = (h) => L + (h / 24) * (W - L - R);
   const y = (v) => T + (1 - v / max) * (H - T - B);
@@ -564,7 +563,8 @@ function wireChart() {
   const overlay = document.createElement("div");
   overlay.style.cssText = "position:absolute;inset:0;pointer-events:none;transition:opacity .12s";
   const put = (h, v, color, text, muted) => {
-    const px = (m.x(h) / m.W) * 100, py = (m.y(v) / m.H) * 240;
+    const box = svg.getBoundingClientRect(), sc = box.width / m.W;
+    const px = (m.x(h) / m.W) * 100, py = m.y(v) * sc;
     overlay.insertAdjacentHTML("beforeend", `<span style="position:absolute;left:calc(${px}% - 5px);top:${py - 5}px;width:10px;height:10px;border-radius:50%;background:${color};box-shadow:0 0 0 2px var(--ground)"></span>
       <span style="position:absolute;left:calc(${px}% + 9px);top:${py - 9}px;font-size:12.5px;font-weight:${muted ? 600 : 700};color:${muted ? "var(--ink-2)" : "var(--ink)"};white-space:nowrap">${text}</span>`);
   };
@@ -588,7 +588,8 @@ function wireChart() {
     tip.classList.add("on");
     overlay.style.opacity = "0";
     const left = (X / m.W) * r.width;
-    tip.style.left = (left + 12 + tip.offsetWidth > r.width ? left - 12 - tip.offsetWidth : left + 12) + "px";
+    const want = left + 12 + tip.offsetWidth > r.width ? left - 12 - tip.offsetWidth : left + 12;
+    tip.style.left = Math.max(m.L * (r.width / m.W), Math.min(want, r.width - tip.offsetWidth)) + "px";
   };
   svg.addEventListener("pointermove", (e) => show(e.clientX));
   svg.addEventListener("pointerleave", () => { tip.classList.remove("on"); cross.style.display = "none"; overlay.style.opacity = "1"; });
@@ -691,7 +692,7 @@ function pageProducts() {
     <div>${PRODUCTS.map((p) => {
       const sold = ORDERS.filter((o) => o.product.id === p.id && o.status === "Aprovado" && o.t >= since);
       return `<div class="prow"><div class="th">${thumb(p)}</div>
-        <div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="mt">${p.kind} · <span class="tag ${p.status === "Ativo" ? "live" : ""}">${p.status}</span></div></div>
+        <div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="mt">${p.kind} · <span class="tag ${p.status === "Ativo" ? "live" : ""}">${p.status === "Ativo" ? ICON.check.replace('class="i"', 'class="i" style="width:12px;height:12px;stroke-width:2.5;margin-right:3px"') : ""}${p.status}</span></div></div>
         <div class="nums"><div><div class="pr">R$ ${brl(p.price)}</div><div class="sl">preço</div></div>
         <div><div class="pr">${sold.length ? "R$ " + brl(sold.reduce((s, o) => s + o.amount, 0)) : "—"}</div><div class="sl">${sold.length} ${sold.length === 1 ? "venda" : "vendas"} em 7 dias</div></div></div>
         <div class="ac">${p.status === "Ativo" ? `<button type="button" class="linkbtn" data-copy="${p.slug}">${ICON.copy.replace('class="i"', 'class="i" style="width:15px;height:15px;vertical-align:-3px;margin-right:4px"')}Copiar link do checkout</button>` : `<span class="mt">Publique para gerar o link</span>`}<a href="#produtos" data-act="noop">Editar</a></div></div>`;

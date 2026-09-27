@@ -15,7 +15,7 @@ Constraints: only real metrics. No invented conversion rate, and no status the g
 
 ## Direction contract
 
-THESIS: The panel is the lojista's bank statement, marked up the way people check a statement: Bic-blue pen for actions, a lime highlighter on today's figure. It refuses the four-KPI-cards, chart, recent-table SaaS dashboard.
+THESIS: The panel is the lojista's bank statement, marked up the way people check a statement: PAVOX-blue pen for actions, a pale-blue highlighter on today's figure. It refuses the four-KPI-cards, chart, recent-table SaaS dashboard.
 
 OWN-WORLD: The PAVOX brand is binding. The logo files are used as-is. Navy #001848 carries headings, the wordmark, and day rules. PAVOX blue #0055fb is the pen, used for actions, links, focus, and today's series. The ground is cool statement-white. A pale-blue highlighter (#c9daff) is used on three things only: today's figure, the active nav item, and the pending count. Green appears only as a status with its icon (Conectado, Ativo). Ochre marks the yesterday series. Entries are hairline-ruled rows grouped under day headers with the day total. Credits read "+ 197,00" in ink, pending reads in muted italic "a receber", expired is struck through, refunds are "− 197,00" in red. Bricolage Grotesque for figures and headings, Hanken Grotesk for UI with tabular columns. No cards, no gradients, no glass.
 
