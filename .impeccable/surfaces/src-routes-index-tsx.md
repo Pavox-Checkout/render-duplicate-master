@@ -19,7 +19,7 @@ OWN-WORLD: The first viewport is drenched in PAVOX navy, with the white-and-blue
 
 STORY: The visitor types a product and price, picks a color, and sees the checkout ready. They tap Pix and see it confirmed, with the sale appearing as a line in the lojista statement. They then learn where the money lands (their own gateway), what the page offers for digital and physical products, and what it costs, down to the real fee for their volume. They start free.
 
-FIRST VIEWPORT: Desktop has the headline and three builder fields (produto, preço, cor) on the left, over navy. On the right is a phone showing the live checkout, with the primary "Começar grátis" under the fields plus the Free-plan fact line. Mobile has the headline, the fields, the phone, then the CTA.
+FIRST VIEWPORT: Desktop has the headline and four builder fields on the left, over navy: produto, preço, tipo, and cor. Tipo carries the STORY's digital/physical promise. On the right is a phone showing the live checkout, with the primary "Começar grátis" under the fields plus the Free-plan fact line. Mobile has the headline, the fields, the phone with its statement strip, then the CTA.
 
 FORM: "Monte na hora", a surface-scope roll dealt 7/4/6. The user locked this card (candidate 6). Seed key 10e45c1d, degraded roll. Signature interaction: Pix paid in the phone, the PAGO stamp, then a "+ R$ 197,00 · Pix · agora" line slides into a statement strip under the phone.
 
