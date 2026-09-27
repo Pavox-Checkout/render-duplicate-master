@@ -118,12 +118,13 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 }
 .notice svg { margin-top: 1px; }
 .intro { display: none; }
+.main { display: contents; }
 .cover {
   border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9;
   box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.28);
 }
 .cover svg { display: block; width: 100%; height: 100%; }
-.cover-mobile { aspect-ratio: 8 / 3; margin-bottom: 20px; }
+.cover-mobile { aspect-ratio: 8 / 3; margin-top: 12px; }
 .intro h1 { margin: 0; font-size: clamp(34px, 4vw, 48px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 800; text-wrap: balance; }
 .intro p { margin: 0; max-width: 46ch; font-size: 17px; color: var(--on-soft); }
 
@@ -219,11 +220,9 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 }
 .method:first-child { border-top: 2px dotted var(--rule); }
 .method:hover { background: #f1f3f5; }
-.method .dot { width: 20px; height: 20px; border-radius: 3px; border: 1.75px solid var(--ink-3); display: grid; place-items: center; background: #fff; }
-.method .dot svg { width: 14px; height: 14px; stroke-width: 3; opacity: 0; }
-.method[aria-checked="true"] .t { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
-.method[aria-checked="true"] .dot { border-color: var(--ink); background: var(--ink); color: #fff; }
-.method[aria-checked="true"] .dot svg { opacity: 1; }
+.method .dot { width: 20px; height: 20px; border-radius: 50%; border: 1.75px solid var(--ink-3); display: grid; place-items: center; background: #fff; }
+.method[aria-checked="true"] .t { font-weight: 800; }
+.method[aria-checked="true"] .dot { border-color: var(--ink); border-width: 6px; }
 .method .glyph { width: 28px; height: 28px; display: grid; place-items: center; color: var(--ink); }
 .method .glyph svg { width: 24px; height: 24px; }
 .method .t { font-size: 15.5px; font-weight: 700; }
@@ -362,8 +361,9 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
     padding: 48px 40px 64px; align-items: start;
   }
   .store-row { grid-column: 1 / -1; margin-bottom: 36px; }
-  .intro { display: grid; gap: 22px; grid-column: 1; grid-row: 3; align-content: start; position: sticky; top: 64px; }
-  .paper-col { grid-column: 2; grid-row: 3; }
+  .main { grid-column: 1 / -1; grid-row: 3; display: grid; grid-template-columns: minmax(0, 1fr) 460px; column-gap: 72px; align-items: start; }
+  .intro { display: grid; gap: 22px; grid-column: 1; align-content: start; position: sticky; top: 64px; }
+  .paper-col { grid-column: 2; }
   .notice-ground { grid-column: 1 / -1; grid-row: 2; margin-bottom: 28px; }
   .foot { grid-row: 4; }
   .slips-mobile, .paybar, .cover-mobile { display: none !important; }
@@ -591,7 +591,7 @@ function addressSection() {
 function methodsSection() {
   const m = state.method;
   const opt = (id, glyph, t, s) => `<button type="button" class="method" role="radio" aria-checked="${m === id}" data-method="${id}">
-      <span class="dot">${ICON.check}</span><span class="glyph">${ICON[glyph]}</span>
+      <span class="dot"></span><span class="glyph">${ICON[glyph]}</span>
       <span><span class="t">${t}</span><br><span class="s">${s}</span></span></button>`;
   const cardSlot = m === "card" ? `<div class="card-slot">
       <div class="gw">${ICON.lock} Os dados do cartão vão direto para o Mercado Pago, em um formulário seguro dele.</div>
@@ -758,6 +758,7 @@ function render() {
       <span class="secure">${ICON.lock} Compra segura</span>
     </header>
     ${state.blocks.notice && formLike ? `<div class="notice notice-ground">${ICON.info}<span>${esc(p.notice)}</span></div>` : ""}
+    <div class="main">
     <div class="intro">
       ${state.blocks.cover ? `<div class="cover">${cover(state.kind, true)}</div>` : ""}
       <h1>${esc(p.name)}</h1>
@@ -765,9 +766,10 @@ function render() {
       ${slips("slips-desk")}
     </div>
     <div class="paper-col">
-      ${state.blocks.cover && formLike ? `<div class="cover cover-mobile">${band(state.kind)}</div>` : ""}
       <div class="paper-wrap ${state.animate === "stamp" ? "thud" : ""}"><div class="paper">${paperFor(state.screen)}</div></div>
     </div>
+    </div>
+    ${state.blocks.cover && formLike ? `<div class="cover cover-mobile">${band(state.kind)}</div>` : ""}
     ${formLike ? slips("slips-mobile") : ""}
     <footer class="foot">Checkout processado por <b>PAVOX</b></footer>`;
 
