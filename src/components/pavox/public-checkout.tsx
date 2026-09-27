@@ -15,6 +15,7 @@ import {
   type MercadoPagoCardFormHandle,
 } from "@/components/pavox/mercadopago-card-form";
 import { toast } from "sonner";
+import { PublicCheckoutFooter } from "@/components/pavox/public-checkout-footer";
 
 type PublicProduct = {
   id: string;
@@ -29,7 +30,7 @@ type PublicProduct = {
 
 type PublicCheckout = {
   checkout: { id: string; name: string; slug: string; config: unknown };
-  store: { slug: string; name: string };
+  store: { slug: string; name: string; checkout_display_name?: string | null };
   product: PublicProduct | null;
   payment_methods: string[];
   /** Methods whose gateway requires the buyer's CPF/CNPJ (e.g. boleto, Asaas). */
@@ -297,7 +298,14 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
   }
 
   if (order) {
-    return <OrderResult order={order} config={config} onUpdate={setOrder} />;
+    return (
+      <OrderResult
+        order={order}
+        config={config}
+        displayName={data.store.checkout_display_name}
+        onUpdate={setOrder}
+      />
+    );
   }
 
   return (
@@ -329,6 +337,11 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
           )
         }
       />
+      <PublicCheckoutFooter
+        displayName={data.store.checkout_display_name}
+        color={config.colors.textMuted}
+        mutedColor={config.colors.textMuted}
+      />
     </div>
   );
 }
@@ -336,10 +349,12 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
 function OrderResult({
   order,
   config,
+  displayName,
   onUpdate,
 }: {
   order: PublicOrder;
   config: CheckoutConfig;
+  displayName?: string | null;
   onUpdate: (order: PublicOrder) => void;
 }) {
   const col = config.colors;
@@ -528,6 +543,11 @@ function OrderResult({
           ) : null}
         </dl>
       </div>
+      <PublicCheckoutFooter
+        displayName={displayName}
+        color={col.textMuted}
+        mutedColor={col.textMuted}
+      />
     </div>
   );
 }

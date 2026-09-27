@@ -21,6 +21,7 @@ import {
 import { brl } from "@/lib/mock";
 import { cn } from "@/lib/utils";
 import { PixIcon } from "@/components/pavox/builder/pix-icon";
+import { PublicCheckoutFooter } from "@/components/pavox/public-checkout-footer";
 import {
   ADDRESS_FIELDS,
   CUSTOMER_FIELDS,
@@ -159,6 +160,8 @@ type Props = {
   config: CheckoutConfig;
   device: Device;
   mode?: PreviewMode;
+  /** Nome exibido no checkout, compartilhado entre preview e checkout público. */
+  displayName?: string | null;
   /** Checkout público real: métodos que o backend aceita para esta loja. */
   availableMethods?: string[];
   /** Checkout público real: métodos cujo gateway exige CPF/CNPJ (boleto; Asaas). */
@@ -176,6 +179,7 @@ export function CheckoutPreview({
   config,
   device,
   mode = "design",
+  displayName,
   availableMethods,
   documentRequiredMethods,
   phoneRequiredMethods,
@@ -522,7 +526,7 @@ export function CheckoutPreview({
           {c.security.enabled ? <Security config={c} /> : null}
 
           {/* rodapé */}
-          {c.footer.enabled ? <Footer config={c} /> : null}
+          {c.footer.enabled ? <Footer config={c} displayName={displayName} /> : null}
 
           {/* resumo/cupom — final do checkout */}
           {renderSlot("end")}
@@ -1203,7 +1207,7 @@ function SecurityGlyph({ item, color }: { item: SecurityItem; color: string }) {
   return <Icon className="h-3.5 w-3.5 shrink-0" style={{ color }} />;
 }
 
-function Footer({ config: c }: { config: CheckoutConfig }) {
+function Footer({ config: c, displayName }: { config: CheckoutConfig; displayName?: string | null }) {
   return (
     <div className="space-y-1.5 pt-1" style={{ color: c.footer.color, textAlign: textAlign(c.footer.align) }}>
       {c.footer.showLinks ? (
@@ -1212,10 +1216,10 @@ function Footer({ config: c }: { config: CheckoutConfig }) {
           <span className="text-[11.5px] underline underline-offset-2">{c.footer.termsLabel}</span>
         </div>
       ) : null}
-      <p className="text-[11px]">{c.footer.text}</p>
+      <PublicCheckoutFooter displayName={displayName} color={c.footer.color} mutedColor={c.footer.color} />
     </div>
   );
-}
+  }
 
 function LiveToast({ config: c, showPreviewTag = true }: { config: CheckoutConfig; showPreviewTag?: boolean }) {
   const [visible, setVisible] = useState(true);
