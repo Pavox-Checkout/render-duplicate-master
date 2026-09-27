@@ -11,14 +11,40 @@ async function userId(req: Request) {
   return authError || !data.user ? null : data.user.id;
 }
 
-async function asa(path: string, init: RequestInit = {}) {
-  const response = await fetch(`${API()}${path}`, {
+class AsaasRequestError extends Error {
+  constructor(
+    message: string,
+    readonly details: { stage: string; path: string; status: number; code?: string },
+  ) {
+    super(message);
+    this.name = "AsaasRequestError";
+  }
+}
+
+async function asa(stage: string, path: string, init: RequestInit = {}) {
+  const apiUrl = API();
+  const response = await fetch(`${apiUrl}${path}`, {
     ...init,
     headers: { access_token: key(), "Content-Type": "application/json", ...(init.headers || {}) },
   });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(body?.errors?.[0]?.description || `Asaas HTTP ${response.status}`);
+  if (!response.ok) {
+    const asaasError = body?.errors?.[0];
+    const message = asaasError?.description || `Asaas HTTP ${response.status}`;
+    const details = { stage, path, status: response.status, code: asaasError?.code };
+    console.error("[asaas-plan-pix] Asaas request failed", {
+      ...details,
+      apiOrigin: new URL(apiUrl).origin,
+      message,
+    });
+    throw new AsaasRequestError(message, details);
+  }
+  console.info("[asaas-plan-pix] Asaas request succeeded", {
+    stage,
+    path,
+    status: response.status,
+    apiOrigin: new URL(apiUrl).origin,
+  });
   return body;
 }
 
@@ -36,7 +62,7 @@ Deno.serve(async (req) => {
     const [{ data: profile }, { data: plan }, { data: existing }] = await Promise.all([
       admin
         .from("profiles")
-        .select("full_name,company_name,email,cpf_cnpj,document")
+        .select("full_name,company_name,email,cpf")
         .eq("id", uid)
         .maybeSingle(),
       admin
@@ -62,10 +88,17 @@ Deno.serve(async (req) => {
     if (!profile || !plan) return error("not_found", "Usuário ou plano não encontrado.", 404);
     if (existing?.gateway_payment_id && existing.payment_data?.pix?.payload)
       return json({ payment: existing.payment_data, billingId: existing.id });
-    const doc = String(profile.cpf_cnpj || profile.document || "").replace(/\D/g, "");
-    if (![11, 14].includes(doc.length))
-      return error("document_required", "Cadastre seu CPF ou CNPJ antes de pagar.", 422);
-    const customer = await asa("/customers", {
+    const doc = String(profile.cpf || "").replace(/\D/g, "");
+    if (doc.length !== 11)
+      return error("document_required", "Cadastre seu CPF antes de pagar.", 422);
+    console.info("[asaas-plan-pix] starting payment flow", {
+      uid,
+      profileFound: Boolean(profile),
+      cpfDigits: doc.length,
+      apiConfigured: Boolean(key()),
+      apiOrigin: new URL(API()).origin,
+    });
+    const customer = await asa("customer", "/customers", {
       method: "POST",
       body: JSON.stringify({
         name: profile.full_name || profile.company_name || "Cliente PAVOX",
@@ -74,7 +107,7 @@ Deno.serve(async (req) => {
         notificationDisabled: true,
       }),
     });
-    const payment = await asa("/payments", {
+    const payment = await asa("payment", "/payments", {
       method: "POST",
       body: JSON.stringify({
         customer: customer.id,
@@ -85,7 +118,7 @@ Deno.serve(async (req) => {
         externalReference: `${uid}:${plan.slug}`,
       }),
     });
-    const pix = await asa(`/payments/${payment.id}/pixQrCode`);
+    const pix = await asa("pix_qr_code", `/payments/${payment.id}/pixQrCode`);
     const data = {
       id: payment.id,
       plan: { slug: plan.slug, name: plan.name, amount: plan.monthly_price },
@@ -116,10 +149,16 @@ Deno.serve(async (req) => {
     if (insertError) throw insertError;
     return json({ payment: data, billingId: record.id });
   } catch (e) {
-    return error(
-      "payment_creation_failed",
-      e instanceof Error ? e.message : "Não foi possível criar o PIX.",
-      502,
-    );
+    if (e instanceof AsaasRequestError) {
+      return error(
+        "asaas_request_failed",
+        `Falha no Asaas (${e.details.stage}, HTTP ${e.details.status}${e.details.code ? `, ${e.details.code}` : ""}): ${e.message}`,
+        502,
+      );
+    }
+    console.error("[asaas-plan-pix] unexpected failure", {
+      message: e instanceof Error ? e.message : "unknown_error",
+    });
+    return error("payment_creation_failed", "Falha interna ao criar o PIX.", 502);
   }
 });
