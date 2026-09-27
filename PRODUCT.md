@@ -37,13 +37,18 @@ PAVOX is a checkout SaaS: a lojista builds a high-converting checkout for a prod
 - Language is Brazilian Portuguese only. Currency is BRL.
 - The checkout must never show a payment state the gateway did not confirm. Order state changes only from server-side confirmation.
 - A redesign must keep every existing route, feature and flow working.
-- **Undecided:** whether the redesign covers the dashboard, the public checkout, the landing page (`/`), or all three, and in what order.
+- **Redesign scope:** the whole site, prototyped in this order: buyer checkout (its own "Comprovante" world in the lojista's color), then the lojista panel, the landing page (`/`), login/sign-up, and admin last. Conquistas PAVOX move out of the panel.
 
 ## Brand Commitments
 
-The name, logo and visual identity are all open to change in the redesign. The user confirmed this. Current assets, kept as reference only: `public/pavox-logo.png`, `public/pavox-banner.png`, `public/pavox-auth-banner.png`, `public/favicon.png`.
+The PAVOX name, logo and colors are binding. The user confirmed this while reviewing the prototypes, correcting the earlier "everything can change" answer. What the redesign may change is layout, typography and components, not the brand.
 
-The user asked that a redesign be prototyped in a separate file first and only replace the live UI after approval.
+- **Logo:** a "P" whose counter holds a bright-blue play triangle, next to a wide geometric uppercase wordmark "PAVOX". Use the logo files. Never redraw or retype the wordmark.
+- **Colors:** navy `#001848` (primary: logo, headings, dark surfaces) and bright blue `#0052F8` / `#0055FB` (accent: the play triangle, actions, links). New surfaces are built on these two colors.
+- **Assets:** the files in `public/` (`pavox-logo.png`, `favicon.png`, `pavox-banner.png`, `pavox-auth-banner.png`) are still in use.
+- **Buyer checkout:** it uses the lojista's own color. PAVOX blue is only the default.
+
+The user asked that every redesign be prototyped in a separate file first and replace the live UI only after they approve it.
 
 ## Evidence on Hand
 

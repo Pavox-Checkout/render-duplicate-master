@@ -19,7 +19,7 @@ Open: how builder blocks (notice, banner, testimonials) sit around the paper; de
 
 THESIS: The checkout is the receipt being filled in. Order, buyer, and payment print onto one strip of thermal paper, and the "PAGO" stamp lands only on real confirmation. It refuses the white two-column form with a green button and a badge strip.
 
-OWN-WORLD: The lojista's color drenches the page ground (default: canary yellow of the carbonless "via do cliente"). One strip of cool-white thermal paper floats on it, with a torn zigzag foot, punched perforation rules, and ink-black print. Data (prices, CPF, Pix code, times, reference) is set in a condensed mono; everything else in a sturdy grotesk. The success color is a rubber-stamp green. There are no cards, no gradients, and no glass.
+OWN-WORLD: The lojista's color drenches the page ground (default: PAVOX blue #0055fb, which the lojista can change). One strip of cool-white thermal paper floats on it, with a torn zigzag foot, punched perforation rules, and ink-black print. Data (prices, CPF, Pix code, times, reference) is set in a condensed mono; everything else in a sturdy grotesk. The success color is a rubber-stamp green. There are no cards, no gradients, and no glass.
 
 STORY: The buyer sees what they are buying and the total like a receipt line, fills three fields, picks a method, and pays. The paper then feeds out the Pix code and a printed status log, and the stamp confirms.
 
