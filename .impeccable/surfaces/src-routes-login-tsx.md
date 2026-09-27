@@ -25,6 +25,6 @@ STORY: A returning lojista signs in with two fields. A new lojista creates the a
 
 FIRST VIEWPORT: The login form is fully above the fold on mobile: a navy logo band, then "Entre na PAVOX", e-mail, senha, and the Entrar button, with "Esqueci minha senha" and "Criar conta" as plain links.
 
-FORM: an extension inside the established world, a narrow request, so no roll. Signature interaction: the 8-digit code field auto-advances and verifies on the eighth digit, and the step list advances with the highlighter.
+FORM: an extension inside the established world, so no concept roll. new-work.md, "Create a whole surface inside an established world", says: never run the script for a local extension or a precisely specified narrow request. The flow's screens and fields are fixed by the live routes, and the user was told the roll was skipped. Signature interaction: the 8-digit code field auto-advances and verifies on the eighth digit, and the step list advances with the highlighter.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
