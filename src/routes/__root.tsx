@@ -83,11 +83,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "PAVOX: checkout com Pix, boleto e cartão" },
       {
         name: "description",
-        content: "Crie o checkout do seu produto e receba direto na conta do gateway que você já usa.",
+        content:
+          "Crie o checkout do seu produto e receba direto na conta do gateway que você já usa.",
       },
       { name: "author", content: "PAVOX" },
       { property: "og:title", content: "PAVOX: checkout com Pix, boleto e cartão" },
-      { property: "og:description", content: "Crie o checkout do seu produto e receba direto na conta do gateway que você já usa." },
+      {
+        property: "og:description",
+        content:
+          "Crie o checkout do seu produto e receba direto na conta do gateway que você já usa.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -96,11 +101,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400..800&display=swap",
+        rel: "preload",
+        href: "/fonts/hanken-grotesk-latin.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],

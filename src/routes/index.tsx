@@ -1,18 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LandingHeader } from "@/components/pavox/landing/landing-header";
-import { LandingFooter } from "@/components/pavox/landing/landing-footer";
-import { Hero } from "@/components/pavox/landing/sections/hero";
-import { Pillars } from "@/components/pavox/landing/sections/pillars";
-import { Product } from "@/components/pavox/landing/sections/product";
-import { Conversion } from "@/components/pavox/landing/sections/conversion";
-import { Marketing } from "@/components/pavox/landing/sections/marketing";
-import { Brand } from "@/components/pavox/landing/sections/brand";
-import { HowItWorks } from "@/components/pavox/landing/sections/how-it-works";
-import { ProductTypes } from "@/components/pavox/landing/sections/product-types";
-import { Pricing } from "@/components/pavox/landing/sections/pricing";
-import { Trust } from "@/components/pavox/landing/sections/trust";
-import { Faq } from "@/components/pavox/landing/sections/faq";
-import { FinalCta } from "@/components/pavox/landing/sections/final-cta";
+import { SimpleLanding } from "@/components/pavox/landing/simple-landing";
 import { PublicCheckout } from "@/components/pavox/public-checkout";
 import { resolveCustomDomain } from "@/lib/custom-domain";
 
@@ -24,17 +11,17 @@ export const Route = createFileRoute("/")({
     meta: loaderData
       ? [{ title: "Checkout seguro" }, { name: "robots", content: "noindex" }]
       : [
-          { title: "PAVOX · Checkout de alta performance" },
+          { title: "PAVOX: checkout com Pix, boleto e cartão" },
           {
             name: "description",
             content:
-              "Crie checkouts de alta performance, gerencie produtos e clientes e acompanhe sua operação em tempo real com a PAVOX.",
+              "Crie a página de pagamento do seu produto em minutos e receba direto na conta do gateway que você já usa.",
           },
-          { property: "og:title", content: "PAVOX · Seu checkout. Mais conversão. Mais vendas." },
+          { property: "og:title", content: "PAVOX: checkout com Pix, boleto e cartão" },
           {
             property: "og:description",
             content:
-              "A plataforma completa para criar checkouts de alta performance e acompanhar tudo em tempo real.",
+              "Crie a página de pagamento do seu produto em minutos e receba direto na conta do gateway que você já usa.",
           },
           { property: "og:type", content: "website" },
           { name: "twitter:card", content: "summary_large_image" },
@@ -45,29 +32,5 @@ export const Route = createFileRoute("/")({
 function IndexPage() {
   const target = Route.useLoaderData();
   if (target) return <PublicCheckout store={target.store} checkout={target.checkout} />;
-  return <LandingPage />;
-}
-
-function LandingPage() {
-  return (
-    <div className="dark relative min-h-[100svh] overflow-x-hidden bg-background text-foreground">
-      <div className="landing-light pointer-events-none fixed inset-0 z-0" />
-      <LandingHeader />
-      <main className="relative z-10">
-        <Hero />
-        <Pillars />
-        <Product />
-        <Conversion />
-        <Marketing />
-        <Brand />
-        <HowItWorks />
-        <ProductTypes />
-        <Pricing />
-        <Trust />
-        <Faq />
-        <FinalCta />
-      </main>
-      <LandingFooter />
-    </div>
-  );
+  return <SimpleLanding />;
 }

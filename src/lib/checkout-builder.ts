@@ -66,7 +66,13 @@ export type ProductKind = "physical" | "digital";
 /** Etapas canônicas do checkout (estrutura fixa). */
 export type StepKey = "identificacao" | "entrega" | "pagamento";
 export type StepItem = { key: StepKey; label: string; icon: string; physicalOnly: boolean };
-export type Testimonial = { id: string; name: string; text: string; rating: number; avatar?: string | undefined };
+export type Testimonial = {
+  id: string;
+  name: string;
+  text: string;
+  rating: number;
+  avatar?: string | undefined;
+};
 export type SecurityItem = { id: string; label: string; icon: string; enabled: boolean };
 
 export type HeaderConfig = {
@@ -310,14 +316,26 @@ export const FIELD_LABELS: Record<FieldKey, string> = {
 };
 
 export const CUSTOMER_FIELDS: FieldKey[] = ["name", "email", "phone", "doc"];
-export const ADDRESS_FIELDS: FieldKey[] = ["zip", "street", "number", "complement", "city", "state"];
+export const ADDRESS_FIELDS: FieldKey[] = [
+  "zip",
+  "street",
+  "number",
+  "complement",
+  "city",
+  "state",
+];
 
 /**
  * Estrutura fixa de etapas do checkout. A ordem é sempre a mesma; a etapa de
  * Entrega só é considerada quando o produto é físico. O lojista não cria etapas
  * manualmente — apenas personaliza os rótulos.
  */
-export const CANONICAL_STEPS: { key: StepKey; icon: string; label: string; physicalOnly: boolean }[] = [
+export const CANONICAL_STEPS: {
+  key: StepKey;
+  icon: string;
+  label: string;
+  physicalOnly: boolean;
+}[] = [
   { key: "identificacao", icon: "user", label: "Identificação", physicalOnly: false },
   { key: "entrega", icon: "truck", label: "Entrega", physicalOnly: true },
   { key: "pagamento", icon: "card", label: "Pagamento", physicalOnly: false },
@@ -335,12 +353,14 @@ export const STEP_DESCRIPTIONS: Record<StepKey, string> = {
  * Produto digital → Identificação, Pagamento.
  */
 export function resolveSteps(config: CheckoutConfig): StepItem[] {
-  return CANONICAL_STEPS.filter((s) => !s.physicalOnly || config.product.kind === "physical").map((s) => ({
-    key: s.key,
-    icon: s.icon,
-    label: config.steps.labels[s.key] || s.label,
-    physicalOnly: s.physicalOnly,
-  }));
+  return CANONICAL_STEPS.filter((s) => !s.physicalOnly || config.product.kind === "physical").map(
+    (s) => ({
+      key: s.key,
+      icon: s.icon,
+      label: config.steps.labels[s.key] || s.label,
+      physicalOnly: s.physicalOnly,
+    }),
+  );
 }
 
 export const LIVE_PHRASES = [
@@ -351,14 +371,14 @@ export const LIVE_PHRASES = [
 ];
 
 export const FONT_STACKS: Record<TypographyConfig["fontFamily"], string> = {
-  sans: '"Manrope", ui-sans-serif, system-ui, sans-serif',
-  display: '"Sora", ui-sans-serif, system-ui, sans-serif',
+  sans: '"Schibsted Grotesk", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif',
+  display: '"Bricolage Grotesque", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif',
   serif: 'Georgia, "Times New Roman", serif',
 };
 
 export const FONT_LABELS: Record<TypographyConfig["fontFamily"], string> = {
-  sans: "Manrope (Sans)",
-  display: "Sora (Display)",
+  sans: "Schibsted Grotesk (Sans)",
+  display: "Bricolage Grotesque (Display)",
   serif: "Serifada",
 };
 
@@ -369,7 +389,10 @@ export function newId(prefix: string) {
 }
 
 /** Paletas rápidas — aplicam apenas cores. */
-export const PALETTES: Record<Exclude<PaletteKey, "custom">, { label: string; colors: Omit<ColorsConfig, "palette"> }> = {
+export const PALETTES: Record<
+  Exclude<PaletteKey, "custom">,
+  { label: string; colors: Omit<ColorsConfig, "palette"> }
+> = {
   pavox: {
     label: "PAVOX",
     colors: {
@@ -457,9 +480,24 @@ export const PALETTE_SWATCHES: { key: PaletteKey; label: string; dots: string[] 
 ];
 
 export const PRESETS: { key: PresetKey; label: string; hint: string; accent: string }[] = [
-  { key: "conversao", label: "Conversão", hint: "Foco em urgência, prova social e Pix.", accent: "#2563eb" },
-  { key: "minimalista", label: "Minimalista", hint: "Limpo, direto e sem distrações.", accent: "#0f172a" },
-  { key: "premium", label: "Premium", hint: "Sofisticado, com respiro e tipografia display.", accent: "#1d4ed8" },
+  {
+    key: "conversao",
+    label: "Conversão",
+    hint: "Foco em urgência, prova social e Pix.",
+    accent: "#2563eb",
+  },
+  {
+    key: "minimalista",
+    label: "Minimalista",
+    hint: "Limpo, direto e sem distrações.",
+    accent: "#0f172a",
+  },
+  {
+    key: "premium",
+    label: "Premium",
+    hint: "Sofisticado, com respiro e tipografia display.",
+    accent: "#1d4ed8",
+  },
   { key: "dark", label: "Dark", hint: "Fundo escuro e alto contraste.", accent: "#3b82f6" },
 ];
 
@@ -666,7 +704,12 @@ export function applyPreset(config: CheckoutConfig, preset: PresetKey): Checkout
         surface: "#ffffff",
         border: "#e2e8f0",
       };
-      next.typography = { ...next.typography, fontFamily: "display", headingSize: 22, headingWeight: 700 };
+      next.typography = {
+        ...next.typography,
+        fontFamily: "display",
+        headingSize: 22,
+        headingWeight: 700,
+      };
       next.layout = { ...next.layout, radius: 18, width: 560 };
       next.social = { ...next.social, enabled: true, layout: "rating" };
       next.scarcity = { ...next.scarcity, enabled: false };
@@ -752,7 +795,7 @@ export function normalizeConfig(raw: unknown): CheckoutConfig {
   if (!raw || typeof raw !== "object") return base;
   const r = raw as Record<string, unknown>;
   const obj = (key: keyof CheckoutConfig) =>
-    (r[key] && typeof r[key] === "object" ? (r[key] as Record<string, unknown>) : {});
+    r[key] && typeof r[key] === "object" ? (r[key] as Record<string, unknown>) : {};
   const arr = <T>(key: keyof CheckoutConfig, sub: string, fallback: T[]): T[] => {
     const section = obj(key);
     const value = section[sub];
@@ -761,17 +804,25 @@ export function normalizeConfig(raw: unknown): CheckoutConfig {
 
   return {
     mode: r["mode"] === "advanced" ? "advanced" : "quick",
-    preset: (["conversao", "minimalista", "premium", "dark"] as PresetKey[]).includes(r["preset"] as PresetKey)
+    preset: (["conversao", "minimalista", "premium", "dark"] as PresetKey[]).includes(
+      r["preset"] as PresetKey,
+    )
       ? (r["preset"] as PresetKey)
       : base.preset,
     header: { ...base.header, ...obj("header") },
     divider: { ...base.divider, ...obj("divider") },
-    notice: { ...base.notice, ...obj("notice"), messages: arr("notice", "messages", base.notice.messages) },
+    notice: {
+      ...base.notice,
+      ...obj("notice"),
+      messages: arr("notice", "messages", base.notice.messages),
+    },
     banner: { ...base.banner, ...obj("banner") },
     summary: {
       ...base.summary,
       ...obj("summary"),
-      position: isBlockPosition(obj("summary")["position"]) ? (obj("summary")["position"] as BlockPosition) : base.summary.position,
+      position: isBlockPosition(obj("summary")["position"])
+        ? (obj("summary")["position"] as BlockPosition)
+        : base.summary.position,
     },
     // O cupom morava dentro de "summary" (couponEnabled/couponFirst). Migra
     // configs antigas automaticamente, preservando a intenção original.
@@ -781,14 +832,24 @@ export function normalizeConfig(raw: unknown): CheckoutConfig {
       if (hasOwnSection) {
         const section = obj("coupon");
         return {
-          enabled: typeof section["enabled"] === "boolean" ? (section["enabled"] as boolean) : base.coupon.enabled,
-          position: isBlockPosition(section["position"]) ? (section["position"] as BlockPosition) : base.coupon.position,
+          enabled:
+            typeof section["enabled"] === "boolean"
+              ? (section["enabled"] as boolean)
+              : base.coupon.enabled,
+          position: isBlockPosition(section["position"])
+            ? (section["position"] as BlockPosition)
+            : base.coupon.position,
         };
       }
       const legacyEnabled =
-        typeof legacySummary["couponEnabled"] === "boolean" ? (legacySummary["couponEnabled"] as boolean) : base.coupon.enabled;
+        typeof legacySummary["couponEnabled"] === "boolean"
+          ? (legacySummary["couponEnabled"] as boolean)
+          : base.coupon.enabled;
       const legacyFirst = legacySummary["couponFirst"] === true;
-      return { enabled: legacyEnabled, position: legacyFirst ? ("before-identification" as BlockPosition) : base.coupon.position };
+      return {
+        enabled: legacyEnabled,
+        position: legacyFirst ? ("before-identification" as BlockPosition) : base.coupon.position,
+      };
     })(),
     steps: {
       ...base.steps,
@@ -801,13 +862,21 @@ export function normalizeConfig(raw: unknown): CheckoutConfig {
       },
     },
     scarcity: { ...base.scarcity, ...obj("scarcity") },
-    social: { ...base.social, ...obj("social"), testimonials: arr("social", "testimonials", base.social.testimonials) },
+    social: {
+      ...base.social,
+      ...obj("social"),
+      testimonials: arr("social", "testimonials", base.social.testimonials),
+    },
     live: { ...base.live, ...obj("live") },
     payment: { ...base.payment, ...obj("payment") },
     colors: { ...base.colors, ...obj("colors") },
     typography: { ...base.typography, ...obj("typography") },
     footer: { ...base.footer, ...obj("footer") },
-    security: { ...base.security, ...obj("security"), items: arr("security", "items", base.security.items) },
+    security: {
+      ...base.security,
+      ...obj("security"),
+      items: arr("security", "items", base.security.items),
+    },
     product: { ...base.product, ...obj("product") },
     identification: { ...base.identification, ...obj("identification") },
     button: { ...base.button, ...obj("button") },
@@ -890,7 +959,8 @@ export function isValidCNPJ(v: string) {
   const cnpj = onlyDigits(v);
   if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
   const calc = (len: number) => {
-    const weights = len === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const weights =
+      len === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
     let sum = 0;
     for (let i = 0; i < len; i++) sum += Number(cnpj[i]) * (weights[i] ?? 0);
     const r = sum % 11;
