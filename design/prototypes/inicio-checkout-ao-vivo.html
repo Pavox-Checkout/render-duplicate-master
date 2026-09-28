@@ -60,11 +60,11 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .top .wrap { display: flex; align-items: center; gap: 24px; height: 64px; }
 .top .logo img { display: block; height: 28px; width: auto; }
 .top nav { display: none; gap: 22px; margin-left: 12px; }
-.top nav a { color: var(--on-navy-2); text-decoration: none; font-size: 14.5px; font-weight: 600; }
+.top nav a { white-space: nowrap; color: var(--on-navy-2); text-decoration: none; font-size: 14.5px; font-weight: 600; }
 .top nav a:hover { color: #fff; }
 .top .sp { flex: 1; }
 .top .enter { color: #fff; text-decoration: none; font-weight: 600; font-size: 14.5px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 12px; border: 0; background: var(--blue); color: #fff; font-weight: 800; font-size: 16px; letter-spacing: -0.01em; text-decoration: none; transition: background-color .15s, transform .12s var(--ease-out), box-shadow .2s; box-shadow: 0 8px 18px -8px rgba(0, 0, 0, .45); }
+.btn { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 12px; border: 0; background: var(--blue); color: #fff; font-weight: 800; font-size: 16px; letter-spacing: -0.01em; text-decoration: none; transition: background-color .15s, transform .12s var(--ease-out), box-shadow .2s; box-shadow: 0 8px 18px -8px rgba(0, 0, 0, .45); }
 .btn:hover { background: var(--blue-2); color: #fff; }
 .btn:active { transform: translateY(1px); }
 .btn.small { height: 38px; padding: 0 14px; font-size: 14px; border-radius: 10px; box-shadow: none; }
@@ -252,7 +252,6 @@ footer a:hover { color: #fff; }
 
 @media (min-width: 760px) {
   .wrap { padding: 0 32px; }
-  .top nav { display: flex; }
   .gwgrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start; }
   .kinds { grid-template-columns: 1fr 1fr; gap: 48px; }
   .plans { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 0; }
@@ -263,6 +262,7 @@ footer a:hover { color: #fff; }
   .flow li { grid-template-columns: 1fr; border-top: 1.5px solid var(--navy); border-bottom: 0; padding: 22px 24px 12px 0; }
 }
 @media (min-width: 1024px) {
+  .top nav { display: flex; }
   .hero { padding: 32px 0 56px; }
   .hero .lede { margin-top: 12px; }
   .hero .grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "hx st" "hf st"; gap: 24px 48px; align-items: end; }
@@ -416,7 +416,7 @@ footer a:hover { color: #fff; }
     <div class="wrap">
       <h2 id="fin-h">Crie sua conta e venda ainda hoje.</h2>
       <p>Crie a conta grátis, conecte seu gateway e publique o primeiro checkout. Sem mensalidade no plano Free.</p>
-      <a class="btn" href="#" data-noop>Começar grátis <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn" href="#" data-noop>Criar conta grátis <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
   </section>
 </main>
@@ -544,7 +544,7 @@ function renderRouter(msg) {
     const opts = GW.filter(([, ms]) => ms.includes(m)).map(([n]) => n);
     return `<div class="route"><label class="m" for="r-${m}">${m}</label>${opts.length > 1
       ? `<select id="r-${m}" data-m="${m}">${opts.map((n) => `<option ${route[m] === n ? "selected" : ""}>${n}</option>`).join("")}</select>`
-      : `<span class="only">${opts[0]} <span style="color:var(--ink-3)">(cartão hoje é pelo Mercado Pago)</span></span>`}</div>`;
+      : `<span class="only">${opts[0]} <span style="color:var(--ink-3)">· o único para cartão hoje</span></span>`}</div>`;
   }).join("");
   document.getElementById("gwlist").innerHTML = GW.map(([n, ms]) => `<li class="${Object.values(route).includes(n) ? "on" : ""}"><span class="n">${n}</span><span class="ms">${ms.join(" · ")}</span></li>`).join("");
   document.getElementById("routed").textContent = msg || "";
@@ -578,7 +578,7 @@ function renderPlans(v) {
     <div class="price tnum">R$ ${p.price ? brl(p.price) : "0"} <small>/mês</small></div>
     <div class="fee">${p.fee.toLocaleString("pt-BR")}% por venda aprovada<br><span style="font-weight:500;color:var(--ink-3)">${p.checkouts}</span></div>
     <div class="cost">Vendendo R$ ${brl(v)}: <b>R$ ${brl(costs[i])}</b> no mês<br><span class="cheap" style="visibility:${costs[i] === min && v > 0 ? "visible" : "hidden"}">${I.check}menor custo para esse volume</span></div>
-    <a class="btn ${i === 0 ? "" : "ghost"}" href="#comecar" style="justify-self:start">${i === 0 ? "Começar grátis" : `Começar no ${p.name}`}</a>
+    <a class="btn ${i === 0 ? "" : "ghost"}" href="#comecar" style="justify-self:start">${i === 0 ? "Criar conta grátis" : `Começar no ${p.name}`}</a>
     <ul>${p.yes.map((f) => `<li>${I.check}${f}</li>`).join("")}${p.no.map((f) => `<li class="no">${I.x}Sem ${f}</li>`).join("")}</ul>
   </div>`).join("");
 }
