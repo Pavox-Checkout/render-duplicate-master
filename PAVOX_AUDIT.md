@@ -102,7 +102,13 @@ Estado: 🟡 implementado de ponta a ponta para **Pix via Mercado Pago**; falta 
 - Estado atual: 🟡 parcial — importam `src/lib/mock.ts`
 - Solução: métricas a partir de `orders` pagos, agrupadas em `America/Sao_Paulo`; zero quando vazio.
 
-### 11. Cupons, order bump, upsell, brindes, provas sociais, A/B, automação
+### 11a. Cupons
+- Estado atual: ✅ real — tabela `coupons` (0024) com RLS por dono; CRUD em `marketing.cupons.tsx`.
+- Checkout: `check_public_coupon` valida e mostra o desconto; antes de pagar o navegador registra o cupom com `set_public_coupon_intent` (0025) e `create_public_order` recalcula o desconto no servidor (total nunca abaixo de R$ 1,00).
+- Usos contados só quando o pedido vira `Aprovado` (trigger `orders_count_coupon_use`). Pode haver uso acima do limite se vários pedidos pendentes forem pagos ao mesmo tempo.
+- Pendente: a Edge Function `public-checkout` do repositório já envia `couponCode`, mas a versão publicada (v15) ainda não; o fluxo não depende disso.
+
+### 11. Order bump, upsell, brindes, provas sociais, A/B, automação
 - Estado atual: 🔴 fake — `src/lib/marketing-data.ts` (listas vazias) + `toast.success` sem persistência
 - Atenção: o modelo padrão do Builder traz depoimentos fictícios ("Mariana A.", "Rafael S.") que aparecem no checkout público se o lojista não os editar.
 
