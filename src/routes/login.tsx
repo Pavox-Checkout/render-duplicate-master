@@ -96,7 +96,19 @@ function LoginPage() {
   };
 
   return (
-    <AuthShell greeting="Bom te ver de novo.">
+    <AuthShell
+      greeting="Bom te ver de novo."
+      railContent={
+        <div className="max-w-[290px]">
+          <h2 className="font-display text-[26px] font-bold leading-[1.12] tracking-[-0.03em] text-white">
+            Tudo da sua operação, em um só lugar.
+          </h2>
+          <p className="mt-4 text-[15px] leading-[1.6] text-[#b9c6e4]">
+            Entre no seu painel PAVOX e tenha controle sobre vendas, pedidos, clientes e checkouts.
+          </p>
+        </div>
+      }
+    >
       <AuthTitle title="Entre na PAVOX">Seu painel, seus pedidos e seu extrato.</AuthTitle>
 
       <form onSubmit={submit} className="flex flex-col gap-5">
