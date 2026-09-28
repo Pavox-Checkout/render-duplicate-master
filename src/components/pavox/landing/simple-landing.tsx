@@ -23,11 +23,11 @@ const GATEWAYS = [
   "Blackcat",
 ];
 
-// Only features the user has confirmed; the full list lives on /planos.
+// Only features that work today (checked in the code); the full list lives on /planos.
 const PLAN_POINTS: Record<string, string[]> = {
   free: ["Produtos ilimitados", "Pedidos, clientes e painel", "Suporte por e-mail"],
-  growth: ["Domínio personalizado", "Recuperação de vendas", "Suporte prioritário"],
-  pro: ["Vários domínios personalizados", "Tudo do Growth", "Relatórios avançados"],
+  growth: ["Domínio personalizado", "Personalização avançada do checkout", "Suporte prioritário"],
+  pro: ["Vários domínios personalizados", "Pavox AI", "Tudo do Growth"],
 };
 
 const FAQ = [

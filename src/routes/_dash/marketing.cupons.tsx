@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Plus, Ticket, Copy, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -67,6 +68,8 @@ function CuponsPage() {
         }
       />
 
+      <ComingSoonNotice />
+
       {coupons.length === 0 ? (
         <EmptyState
           icon={Ticket}
@@ -112,9 +115,7 @@ function CuponsPage() {
                   <TableCell className="text-muted-foreground">{c.type}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {c.used}
-                    {c.limit ? (
-                      <span className="text-muted-foreground"> / {c.limit}</span>
-                    ) : null}
+                    {c.limit ? <span className="text-muted-foreground"> / {c.limit}</span> : null}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{c.validity}</TableCell>
                   <TableCell>
@@ -129,22 +130,11 @@ function CuponsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => toast.info("Editar cupom")}>
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            toast.success(
-                              c.status === "Ativo" ? "Cupom pausado" : "Cupom ativado",
-                            )
-                          }
-                        >
+                        <DropdownMenuItem onClick={() => notYet()}>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => notYet()}>
                           {c.status === "Ativo" ? "Pausar" : "Ativar"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => toast.success("Cupom excluído")}
-                        >
+                        <DropdownMenuItem className="text-destructive" onClick={() => notYet()}>
                           Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -214,7 +204,7 @@ function CuponsPage() {
             </Button>
             <Button
               onClick={() => {
-                toast.success("Cupom criado com sucesso.");
+                notYet();
                 setOpen(false);
               }}
             >

@@ -77,6 +77,7 @@ export type PlanDisplay = {
   features: string[];
 };
 
+// Features marked "(em breve)" have no backend yet; they are listed as planned, never as available.
 export const PLAN_CATALOG: PlanDisplay[] = [
   {
     slug: "free",
@@ -112,12 +113,12 @@ export const PLAN_CATALOG: PlanDisplay[] = [
       "Produtos ilimitados",
       "Domínio personalizado",
       "Checkout avançado",
-      "Order Bump",
-      "Upsell",
-      "Cupons",
-      "Recuperação de vendas",
-      "Analytics completo",
-      "Relatórios completos",
+      "Order Bump (em breve)",
+      "Upsell (em breve)",
+      "Cupons (em breve)",
+      "Recuperação de vendas (em breve)",
+      "Analytics completo (em breve)",
+      "Relatórios completos (em breve)",
       "Personalização avançada",
       "Suporte prioritário",
     ],
@@ -134,11 +135,11 @@ export const PLAN_CATALOG: PlanDisplay[] = [
       "Múltiplos domínios personalizados",
       "Tudo do Growth",
       "Pavox AI",
-      "Analytics avançado",
-      "A/B Testing",
-      "Recursos premium de conversão",
-      "Automação avançada",
-      "Relatórios avançados",
+      "Analytics avançado (em breve)",
+      "A/B Testing (em breve)",
+      "Recursos premium de conversão (em breve)",
+      "Automação avançada (em breve)",
+      "Relatórios avançados (em breve)",
       "Suporte prioritário",
     ],
   },

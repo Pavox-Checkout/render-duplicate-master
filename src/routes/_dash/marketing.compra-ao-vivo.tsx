@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Save, ShoppingBag } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { SettingToggle } from "@/components/pavox/marketing/setting-toggle";
 import { CheckoutPreviewFrame } from "@/components/pavox/marketing/checkout-preview-frame";
@@ -52,11 +52,13 @@ function CompraAoVivoPage() {
         title="Compra ao vivo"
         subtitle="Exiba notificações de compras recentes para gerar prova social em tempo real."
         actions={
-          <Button size="sm" onClick={() => toast.success("Compra ao vivo salva.")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Save className="h-4 w-4" /> Salvar alterações
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_minmax(320px,420px)]">
         <div className="surface space-y-5 p-5">
@@ -116,10 +118,7 @@ function CompraAoVivoPage() {
                     <p className="text-[12.5px] font-semibold">
                       {sample.name}
                       {showCity ? (
-                        <span className="font-normal text-muted-foreground">
-                          {" "}
-                          de {sample.city}
-                        </span>
+                        <span className="font-normal text-muted-foreground"> de {sample.city}</span>
                       ) : null}
                     </p>
                     <p className="truncate text-[11.5px] text-muted-foreground">

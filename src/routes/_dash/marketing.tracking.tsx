@@ -1,15 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
-import {
-  Check,
-  CheckCircle2,
-  Info,
-  Link2,
-  Plug,
-  Settings2,
-  Sparkles,
-} from "lucide-react";
-import { toast } from "sonner";
+import { Check, CheckCircle2, Info, Link2, Plug, Settings2, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { TrackingLogo } from "@/components/pavox/marketing/tracking-logo";
 import { SettingToggle } from "@/components/pavox/marketing/setting-toggle";
@@ -62,13 +54,15 @@ function TrackingPage() {
         subtitle="Conecte suas principais ferramentas de rastreamento e acompanhe a origem das suas vendas."
       />
 
+      <ComingSoonNotice />
+
       <div className="flex items-start gap-2.5 rounded-xl border border-primary/15 bg-accent/60 px-4 py-3">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-          Você já pode configurar credenciais, checkouts e eventos de cada
-          plataforma. O <span className="font-medium text-foreground">envio automático de eventos</span>{" "}
-          é habilitado assim que a integração é concluída — nenhuma plataforma é
-          exibida como ativa sem uma conexão real.
+          Você já pode configurar credenciais, checkouts e eventos de cada plataforma. O{" "}
+          <span className="font-medium text-foreground">envio automático de eventos</span> é
+          habilitado assim que a integração é concluída — nenhuma plataforma é exibida como ativa
+          sem uma conexão real.
         </p>
       </div>
 
@@ -338,9 +332,7 @@ function TrackingConfigDialog({
                       label={e.label}
                       description={e.description}
                       checked={events[e.id] ?? false}
-                      onCheckedChange={(v) =>
-                        setEvents((prev) => ({ ...prev, [e.id]: v }))
-                      }
+                      onCheckedChange={(v) => setEvents((prev) => ({ ...prev, [e.id]: v }))}
                     />
                   ))}
                 </div>
@@ -349,9 +341,9 @@ function TrackingConfigDialog({
               <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2.5">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-                  A configuração é salva na sua conta. O envio automático de
-                  eventos para a {platform.name} é ativado quando a integração é
-                  concluída — nenhum evento é enviado antes disso.
+                  A configuração é salva na sua conta. O envio automático de eventos para a{" "}
+                  {platform.name} é ativado quando a integração é concluída — nenhum evento é
+                  enviado antes disso.
                 </p>
               </div>
             </div>
@@ -362,9 +354,7 @@ function TrackingConfigDialog({
                 variant="ghost"
                 className="text-muted-foreground"
                 onClick={() => {
-                  toast.info(
-                    "O teste de conexão fica disponível assim que a integração for ativada.",
-                  );
+                  notYet();
                 }}
               >
                 <Link2 className="h-4 w-4" /> Testar conexão
@@ -376,7 +366,7 @@ function TrackingConfigDialog({
                     variant="outline"
                     onClick={() => {
                       onDisconnect(platform.id);
-                      toast.success(`${platform.name} desconectada.`);
+                      notYet();
                     }}
                   >
                     Desconectar
@@ -390,7 +380,7 @@ function TrackingConfigDialog({
                   type="button"
                   onClick={() => {
                     onSave(platform.id);
-                    toast.success(`Configuração da ${platform.name} salva.`);
+                    notYet();
                   }}
                 >
                   <CheckCircle2 className="h-4 w-4" /> Salvar

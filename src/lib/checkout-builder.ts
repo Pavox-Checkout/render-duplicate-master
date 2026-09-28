@@ -22,7 +22,7 @@ export type FieldKey =
   | "city"
   | "state";
 
-export type PresetKey = "conversao" | "minimalista" | "premium" | "dark";
+export type PresetKey = "conversao" | "minimalista" | "premium" | "dark" | "comprovante";
 export type PaletteKey = "pavox" | "azul" | "verde" | "roxo" | "escuro" | "custom";
 
 export type ImageFit = "cover" | "contain" | "original";
@@ -481,6 +481,12 @@ export const PALETTE_SWATCHES: { key: PaletteKey; label: string; dots: string[] 
 
 export const PRESETS: { key: PresetKey; label: string; hint: string; accent: string }[] = [
   {
+    key: "comprovante",
+    label: "Comprovante",
+    hint: "O checkout vira um recibo em papel sobre a cor da sua loja.",
+    accent: "#0055fb",
+  },
+  {
     key: "conversao",
     label: "Conversão",
     hint: "Foco em urgência, prova social e Pix.",
@@ -528,8 +534,10 @@ function baseConfig(): CheckoutConfig {
       spacingBottom: 12,
     },
     notice: {
-      enabled: true,
-      messages: [{ id: newId("msg"), text: "Frete grátis para todo o Brasil nas compras de hoje" }],
+      // Off by default: the lojista writes their own notice; PAVOX never promises
+      // shipping or offers on their behalf.
+      enabled: false,
+      messages: [{ id: newId("msg"), text: "Escreva aqui um aviso para os seus compradores" }],
       background: "#0f172a",
       textColor: "#ffffff",
       size: "sm",
@@ -551,7 +559,8 @@ function baseConfig(): CheckoutConfig {
       installmentsEnabled: true,
     },
     coupon: {
-      enabled: true,
+      // Coupons are not processed by the backend yet.
+      enabled: false,
       position: "after-summary",
     },
     steps: {
@@ -574,24 +583,12 @@ function baseConfig(): CheckoutConfig {
       position: "top",
     },
     social: {
-      enabled: true,
+      // Only real testimonials the lojista adds; none are invented by default.
+      enabled: false,
       layout: "card",
       showStars: true,
       showPhoto: true,
-      testimonials: [
-        {
-          id: newId("tst"),
-          name: "Mariana A.",
-          text: "Compra rápida e checkout simples. Recebi tudo certinho!",
-          rating: 5,
-        },
-        {
-          id: newId("tst"),
-          name: "Rafael S.",
-          text: "Confiei e valeu a pena. Pagamento no Pix caiu na hora.",
-          rating: 5,
-        },
-      ],
+      testimonials: [],
     },
     live: {
       enabled: true,
@@ -714,6 +711,29 @@ export function applyPreset(config: CheckoutConfig, preset: PresetKey): Checkout
       next.social = { ...next.social, enabled: true, layout: "rating" };
       next.scarcity = { ...next.scarcity, enabled: false };
       break;
+    case "comprovante":
+      // A paper receipt on the store color: the ground follows `primary`,
+      // so the lojista only has to pick their color.
+      next.colors = {
+        ...next.colors,
+        palette: "custom",
+        primary: next.colors.primary || "#0055fb",
+        button: next.colors.primary || "#0055fb",
+        background: next.colors.primary || "#0055fb",
+        surface: "#fbfcfd",
+        text: "#141518",
+        textMuted: "#4a4e57",
+        border: "#c9cdd4",
+      };
+      next.header = { ...next.header, background: "#fbfcfd", textColor: "#141518" };
+      next.typography = { ...next.typography, fontFamily: "sans" };
+      next.layout = { ...next.layout, radius: 8, width: 480 };
+      next.divider = { ...next.divider, enabled: false };
+      next.footer = { ...next.footer, color: "#4a4e57" };
+      next.scarcity = { ...next.scarcity, enabled: false };
+      next.live = { ...next.live, enabled: false };
+      next.banner = { ...next.banner, enabled: false };
+      break;
     case "dark":
       next.colors = { ...next.colors, palette: "escuro", ...PALETTES.escuro.colors };
       next.header = { ...next.header, background: "#1e293b", textColor: "#f8fafc" };
@@ -804,9 +824,9 @@ export function normalizeConfig(raw: unknown): CheckoutConfig {
 
   return {
     mode: r["mode"] === "advanced" ? "advanced" : "quick",
-    preset: (["conversao", "minimalista", "premium", "dark"] as PresetKey[]).includes(
-      r["preset"] as PresetKey,
-    )
+    preset: (
+      ["conversao", "minimalista", "premium", "dark", "comprovante"] as PresetKey[]
+    ).includes(r["preset"] as PresetKey)
       ? (r["preset"] as PresetKey)
       : base.preset,
     header: { ...base.header, ...obj("header") },
@@ -984,3 +1004,17 @@ export const RECOMMENDATIONS = [
     detail: "Depoimentos próximos ao CTA reforçam a confiança na hora da decisão.",
   },
 ];
+
+/**
+ * Placeholder content older versions of the builder inserted by default. It
+ * was never written by the lojista, so the public checkout drops it instead of
+ * showing invented reviews or an invented free-shipping promise to buyers.
+ */
+export const LEGACY_DEFAULT_TESTIMONIALS = new Set([
+  "Compra rápida e checkout simples. Recebi tudo certinho!",
+  "Confiei e valeu a pena. Pagamento no Pix caiu na hora.",
+]);
+export const LEGACY_DEFAULT_NOTICES = new Set([
+  "Frete grátis para todo o Brasil nas compras de hoje",
+  "Escreva aqui um aviso para os seus compradores",
+]);

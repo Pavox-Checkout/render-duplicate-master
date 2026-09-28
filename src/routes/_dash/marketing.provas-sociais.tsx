@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Plus, Star, MessageSquareQuote } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { ToolStatusBadge } from "@/components/pavox/marketing/tool-status-badge";
@@ -18,7 +18,8 @@ export const Route = createFileRoute("/_dash/marketing/provas-sociais")({
       { title: "Provas sociais · PAVOX" },
       {
         name: "description",
-        content: "Exiba depoimentos e avaliações no checkout para aumentar a confiança e a conversão.",
+        content:
+          "Exiba depoimentos e avaliações no checkout para aumentar a confiança e a conversão.",
       },
     ],
   }),
@@ -51,11 +52,13 @@ function ProvasSociaisPage() {
         title="Provas sociais"
         subtitle="Depoimentos e avaliações exibidos no checkout para reforçar a decisão de compra."
         actions={
-          <Button size="sm" onClick={() => toast.info("Adicionar depoimento")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Plus className="h-4 w-4" /> Novo depoimento
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_minmax(320px,420px)]">
         <div className="space-y-3">

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Save, Timer, Flame } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { SettingToggle } from "@/components/pavox/marketing/setting-toggle";
 import { CheckoutPreviewFrame } from "@/components/pavox/marketing/checkout-preview-frame";
@@ -34,11 +34,13 @@ function EscassezPage() {
         title="Escassez"
         subtitle="Estimule decisões rápidas com cronômetro de oferta e indicadores de estoque limitado."
         actions={
-          <Button size="sm" onClick={() => toast.success("Escassez salva.")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Save className="h-4 w-4" /> Salvar alterações
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_minmax(320px,420px)]">
         <div className="space-y-4">

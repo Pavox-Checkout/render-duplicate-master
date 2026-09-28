@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { RotateCcw, ShoppingCart, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
 import { StatCard } from "@/components/pavox/stat-card";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_dash/recuperacao")({
   component: Recuperacao,
@@ -32,8 +32,15 @@ function Recuperacao() {
         subtitle="Cada carrinho abandonado é uma venda que ainda pode acontecer."
       />
 
+      <ComingSoonNotice />
+
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Carrinhos abandonados" value="R$ 0,00" hint="30 dias" icon={ShoppingCart} />
+        <StatCard
+          label="Carrinhos abandonados"
+          value="R$ 0,00"
+          hint="30 dias"
+          icon={ShoppingCart}
+        />
         <StatCard label="Recuperados" value="R$ 0,00" hint="30 dias" icon={RotateCcw} />
         <StatCard label="Taxa de recuperação" value="0,00%" hint="30 dias" icon={TrendingUp} />
       </div>
@@ -68,7 +75,10 @@ function Recuperacao() {
                 ["sms", "SMS", "Lembrete final em 24h"],
               ] as const
             ).map(([key, label, desc]) => (
-              <div key={key} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+              <div
+                key={key}
+                className="flex items-start justify-between gap-3 rounded-lg border border-border p-3"
+              >
                 <div>
                   <p className="text-[13.5px] font-medium">{label}</p>
                   <p className="text-[12px] text-muted-foreground">{desc}</p>
@@ -77,7 +87,7 @@ function Recuperacao() {
                   checked={channels[key]}
                   onCheckedChange={(v) => {
                     setChannels((c) => ({ ...c, [key]: v }));
-                    toast(`${label} ${v ? "ativado" : "desativado"}`);
+                    notYet();
                   }}
                 />
               </div>
