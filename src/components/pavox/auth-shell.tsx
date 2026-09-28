@@ -13,10 +13,12 @@ export function AuthShell({
   greeting,
   children,
   wide = false,
+  railContent,
 }: {
   greeting: string;
   children: ReactNode;
   wide?: boolean;
+  railContent?: ReactNode;
 }) {
   return (
     <div className="min-h-[100svh] bg-background lg:grid lg:grid-cols-[380px_minmax(0,1fr)]">
@@ -35,6 +37,8 @@ export function AuthShell({
             {greeting}
           </p>
         </div>
+        {railContent && <div className="hidden flex-1 items-center lg:flex">{railContent}</div>}
+        {!railContent && <div className="hidden flex-1 lg:block" />}
         <p className="hidden text-[14px] text-[#b9c6e4] lg:block">
           Checkout com o gateway que você já usa.
         </p>
