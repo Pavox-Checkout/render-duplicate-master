@@ -102,13 +102,16 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
   padding: 20px 16px 160px;
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px;
 }
+.wordmark { min-width: 0; }
+.wm-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.intro h1.long { font-size: clamp(26px, 2.6vw, 34px); line-height: 1.1; letter-spacing: -0.025em; }
 .store-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; }
 .wordmark { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: var(--on); text-decoration: none; }
 .wordmark .mark {
   width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
   background: var(--on); color: var(--brand); font-size: 14px; font-weight: 800; letter-spacing: -0.04em;
 }
-.secure { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--on); }
+.secure { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--on); }
 .secure svg { width: 16px; height: 16px; }
 .notice {
   display: flex; gap: 10px; align-items: flex-start;
@@ -206,7 +209,8 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .f .err { display: none; margin-top: 5px; font-size: 13px; font-weight: 600; color: var(--stamp-bad); }
 .f.bad input { border-color: var(--stamp-bad); background: #fff7f6; }
 .f.bad .err { display: block; }
-.linkish {
+.linkish { min-height: 44px; display: inline-flex; align-items: center;
+
   justify-self: start; padding: 4px 0; border: 0; background: none; color: var(--ink);
   font-size: 13.5px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px;
 }
@@ -230,6 +234,11 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .card-slot { margin-top: 12px; padding: 14px; border-radius: 8px; border: 1.5px dashed var(--field); background: #fff; }
 .card-slot .gw { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12.5px; color: var(--ink-2); }
 .card-slot .gw svg { width: 15px; height: 15px; }
+.copy-fail { margin: 8px 0 0; font-size: 13.5px; font-weight: 600; color: var(--stamp-bad); text-align: center; }
+.copy-fail.net { color: var(--ink-2); font-weight: 500; }
+.wordmark .mark { flex: none; }
+.pay-err { margin: 14px 0 0; }
+.pay-err:focus { outline: none; }
 .decline {
   display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px 14px;
   border-radius: 8px; background: #fbeceb; color: #7d1f19; font-size: 14px; font-weight: 600; line-height: 1.4;
@@ -366,7 +375,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
   .paper-col { grid-column: 2; }
   .notice-ground { grid-column: 1 / -1; grid-row: 2; margin-bottom: 28px; }
   .foot { grid-row: 4; }
-  .slips-mobile, .paybar, .cover-mobile { display: none !important; }
+  .slips-mobile, .paybar, .cover-mobile, .h1-m { display: none !important; }
   .cover-mobile + .paper-wrap { margin-top: 0; }
   .foot { grid-column: 1 / -1; margin-top: 48px; }
   :root { --pad: 30px; }
@@ -399,8 +408,8 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 </div>
 <aside class="proto-panel" id="protoPanel" aria-label="Controles do protótipo"></aside>
 
-<div class="stage on-ground" id="stage"></div>
-<div id="paybarHost"></div>
+<main class="stage on-ground" id="stage"></main>
+<aside id="paybarHost" aria-label="Total e pagamento"></aside>
 
 <script>
 const QR = { digital: `<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h45v45H0z"/><path stroke="#141518" d="M0 0.5h7m1 0h1m1 0h2m1 0h2m1 0h1m1 0h1m1 0h2m1 0h3m2 0h4m1 0h1m2 0h1m1 0h7M0 1.5h1m5 0h1m1 0h7m1 0h1m1 0h1m1 0h5m1 0h2m2 0h1m1 0h2m1 0h1m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m4 0h2m1 0h4m1 0h1m2 0h2m1 0h2m1 0h1m4 0h1m1 0h1m2 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m1 0h1m6 0h1m2 0h2m7 0h1m2 0h2m1 0h2m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m2 0h1m3 0h1m1 0h2m3 0h17m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m2 0h2m1 0h1m2 0h1m1 0h4m3 0h1m1 0h1m1 0h2m2 0h2m4 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h4m5 0h4m3 0h1m1 0h1m2 0h1m2 0h1M0 8.5h1m1 0h2m1 0h3m1 0h1m1 0h4m2 0h2m1 0h5m1 0h1m2 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h1m1 0h2M0 9.5h4m1 0h1m1 0h2m2 0h2m2 0h1m2 0h1m3 0h1m1 0h2m2 0h1m2 0h1m1 0h2m1 0h1m2 0h1m2 0h1M1 10.5h2m2 0h3m1 0h1m2 0h1m1 0h2m1 0h4m2 0h1m2 0h1m4 0h1m1 0h1m4 0h1m1 0h1m1 0h1m1 0h1M2 11.5h1m2 0h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h3m2 0h1m1 0h3m1 0h2m1 0h1m4 0h4m1 0h1m1 0h1M0 12.5h1m2 0h4m7 0h1m1 0h4m1 0h2m1 0h5m1 0h1m1 0h1m1 0h1m1 0h3m1 0h2M1 13.5h1m1 0h2m2 0h2m1 0h1m2 0h1m1 0h1m1 0h2m1 0h4m4 0h2m1 0h1m3 0h1m1 0h3m1 0h1M3 14.5h1m2 0h1m1 0h1m2 0h1m2 0h1m1 0h1m6 0h1m1 0h1m1 0h3m1 0h3m1 0h2m1 0h2M0 15.5h4m1 0h1m1 0h4m4 0h1m4 0h1m1 0h1m3 0h1m3 0h4m2 0h2m4 0h1m1 0h1M1 16.5h1m2 0h1m1 0h1m2 0h2m3 0h3m1 0h1m1 0h1m2 0h6m1 0h1m7 0h4m2 0h1M0 17.5h1m2 0h1m4 0h1m1 0h3m1 0h1m1 0h2m8 0h3m3 0h3m2 0h1m3 0h1m1 0h2M1 18.5h1m3 0h6m7 0h1m6 0h1m1 0h1m1 0h2m1 0h1m1 0h2m1 0h2m1 0h2M3 19.5h1m6 0h2m1 0h7m2 0h1m1 0h1m1 0h1m1 0h2m2 0h1m2 0h4m2 0h3M2 20.5h1m1 0h8m1 0h2m5 0h5m4 0h2m1 0h3m1 0h8M4 21.5h1m3 0h1m2 0h2m1 0h2m1 0h4m3 0h2m2 0h3m5 0h1m3 0h1m1 0h1m1 0h1M0 22.5h3m1 0h1m1 0h1m1 0h1m1 0h3m1 0h4m2 0h1m1 0h1m1 0h2m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h3M0 23.5h5m3 0h5m2 0h3m2 0h1m3 0h4m1 0h1m1 0h2m1 0h1m1 0h1m3 0h1m3 0h1M1 24.5h1m2 0h5m1 0h3m2 0h1m2 0h1m1 0h7m8 0h6M3 25.5h2m4 0h2m1 0h1m2 0h1m5 0h5m1 0h1m3 0h3m2 0h3m2 0h2m1 0h1M0 26.5h2m1 0h1m1 0h2m2 0h1m3 0h1m1 0h1m1 0h2m1 0h1m4 0h1m2 0h1m1 0h1m2 0h1m1 0h2m2 0h1m1 0h1m1 0h2M0 27.5h1m3 0h2m1 0h1m4 0h2m1 0h1m2 0h2m2 0h1m4 0h1m1 0h2m1 0h5m1 0h2m1 0h4M0 28.5h5m1 0h4m1 0h5m3 0h2m1 0h1m2 0h1m1 0h1m2 0h5m1 0h3m2 0h2m1 0h1M0 29.5h3m2 0h1m2 0h1m1 0h1m1 0h1m1 0h2m1 0h1m1 0h3m6 0h1m1 0h1m5 0h1m1 0h2m3 0h1M0 30.5h1m1 0h1m1 0h1m1 0h1m4 0h2m1 0h1m1 0h2m1 0h1m1 0h2m1 0h3m1 0h1m1 0h1m1 0h3m1 0h1M1 31.5h1m1 0h1m1 0h1m2 0h1m1 0h1m1 0h4m1 0h3m3 0h1m1 0h1m2 0h2m1 0h1m2 0h2m4 0h3m1 0h1M3 32.5h1m2 0h1m3 0h6m4 0h1m3 0h7m2 0h1m1 0h4m1 0h1m1 0h1m1 0h1M0 33.5h3m2 0h1m2 0h1m1 0h2m2 0h3m1 0h2m1 0h3m6 0h4m1 0h3m1 0h4M4 34.5h1m1 0h3m1 0h1m2 0h2m3 0h1m6 0h2m1 0h1m4 0h1m2 0h3m2 0h1m1 0h2M1 35.5h4m3 0h2m4 0h1m1 0h1m4 0h2m1 0h1m1 0h2m2 0h2m5 0h3m1 0h1m1 0h1M0 36.5h1m2 0h2m1 0h2m5 0h1m1 0h1m1 0h1m1 0h6m4 0h1m2 0h2m1 0h8M8 37.5h5m2 0h1m1 0h1m1 0h2m3 0h1m1 0h5m1 0h1m3 0h1m3 0h1m3 0h1M0 38.5h7m1 0h1m2 0h1m5 0h2m1 0h1m1 0h1m1 0h2m2 0h1m1 0h4m2 0h1m1 0h1m1 0h2m1 0h2M0 39.5h1m5 0h1m1 0h1m2 0h4m1 0h2m1 0h2m3 0h1m5 0h1m2 0h1m2 0h1m3 0h1m1 0h3M0 40.5h1m1 0h3m1 0h1m2 0h2m1 0h1m2 0h2m1 0h1m1 0h7m2 0h2m1 0h10M0 41.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h1m3 0h1m2 0h1m1 0h1m1 0h4m3 0h1m2 0h2m1 0h3m2 0h2M0 42.5h1m1 0h3m1 0h1m1 0h1m3 0h4m1 0h2m8 0h4m3 0h1m1 0h2m2 0h2M0 43.5h1m5 0h1m2 0h3m1 0h1m2 0h1m6 0h2m3 0h2m4 0h3m1 0h2m3 0h2M0 44.5h7m1 0h2m1 0h1m1 0h1m2 0h4m1 0h1m1 0h1m3 0h3m1 0h1m1 0h1m1 0h2m1 0h6"/></svg>
@@ -439,6 +448,8 @@ const PRODUCTS = {
   },
 };
 
+const STORE = { name: "Ateliê Doce Lar", initials: "DL" };
+
 const TESTIMONIALS = [
   { who: "Marina S.", text: "Fiz o bolo de andar da aula 4 e já vendi três encomendas no mês.", stars: 5 },
   { who: "Rogério P.", text: "Explicação sem enrolar. A apostila salvou minha vida na hora do glacê.", stars: 5 },
@@ -453,13 +464,13 @@ const SWATCHES = [
 const SCREENS = [
   ["form", "Formulário"], ["loading", "Carregando"], ["pix", "Pix aguardando"], ["pix-paid", "Pix pago"],
   ["pix-expired", "Pix expirado"], ["boleto", "Boleto"], ["card-declined", "Cartão recusado"],
-  ["card-paid", "Cartão aprovado"], ["soldout", "Esgotado"], ["unavailable", "Indisponível"],
+  ["card-paid", "Cartão aprovado"], ["pay-error", "Erro ao gerar Pix"], ["offline", "Sem internet"], ["soldout", "Esgotado"], ["unavailable", "Indisponível"],
 ];
 
 const state = {
   screen: "form", kind: "digital", method: "pix", color: "#0055fb", pj: false,
   blocks: { notice: true, cover: true, social: true },
-  values: {}, errors: {}, submitting: false, generatedAt: null, paidAt: null, copied: false, animate: null,
+  values: {}, errors: {}, submitting: false, payError: null, generatedAt: null, paidAt: null, copied: false, animate: null,
 };
 
 const brl = (n) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -471,6 +482,10 @@ function hexToRgb(hex) {
   const h = hex.replace("#", "");
   const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mixHex(a, b, t) {
+  const x = hexToRgb(a), y = hexToRgb(b);
+  return "#" + x.map((v, i) => Math.round(v * (1 - t) + y[i] * t).toString(16).padStart(2, "0")).join("");
 }
 function luminance(hex) {
   const [r, g, b] = hexToRgb(hex).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
@@ -484,7 +499,13 @@ function applyColor(hex) {
   const L = luminance(hex);
   const onDark = (1.05) / (L + 0.05);
   const onLight = (L + 0.05) / (luminance("#141518") + 0.05);
-  root.setProperty("--on", onLight >= onDark ? "#141518" : "#ffffff");
+  const on = onLight >= onDark ? "#141518" : "#ffffff";
+  root.setProperty("--on", on);
+  // Secondary text on the store color: tinted toward the color, but never below 4.5:1.
+  const ratio = (a) => { const x = luminance(a); return (Math.max(x, L) + 0.05) / (Math.min(x, L) + 0.05); };
+  let soft = on;
+  for (let t = 0.26; t >= 0; t -= 0.02) { const m = mixHex(on, hex, t); if (ratio(m) >= 4.6) { soft = m; break; } }
+  root.setProperty("--on-soft", soft);
   // Very light colors need a visible edge on white paper.
   root.setProperty("--brand-edge", L > 0.6 ? "color-mix(in srgb, var(--brand) 55%, #141518)" : "color-mix(in srgb, var(--brand) 80%, #141518)");
 }
@@ -539,7 +560,7 @@ function thumb(kind) {
 function head() {
   const now = new Date();
   return `<div class="head">
-    <div class="store">Ateliê Doce Lar</div>
+    <div class="store">${esc(STORE.name)}</div>
     <div class="meta">Via do cliente · <span class="mono">${now.toLocaleDateString("pt-BR")} ${hhmm(now)}</span></div>
   </div>`;
 }
@@ -617,9 +638,18 @@ function payLabel(short) {
   return short ? `Pagar ${how} ${ICON.arrow}` : `Pagar R$ ${brl(p.price)} ${how} ${ICON.arrow}`;
 }
 
+function payErrorBox() {
+  if (!state.payError) return "";
+  const what = state.method === "pix" ? "o Pix" : state.method === "boleto" ? "o boleto" : "o pagamento";
+  const msg = state.payError === "offline"
+    ? `<b>Sem internet.</b> Seus dados continuam aqui. Quando a conexão voltar, toque em pagar de novo.`
+    : `<b>Não conseguimos gerar ${what}.</b> A loja não recebeu resposta do banco e nada foi cobrado. Tente de novo em instantes.`;
+  return `<div class="decline pay-err" role="alert" tabindex="-1" id="payErr">${ICON.alert}<span>${msg}</span></div>`;
+}
 function paperForm() {
   return `${head()}<div class="perf"></div>${orderLines()}<div class="perf"></div>
     <form id="buy" novalidate>${buyerSection()}${addressSection()}<div class="perf"></div>${methodsSection()}
+      ${payErrorBox()}
       <button class="pay pay-desk" type="submit" ${state.submitting ? "disabled" : ""}>${payLabel()}</button>
       <p class="reassure">${ICON.lock} Seus dados viajam com criptografia. Nada é cobrado sem a sua confirmação no banco.</p>
     </form>`;
@@ -661,7 +691,9 @@ function paperPix(status) {
       </div>
       ${paid || expired ? "" : `
         <div class="code mono" aria-label="Código Pix copia e cola"><span>${pixCode()}</span></div>
-        <button class="pay copy ${state.copied ? "done" : ""}" type="button" data-act="copy">${state.copied ? `${ICON.check} Código copiado` : `${ICON.copy} Copiar código Pix`}</button>
+        <button class="pay copy ${state.copied === true ? "done" : ""}" type="button" data-act="copy">${state.copied === true ? `${ICON.check} Código copiado` : `${ICON.copy} Copiar código Pix`}</button>
+        ${state.copied === "fail" ? `<p class="copy-fail" role="status">Não deu para copiar sozinho. O código ficou selecionado: toque e segure para copiar.</p>` : ""}
+        ${navigator.onLine ? "" : `<p class="copy-fail net" role="status">Sem internet agora. Se você já pagou, fique tranquilo: quando a conexão voltar, esta página confere de novo.</p>`}
         <div class="valid">Válido até <span class="num">${hhmm(exp)}</span> · faltam <span class="num" id="countdown">30:00</span></div>`}
       ${expired ? `<button class="pay" type="button" data-act="restart" style="margin-top:18px">Fazer novo pedido ${ICON.arrow}</button>` : ""}
       <div class="perf"></div>
@@ -697,7 +729,8 @@ function paperBoleto() {
       <p class="state-sub">Pague no app do banco ou numa lotérica até o vencimento. A confirmação leva até 2 dias úteis depois do pagamento.</p>
       <div class="barcode">${barcodeSvg(line.replace(/\D/g, ""))}</div>
       <div class="code mono" aria-label="Linha digitável"><span>${line}</span></div>
-      <button class="pay copy ${state.copied ? "done" : ""}" type="button" data-act="copy">${state.copied ? `${ICON.check} Linha copiada` : `${ICON.copy} Copiar linha digitável`}</button>
+      <button class="pay copy ${state.copied === true ? "done" : ""}" type="button" data-act="copy">${state.copied === true ? `${ICON.check} Linha copiada` : `${ICON.copy} Copiar linha digitável`}</button>
+      ${state.copied === "fail" ? `<p class="copy-fail" role="status">Não deu para copiar sozinho. A linha ficou selecionada: toque e segure para copiar.</p>` : ""}
       <a class="ghost" href="#" data-act="noop">${ICON.ext} Abrir boleto em PDF</a>
       <div class="perf"></div>
       <dl class="kv"><div><dt>Vencimento</dt><dd class="num">${due.toLocaleDateString("pt-BR")}</dd></div><div><dt>Pedido</dt><dd class="num">PVX-48213</dd></div><div><dt>Produto</dt><dd>${esc(p.name)}</dd></div></dl>
@@ -744,7 +777,7 @@ function paperFor(screen) {
 function slips(cls) {
   if (!state.blocks.social) return "";
   return `<section class="slips ${cls}" aria-label="Quem já comprou"><h2>Quem já comprou</h2>
-    ${TESTIMONIALS.map((t) => `<figure class="slip" style="margin:0"><div class="who"><span>${t.who}</span><span class="stars" aria-label="${t.stars} de 5 estrelas">${ICON.star.repeat(t.stars)}</span></div><p>${t.text}</p></figure>`).join("")}
+    ${TESTIMONIALS.map((t) => `<figure class="slip" style="margin:0"><div class="who"><span>${t.who}</span><span class="stars" role="img" aria-label="${t.stars} de 5 estrelas">${ICON.star.repeat(t.stars)}</span></div><p>${t.text}</p></figure>`).join("")}
   </section>`;
 }
 
@@ -754,17 +787,18 @@ function render() {
   const soldout = state.screen === "soldout" || state.screen === "unavailable";
   document.getElementById("stage").innerHTML = `
     <header class="store-row">
-      <span class="wordmark"><span class="mark" aria-hidden="true">DL</span>Ateliê Doce Lar</span>
+      <span class="wordmark" title="${esc(STORE.name)}"><span class="mark" aria-hidden="true">${esc(STORE.initials)}</span><span class="wm-name">${esc(STORE.name)}</span></span>
       <span class="secure">${ICON.lock} Compra segura</span>
     </header>
     ${state.blocks.notice && formLike ? `<div class="notice notice-ground">${ICON.info}<span>${esc(p.notice)}</span></div>` : ""}
     <div class="main">
     <div class="intro">
       ${state.blocks.cover ? `<div class="cover">${cover(state.kind, true)}</div>` : ""}
-      <h1>${esc(p.name)}</h1>
+      <h1 class="${p.name.length > 48 ? "long" : ""}">${esc(p.name)}</h1>
       <p>${esc(p.blurb)}</p>
       ${slips("slips-desk")}
     </div>
+    ${state.screen === "form" || state.screen === "card-declined" ? `<h1 class="sr-only h1-m">${esc(p.name)}</h1>` : ""}
     <div class="paper-col">
       <div class="paper-wrap ${state.animate === "stamp" ? "thud" : ""}"><div class="paper">${paperFor(state.screen)}</div></div>
     </div>
@@ -831,6 +865,12 @@ document.addEventListener("input", (ev) => {
   state.values[k] = el.value;
   if (state.errors[k]) { delete state.errors[k]; el.closest(".f").classList.remove("bad"); el.removeAttribute("aria-invalid"); }
 });
+function focusPayErr() {
+  const e = document.getElementById("payErr");
+  e?.focus({ preventScroll: true }); e?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+addEventListener("online", () => { if (state.payError === "offline") { state.payError = null; render(); } else if (state.screen === "pix") render(); });
+addEventListener("offline", () => { if (state.screen === "pix") render(); });
 document.addEventListener("submit", (ev) => {
   if (ev.target.id !== "buy") return;
   ev.preventDefault();
@@ -843,6 +883,8 @@ document.addEventListener("submit", (ev) => {
     first?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
+  state.payError = null;
+  if (!navigator.onLine) { state.payError = "offline"; render(); focusPayErr(); return; }
   state.submitting = true; render();
   setTimeout(() => {
     state.submitting = false; state.copied = false;
@@ -856,14 +898,17 @@ document.addEventListener("submit", (ev) => {
 document.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-method],[data-act],[data-screen],[data-kind],[data-color],[data-block]");
   if (!t) return;
-  if (t.dataset.method) { state.method = t.dataset.method; if (state.screen === "card-declined") state.screen = "form"; render(); document.querySelector(`[data-method="${state.method}"]`)?.focus(); return; }
+  if (t.dataset.method) { state.method = t.dataset.method; state.payError = null; if (state.screen === "card-declined") state.screen = "form"; render(); document.querySelector(`[data-method="${state.method}"]`)?.focus(); return; }
   const act = t.dataset.act;
   if (act === "pj") { state.pj = !state.pj; state.errors = {}; render(); return; }
   if (act === "copy") {
     const text = state.screen === "boleto" ? "34191790010104351004791020150008198760000019700" : pixCode();
-    navigator.clipboard?.writeText(text).catch(() => {});
-    state.copied = true; render();
-    setTimeout(() => { state.copied = false; if (state.screen === "pix" || state.screen === "boleto") render(); }, 2600);
+    const done = (ok) => {
+      state.copied = ok ? true : "fail"; render();
+      if (!ok) { const c = document.querySelector(".code span"); if (c) { const rg = document.createRange(); rg.selectNodeContents(c); getSelection().removeAllRanges(); getSelection().addRange(rg); } }
+      setTimeout(() => { state.copied = false; if (state.screen === "pix" || state.screen === "boleto") render(); }, ok ? 2600 : 6000);
+    };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(() => done(true), () => done(false)); else done(false);
     return;
   }
   if (act === "restart") { state.screen = "form"; render(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
@@ -876,7 +921,8 @@ document.addEventListener("click", (ev) => {
     state.errors = {}; render(); return;
   }
   if (t.dataset.screen) {
-    state.screen = t.dataset.screen; state.errors = {}; state.copied = false;
+    state.screen = t.dataset.screen; state.errors = {}; state.copied = false; state.payError = null;
+    if (state.screen === "pay-error" || state.screen === "offline") { state.payError = state.screen === "offline" ? "offline" : "gateway"; state.screen = "form"; state.method = "pix"; }
     if (state.screen === "card-declined" || state.screen === "card-paid") state.method = "card";
     state.generatedAt = new Date(Date.now() - (state.screen === "pix-expired" ? 31 * 60000 : 60000));
     state.paidAt = new Date();
