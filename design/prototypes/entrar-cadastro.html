@@ -140,6 +140,13 @@ form { margin-top: 24px; display: grid; gap: 16px; }
   .main { padding: 72px 48px; align-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* touch: 44px hit areas without changing the drawn size */
+@media (pointer: coarse) {
+  a.logo { display: inline-block; padding-block: 9px; margin-block: -9px; }
+  label a, .alt a { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  .pw button { min-width: 44px; min-height: 44px; }
+}
 </style>
 </head>
 <body>

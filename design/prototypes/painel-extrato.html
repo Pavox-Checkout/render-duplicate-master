@@ -322,6 +322,13 @@ dialog .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* touch: 44px hit areas without changing the drawn size */
+@media (pointer: coarse) {
+  a.wordmark, a.more { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  .seg button { min-height: 44px; }
+  .linkbtn { min-height: 44px; margin-block: -8px; }
+}
 </style>
 </head>
 <body>

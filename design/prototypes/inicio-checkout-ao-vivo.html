@@ -50,6 +50,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .hl { background: linear-gradient(100deg, rgba(201,218,255,0) 0.6%, var(--hl) 2.4%, var(--hl) 95%, rgba(201,218,255,0) 98%) no-repeat 0 88% / 100% 55%; padding: 0 .1em; margin: 0 -.1em; border-radius: .2em .5em .3em .6em; }
 
 /* prototype ribbon (tooling, not part of the design) */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .proto-bar { position: fixed; inset: 0 0 auto 0; z-index: 90; height: 40px; display: flex; align-items: center; padding: 0 16px; background: #0d0e10; color: #e9eaec; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .proto-bar b { color: #fff; margin-right: 4px; }
 @media (max-width: 520px) { .pb-long { display: none; } }
@@ -122,7 +123,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .tot .v { font-family: var(--mono); font-stretch: 87.5%; font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
 .tot .v small { font-size: .5em; margin-right: 3px; }
 .mf { display: grid; gap: 6px; }
-.mf .f { height: 32px; border-radius: 5px; border: 1.5px solid #b9bec7; background: #fff; font-size: 11px; color: #767b86; display: flex; align-items: center; padding: 0 10px; }
+.mf .f { height: 32px; border-radius: 5px; border: 1.5px solid #b9bec7; background: #fff; font-size: 11px; color: #676c77; display: flex; align-items: center; padding: 0 10px; }
 .meth { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 10px; border: 1.5px solid #b9bec7; border-radius: 6px; overflow: hidden; font-size: 11px; font-weight: 700; }
 .meth span { display: flex; align-items: center; justify-content: center; gap: 4px; height: 30px; color: #4a4e57; }
 .meth span + span { border-left: 1.5px solid #b9bec7; }
@@ -276,6 +277,17 @@ footer a:hover { color: #fff; }
   .tool:nth-child(-n+2) { }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } html { scroll-behavior: auto; } }
+
+/* touch: 44px hit areas without changing the drawn size */
+@media (pointer: coarse) {
+  a.logo { display: inline-block; padding-block: 8px; margin-block: -8px; }
+  a.enter, footer a { display: inline-block; padding: 12px 4px; margin: -12px -4px; }
+  .link-on-navy { display: inline-block; padding-block: 10px; margin-block: -10px; }
+  .btn.small { min-height: 44px; }
+  .demo-ctl .ex button, .demo-ctl .pp { min-height: 44px; }
+  #c-val { height: 44px; margin-block: -8px; }
+  #c-range { height: 44px; }
+}
 </style>
 </head>
 <body>

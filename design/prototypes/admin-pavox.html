@@ -210,6 +210,13 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
   .attn { padding: 10px 0; font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* touch: 44px hit areas without changing the drawn size */
+@media (pointer: coarse) {
+  .seg button { min-height: 44px; }
+  .attn a, .block-head a { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  .linkbtn { min-height: 44px; margin-block: -8px; }
+}
 </style>
 </head>
 <body>
