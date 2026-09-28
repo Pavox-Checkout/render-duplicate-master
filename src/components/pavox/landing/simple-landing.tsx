@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { PLAN_CATALOG } from "@/lib/billing";
 import { cn } from "@/lib/utils";
+import { PaymentConversion } from "./sections/payment-conversion";
 
 /*
  * PAVOX landing page: white, minimal and conventional.
@@ -228,6 +229,8 @@ export function SimpleLanding() {
             </div>
           </div>
         </section>
+
+        <PaymentConversion />
 
         <section id="planos" aria-labelledby="pl-h" className="scroll-mt-24 pb-[104px]">
           <div className="mx-auto max-w-[1120px] px-5 md:px-8">
