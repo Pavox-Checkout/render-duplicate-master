@@ -59,7 +59,6 @@ const main = [
   { to: "/dashboard", label: "Visão geral", icon: LayoutGrid },
   { to: "/vendas", label: "Vendas", icon: TrendingUp },
   { to: "/pedidos", label: "Pedidos", icon: Receipt },
-  { to: "/produtos", label: "Produtos", icon: Package },
   { to: "/checkouts", label: "Checkouts", icon: ShoppingBag },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/recuperacao", label: "Recuperação", icon: RotateCcw },
@@ -105,6 +104,28 @@ function NavItem({
         </span>
       )}
     </Link>
+  );
+}
+
+function ProductsGroup({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isProducts = pathname.startsWith("/produtos") || pathname.startsWith("/fretes");
+  const [open, setOpen] = useState(isProducts);
+
+  return (
+    <Collapsible open={open || isProducts} onOpenChange={setOpen}>
+      <CollapsibleTrigger className={cn("group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", isProducts ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/85")}>
+        <Package className="h-[17px] w-[17px] shrink-0 opacity-80 group-hover:opacity-100" />
+        <span className="flex-1 truncate text-left">Produtos</span>
+        <ChevronRight className={cn("h-4 w-4 shrink-0 opacity-60 transition-transform", (open || isProducts) && "rotate-90")} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+        <div className="mt-1 ml-4 space-y-0.5 border-l border-sidebar-border pl-2.5">
+          <Link to="/produtos" onClick={onNavigate} className="block truncate rounded-md px-2.5 py-1.5 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:font-semibold data-[status=active]:text-primary">Produtos</Link>
+          <Link to="/fretes" onClick={onNavigate} className="block truncate rounded-md px-2.5 py-1.5 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:font-semibold data-[status=active]:text-primary">Fretes</Link>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -215,6 +236,7 @@ export function SidebarNav({
           />
         ))}
 
+        <ProductsGroup onNavigate={onNavigate} />
         <MarketingGroup onNavigate={onNavigate} />
         {adminAccess?.role && (
           <NavItem to="/admin" label="Administração" icon={ShieldCheck} onNavigate={onNavigate} />

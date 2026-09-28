@@ -37,6 +37,7 @@ import { Route as PlanosSelecionarRouteImport } from './routes/planos.selecionar
 import { Route as DashCheckoutsIndexRouteImport } from './routes/_dash/checkouts.index'
 import { Route as DashCheckoutsIdRouteImport } from './routes/_dash/checkouts.$id'
 import { Route as DashCheckoutsNovoRouteImport } from './routes/_dash/checkouts.novo'
+import { Route as DashFretesIndexRouteImport } from './routes/_dash/fretes.index'
 import { Route as DashMarketingIndexRouteImport } from './routes/_dash/marketing.index'
 import { Route as DashMarketingAbTestingRouteImport } from './routes/_dash/marketing.ab-testing'
 import { Route as DashMarketingAutomacaoRouteImport } from './routes/_dash/marketing.automacao'
@@ -198,6 +199,11 @@ const DashCheckoutsNovoRoute = DashCheckoutsNovoRouteImport.update({
   path: '/checkouts/novo',
   getParentRoute: () => DashRoute,
 } as any)
+const DashFretesIndexRoute = DashFretesIndexRouteImport.update({
+  id: '/fretes/',
+  path: '/fretes/',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashMarketingIndexRoute = DashMarketingIndexRouteImport.update({
   id: '/marketing/',
   path: '/marketing/',
@@ -355,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/produtos/novo': typeof DashProdutosNovoRoute
   '/c/$store/$checkout': typeof CStoreCheckoutRoute
   '/checkouts/': typeof DashCheckoutsIndexRoute
+  '/fretes/': typeof DashFretesIndexRoute
   '/marketing/': typeof DashMarketingIndexRoute
   '/pedidos/': typeof DashPedidosIndexRoute
   '/produtos/': typeof DashProdutosIndexRoute
@@ -404,6 +411,7 @@ export interface FileRoutesByTo {
   '/produtos/novo': typeof DashProdutosNovoRoute
   '/c/$store/$checkout': typeof CStoreCheckoutRoute
   '/checkouts': typeof DashCheckoutsIndexRoute
+  '/fretes': typeof DashFretesIndexRoute
   '/marketing': typeof DashMarketingIndexRoute
   '/pedidos': typeof DashPedidosIndexRoute
   '/produtos': typeof DashProdutosIndexRoute
@@ -456,6 +464,7 @@ export interface FileRoutesById {
   '/_dash/produtos/novo': typeof DashProdutosNovoRoute
   '/c/$store/$checkout': typeof CStoreCheckoutRoute
   '/_dash/checkouts/': typeof DashCheckoutsIndexRoute
+  '/_dash/fretes/': typeof DashFretesIndexRoute
   '/_dash/marketing/': typeof DashMarketingIndexRoute
   '/_dash/pedidos/': typeof DashPedidosIndexRoute
   '/_dash/produtos/': typeof DashProdutosIndexRoute
@@ -508,6 +517,7 @@ export interface FileRouteTypes {
     | '/produtos/novo'
     | '/c/$store/$checkout'
     | '/checkouts/'
+    | '/fretes/'
     | '/marketing/'
     | '/pedidos/'
     | '/produtos/'
@@ -557,6 +567,7 @@ export interface FileRouteTypes {
     | '/produtos/novo'
     | '/c/$store/$checkout'
     | '/checkouts'
+    | '/fretes'
     | '/marketing'
     | '/pedidos'
     | '/produtos'
@@ -608,6 +619,7 @@ export interface FileRouteTypes {
     | '/_dash/produtos/novo'
     | '/c/$store/$checkout'
     | '/_dash/checkouts/'
+    | '/_dash/fretes/'
     | '/_dash/marketing/'
     | '/_dash/pedidos/'
     | '/_dash/produtos/'
@@ -822,6 +834,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashCheckoutsNovoRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/fretes/': {
+      id: '/_dash/fretes/'
+      path: '/fretes'
+      fullPath: '/fretes/'
+      preLoaderRoute: typeof DashFretesIndexRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/marketing/': {
       id: '/_dash/marketing/'
       path: '/marketing'
@@ -1005,6 +1024,7 @@ interface DashRouteChildren {
   DashProdutosIdRoute: typeof DashProdutosIdRoute
   DashProdutosNovoRoute: typeof DashProdutosNovoRoute
   DashCheckoutsIndexRoute: typeof DashCheckoutsIndexRoute
+  DashFretesIndexRoute: typeof DashFretesIndexRoute
   DashMarketingIndexRoute: typeof DashMarketingIndexRoute
   DashPedidosIndexRoute: typeof DashPedidosIndexRoute
   DashProdutosIndexRoute: typeof DashProdutosIndexRoute
@@ -1043,6 +1063,7 @@ const DashRouteChildren: DashRouteChildren = {
   DashProdutosIdRoute: DashProdutosIdRoute,
   DashProdutosNovoRoute: DashProdutosNovoRoute,
   DashCheckoutsIndexRoute: DashCheckoutsIndexRoute,
+  DashFretesIndexRoute: DashFretesIndexRoute,
   DashMarketingIndexRoute: DashMarketingIndexRoute,
   DashPedidosIndexRoute: DashPedidosIndexRoute,
   DashProdutosIndexRoute: DashProdutosIndexRoute,
