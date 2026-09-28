@@ -165,7 +165,7 @@ table.data .r { text-align: right; }
 /* ---------- the statement ---------- */
 .stmt { margin-top: 4px; }
 .day { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 18px 0 8px; border-bottom: 1.5px solid var(--navy); position: sticky; top: 96px; z-index: 5; background: var(--ground); }
-.day h3 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.day h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
 .day .tot { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 14.5px; }
 .day .tot span { color: var(--ink-3); font-weight: 500; margin-right: 6px; font-size: 13px; }
 .entry { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--rule); color: inherit; text-decoration: none; transition: background-color .15s, box-shadow .15s; }
@@ -187,7 +187,7 @@ table.data .r { text-align: right; }
 .entry.refund .amt { color: var(--debit); }
 .entry.fresh { animation: fresh 1.8s var(--ease-out) both; }
 @keyframes fresh { 0% { background: color-mix(in srgb, var(--hl) 70%, transparent); transform: translateY(-6px); opacity: 0; } 25% { opacity: 1; transform: none; } 100% { background: transparent; } }
-.dotsep::before { content: "·"; margin-right: 6px; }
+.pm { flex: none; margin-left: 10px; }
 
 /* ---------- orders page ---------- */
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -217,7 +217,7 @@ table.data .r { text-align: right; }
 .od-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .od-grid { display: grid; gap: 0 48px; }
 .sect { padding: 20px 0; border-bottom: 1px solid var(--rule); }
-.sect h2 { margin: 0 0 12px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.sect h2 { margin: 0 0 12px; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
 .kv { display: grid; gap: 10px; margin: 0; }
 .kv div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; font-size: 14.5px; }
 .kv dt { color: var(--ink-3); }
@@ -371,7 +371,6 @@ const ICON = {
   team: '<svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c.5-2.8 2.4-4.3 5-4.3s4.5 1.5 5 4.3M11 19c.5-2.8 2.4-4.3 5-4.3s4.5 1.5 5 4.3"/></svg>',
   up: '<svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
   down: '<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
-  arrow: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   back: '<svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
   clock: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   check: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -390,7 +389,7 @@ let seed = 7;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const PRODUCTS = [
   { id: "p1", name: "Curso Confeitaria de Vitrine", price: 197, kind: "Digital", status: "Ativo", slug: "confeitaria-de-vitrine", w: 0.5 },
-  { id: "p2", name: "Kit Bicos de Confeitar Inox · 24 peças", price: 89.9, kind: "Físico", status: "Ativo", slug: "kit-bicos-inox", w: 0.27 },
+  { id: "p2", name: "Kit Bicos de Confeitar Inox, 24 peças", price: 89.9, kind: "Físico", status: "Ativo", slug: "kit-bicos-inox", w: 0.27 },
   { id: "p3", name: "Mentoria Encomendas que Vendem", price: 497, kind: "Digital", status: "Ativo", slug: "mentoria-encomendas", w: 0.08 },
   { id: "p4", name: "E-book Precificação sem Medo", price: 47, kind: "Digital", status: "Ativo", slug: "ebook-precificacao", w: 0.15 },
   { id: "p5", name: "Workshop Bolo no Pote", price: 67, kind: "Digital", status: "Rascunho", slug: "workshop-bolo-no-pote", w: 0 },
@@ -479,16 +478,16 @@ function renderNav() {
 function entry(o, desk) {
   const cls = o.status === "Pendente" ? "pending" : o.status === "Expirado" || o.status === "Recusado" ? "dead" : o.status === "Reembolsado" ? "refund" : "";
   const sign = o.status === "Aprovado" ? "+ " : o.status === "Reembolsado" ? "− " : "";
-  const st = o.status === "Pendente" ? (o.method === "boleto" ? "a receber · boleto" : pixLeft(o)) : o.status === "Aprovado" ? (o.method === "card" && o.installments > 1 ? `${o.installments}x no cartão` : "recebido") : o.status === "Reembolsado" ? "reembolsado" : o.status === "Expirado" ? "Pix expirou" : "cartão recusado";
+  const st = o.status === "Pendente" ? (o.method === "boleto" ? "boleto a receber" : pixLeft(o)) : o.status === "Aprovado" ? (o.method === "card" && o.installments > 1 ? `${o.installments}x no cartão` : "recebido") : o.status === "Reembolsado" ? "reembolsado" : o.status === "Expirado" ? "Pix expirou" : "cartão recusado";
   return `<a class="entry ${cls} ${state.fresh === o.ref ? "fresh" : ""}" href="#pedido/${o.ref}">
     <span class="tm">${hhmm(o.t)}</span>
-    <span class="mn"><span class="who">${esc(o.name)}</span><span class="sub"><span>${esc(o.product.name)}</span><span class="dotsep">${METHOD[o.method]}</span><span class="dotsep t-m">${hhmm(o.t)}</span></span></span>
+    <span class="mn"><span class="who">${esc(o.name)}</span><span class="sub"><span>${esc(o.product.name)}</span><span class="pm">${METHOD[o.method]}<span class="t-m"> às ${hhmm(o.t)}</span></span></span></span>
     <span class="rt"><span class="amt">${sign}${brl(o.amount)}</span><span class="st ${o.status === "Recusado" ? "bad" : ""} ${o.status === "Pendente" && o.method === "pix" && (o.t + 30 * 60000 - NOW.getTime()) < 10 * 60000 ? "soon" : ""}">${st}</span></span>
   </a>`;
 }
 function pixLeft(o) {
   const left = Math.max(0, Math.round((o.t + 30 * 60000 - NOW.getTime()) / 60000));
-  return `a receber · ${left} min`;
+  return `vence em ${left} min`;
 }
 function dayLabel(t) {
   const d0 = today0();
@@ -618,26 +617,26 @@ function pageOverview() {
   const pix = pend.filter((o) => o.method === "pix").length, bol = pend.length - pix;
   const label = state.period === "hoje" ? "Vendido hoje" : state.period === "7d" ? "Vendido nos últimos 7 dias" : "Vendido nos últimos 30 dias";
   const list = ORDERS.filter((o) => o.t >= t0 - DAY);
-  return `<div class="pagehead"><div><h1>Boa tarde, Ateliê</h1><p>${new Date(NOW).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })} · atualizado às ${hhmm(NOW)}</p></div>
+  return `<div class="pagehead"><div><h1>Boa tarde, Ateliê</h1><p>${new Date(NOW).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}, atualizado às ${hhmm(NOW)}</p></div>
       <div class="seg" role="group" aria-label="Período">${[["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"]].map(([k, l]) => `<button type="button" data-period="${k}" aria-pressed="${state.period === k}">${l}</button>`).join("")}</div></div>
     <section class="today" aria-label="Resumo">
       <div class="figure">
         <div class="lbl">${label}</div>
         <div class="big tnum" id="bigfig"><span class="hl ${state.fresh ? "draw" : ""}"><small>R$</small>${brl(sold)}</span></div>
         ${pct != null ? `<div class="delta ${pct >= 0 ? "up" : "down"}">${pct >= 0 ? ICON.up : ICON.down}${Math.abs(pct).toFixed(0)}% <span class="vs">${pct >= 0 ? "a mais" : "a menos"} que ontem até ${hhmm(NOW)}</span></div>` : ""}
-        <div class="facts">${n} vendas aprovadas · ticket médio R$ ${brl(n ? sold / n : 0)}</div>
+        <div class="facts">${n} vendas aprovadas, ticket médio de R$ ${brl(n ? sold / n : 0)}</div>
       </div>
       <div class="pend-block">
         <h2>A receber</h2>
         <div class="sum tnum">R$ ${brl(pendSum)}</div>
-        <div class="why"><span class="hl">${pix} Pix e ${bol} ${bol === 1 ? "boleto" : "boletos"}</span> aguardando pagamento</div>
+        <div class="why">${pix} Pix e ${bol} ${bol === 1 ? "boleto" : "boletos"} aguardando pagamento</div>
         <ul class="plist">${pend.slice(0, 3).map((o) => `<li><span class="who">${esc(o.name)}</span><span class="amt tnum">${brl(o.amount)}</span><span class="when">${ICON.clock}${o.method === "pix" ? `<span class="${(o.t + 30 * 60000 - NOW) < 10 * 60000 ? "soon" : ""}">Pix expira em ${Math.max(0, Math.round((o.t + 30 * 60000 - NOW.getTime()) / 60000))} min</span>` : `Boleto vence ${new Date(o.t + 3 * DAY).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`}</span></li>`).join("")}</ul>
-        <a class="more" href="#pedidos" data-filter="pendente">Ver os ${pend.length} pendentes ${ICON.arrow}</a>
+        <a class="more" href="#pedidos" data-filter="pendente">Ver os ${pend.length} pendentes</a>
       </div>
     </section>
     ${chartBlock()}
     <section class="block" aria-labelledby="stmt-h" style="border-bottom:0">
-      <div class="block-head"><div><h2 id="stmt-h">Extrato</h2><p>Cada pedido, na hora em que aconteceu.</p></div><a class="more" href="#pedidos" style="margin:0">Todos os pedidos ${ICON.arrow}</a></div>
+      <div class="block-head"><div><h2 id="stmt-h">Extrato</h2><p>Cada pedido, na hora em que aconteceu.</p></div><a class="more" href="#pedidos" style="margin:0">Todos os pedidos</a></div>
       ${statement(list)}
     </section>`;
 }
@@ -672,7 +671,7 @@ function pageOrder(ref) {
   if (o.status === "Recusado") tl.push([o.t + 15000, "Cartão recusado", "Saldo ou limite insuficiente", false]);
   const doc = "529.***.***-25";
   return `<a class="back" href="#pedidos">${ICON.back} Pedidos</a>
-    <div class="od-head"><div class="ref">Pedido ${o.ref} · ${new Date(o.t).toLocaleDateString("pt-BR")} às ${hhmm(o.t)}</div>
+    <div class="od-head"><div class="ref">Pedido ${o.ref}, ${new Date(o.t).toLocaleDateString("pt-BR")} às ${hhmm(o.t)}</div>
       <div class="big tnum" style="${o.status === "Reembolsado" ? "color:var(--debit)" : o.status === "Expirado" || o.status === "Recusado" ? "color:var(--ink-3);text-decoration:line-through;text-decoration-thickness:3px" : ""}">${sign}R$ ${brl(o.amount)}</div>
       <div style="margin-top:8px"><span class="badge ${badge[0]}">${ICON[badge[1]]}${badge[2]}</span></div>
       ${o.status === "Aprovado" ? `<div class="od-actions"><button type="button" class="btn ghost small" data-act="resend">${ICON.mail} Reenviar recibo</button><button type="button" class="btn ghost small" data-act="refund" style="color:var(--debit)">${ICON.undo} Reembolsar</button></div>` : ""}
@@ -721,7 +720,7 @@ function pageIntegrations() {
   const con = GATEWAYS.filter((g) => g.connected), avail = GATEWAYS.filter((g) => !g.connected);
   const opts = (m) => con.filter((g) => g.methods.includes(m)).map((g) => `<option value="${g.id}">${g.name}</option>`).join("");
   const route = (key, label, m) => `<div class="route"><label class="m" for="r-${key}">${label}</label><select id="r-${key}" data-route="${key}">${opts(m).replace(`value="${state.routing[key]}"`, `value="${state.routing[key]}" selected`)}</select></div>`;
-  const row = (g, right) => `<div class="gw"><div class="mk" aria-hidden="true">${g.mk}</div><div class="nm">${g.name}</div><div class="rt">${right}</div><div class="ms">${g.methods.join(" · ")}</div></div>`;
+  const row = (g, right) => `<div class="gw"><div class="mk" aria-hidden="true">${g.mk}</div><div class="nm">${g.name}</div><div class="rt">${right}</div><div class="ms">${g.methods.join(", ")}</div></div>`;
   return `<div class="pagehead"><div><h1>Integrações</h1><p>Você escolhe o gateway. O dinheiro cai direto na sua conta dele.</p></div></div>
     <section class="block" style="padding-top:0"><div class="block-head"><div><h2>Onde cada pagamento cai</h2><p>Troque quando quiser. Vale para os próximos pedidos.</p></div></div>
       ${route("pix", "Pix", "Pix")}${route("card", "Cartão", "Cartão")}${route("boleto", "Boleto", "Boleto")}

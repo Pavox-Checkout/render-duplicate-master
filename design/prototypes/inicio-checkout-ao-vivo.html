@@ -77,7 +77,6 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .hero .grid { display: grid; gap: 32px; }
 .hero .facts { margin-top: 0; }
 .hero h1 { margin: 0; font-family: var(--display); font-weight: 750; font-size: clamp(38px, 5.4vw, 60px); line-height: 1.0; letter-spacing: -0.04em; text-wrap: balance; }
-.hero h1 em { font-style: normal; color: #7fa6ff; }
 .hero .lede { margin: 16px 0 0; max-width: 46ch; font-size: 18px; color: var(--on-navy-2); }
 .facts { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 0; max-width: 480px; border-top: 1px solid var(--navy-3); }
 .facts li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--navy-3); font-size: 15.5px; color: var(--on-navy-2); }
@@ -109,8 +108,8 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .scr .bar .st { display: inline-flex; gap: 5px; align-items: center; }
 .scr .bar svg { width: 13px; height: 13px; }
 .paper { position: relative; margin: 4px 12px 12px; border-radius: 4px; flex: 1; background: #fbfcfd; color: #141518; border-radius: 3px 3px 0 0; padding: 14px 16px 16px; overflow: hidden; box-shadow: 0 16px 24px -8px rgba(0,0,0,.25); }
-.paper .store { text-align: center; font-weight: 800; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
-.paper .meta { text-align: center; font-size: 9.5px; color: #6b707b; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+.paper .store { text-align: center; font-weight: 800; font-size: 13.5px; }
+.paper .meta { text-align: center; font-size: 10.5px; color: #6b707b; font-weight: 600; margin-top: 2px; }
 .perf { position: relative; height: 0; margin: 12px -16px; border-top: 2px dashed #c9cdd4; }
 .perf::before, .perf::after { content: ""; position: absolute; top: -8px; width: 14px; height: 14px; border-radius: 50%; background: var(--brand); transition: background-color .4s var(--ease-out); }
 .perf::before { left: -7px; } .perf::after { right: -7px; }
@@ -119,7 +118,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .ln { display: flex; gap: 6px; align-items: baseline; margin-top: 8px; font-family: var(--mono); font-stretch: 87.5%; font-size: 11px; }
 .ln .d { flex: 1; border-bottom: 2px dotted #c9cdd4; transform: translateY(-3px); }
 .tot { display: flex; justify-content: space-between; align-items: baseline; }
-.tot .l { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; }
+.tot .l { font-size: 13px; font-weight: 800; }
 .tot .v { font-family: var(--mono); font-stretch: 87.5%; font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
 .tot .v small { font-size: .5em; margin-right: 3px; }
 .mf { display: grid; gap: 6px; }
@@ -146,7 +145,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .scr-title { text-align: center; font-weight: 800; font-size: 16px; letter-spacing: -0.01em; margin: 2px 0 0; }
 
 .strip { width: min(360px, 90vw); border-top: 1.5px solid #7fa6ff; }
-.strip .h { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; color: var(--on-navy-2); text-transform: uppercase; }
+.strip .h { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0 6px; font-size: 14px; font-weight: 700; color: var(--on-navy-2); }
 .strip .h img { height: 14px; width: auto; }
 .sline { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--navy-3); font-size: 14px; }
 .sline .w { font-weight: 700; }
@@ -175,7 +174,7 @@ section.s { padding: 72px 0; border-bottom: 1.5px solid var(--navy); }
 .gwlist li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--rule); }
 .gwlist .n { font-weight: 700; font-size: 16px; color: var(--navy); }
 .gwlist .ms { font-size: 14px; color: var(--ink-3); text-align: right; }
-.gwlist li.on .n::after { content: " · no seu roteamento"; font-weight: 600; font-size: 13px; color: var(--blue); }
+.gwlist li.on .n::after { content: "no seu roteamento"; display: block; font-weight: 600; font-size: 13px; color: var(--blue); }
 
 /* flow */
 .flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: f; }
@@ -212,7 +211,7 @@ section.s { padding: 72px 0; border-bottom: 1.5px solid var(--navy); }
 .plan { display: grid; gap: 14px; align-content: start; padding: 24px 0; border-bottom: 1px solid var(--rule); }
 .plan .hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; min-height: 36px; }
 .plan h3 { margin: 0; font-family: var(--display); font-size: 28px; color: var(--navy); letter-spacing: -0.02em; }
-.plan .rec { font-size: 12.5px; font-weight: 800; color: var(--blue); letter-spacing: .04em; text-transform: uppercase; }
+.plan .rec { font-size: 14px; font-weight: 700; color: var(--blue); }
 .plan .price { font-family: var(--display); font-size: 36px; font-weight: 750; letter-spacing: -0.03em; color: var(--navy); }
 .plan .price small { font-family: var(--ui); font-size: 15px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; }
 .plan .fee { font-weight: 700; color: var(--ink-2); }
@@ -308,7 +307,7 @@ footer a:hover { color: #fff; }
   <section class="hero navy" id="inicio" aria-labelledby="h1">
     <div class="wrap grid">
       <div class="hx">
-        <h1 id="h1">Seu checkout vendendo <em>hoje</em>. No gateway que você já usa.</h1>
+        <h1 id="h1">Seu checkout vendendo hoje. No gateway que você já usa.</h1>
         <p class="lede">Veja um checkout de exemplo funcionando: o comprador paga com Pix, o banco confirma e a venda cai no seu extrato.</p>
       </div>
       <div class="stage">
@@ -327,7 +326,7 @@ footer a:hover { color: #fff; }
           <li><svg class="i" viewBox="0 0 24 24"><path d="M3.5 7.5 12 3.5l8.5 4v9L12 20.5l-8.5-4z"/><path d="M3.5 7.5 12 11.5l8.5-4M12 11.5v9"/></svg><span><b>Produto digital ou físico</b>Para físico, o checkout já pede o endereço de entrega.</span></li>
           <li><svg class="i" viewBox="0 0 24 24"><path d="M3.5 12.5 11 5h8v8l-7.5 7.5z"/><circle cx="15.5" cy="8.5" r="1.3"/></svg><span><b>Comece de graça</b>Plano Free: R$ 0 por mês e 1,99% por venda aprovada.</span></li>
         </ul>
-        <div class="cta-row" style="margin-top:24px"><a class="btn" href="#comecar">Criar conta grátis <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="link-on-navy" href="#passos">Como começar</a></div>
+        <div class="cta-row" style="margin-top:24px"><a class="btn" href="#comecar">Criar conta grátis</a><a class="link-on-navy" href="#passos">Como começar</a></div>
       </div>
     </div>
   </section>
@@ -346,7 +345,7 @@ footer a:hover { color: #fff; }
   <section class="s" id="gateways" aria-labelledby="gw-h">
     <div class="wrap gwgrid">
       <div>
-        <h2 id="gw-h">O dinheiro cai na <span class="hl">sua</span> conta do gateway.</h2>
+        <h2 id="gw-h">O dinheiro cai na sua conta do gateway.</h2>
         <p class="intro">Você conecta o gateway que já usa e escolhe para onde vai cada forma de pagamento. Quer trocar? Troca no painel, e vale para os próximos pedidos.</p>
         <div class="body" id="router"></div>
         <p class="routed" id="routed" role="status"></p>
@@ -416,7 +415,7 @@ footer a:hover { color: #fff; }
     <div class="wrap">
       <h2 id="fin-h">Crie sua conta e venda ainda hoje.</h2>
       <p>Crie a conta grátis, conecte seu gateway e publique o primeiro checkout. Sem mensalidade no plano Free.</p>
-      <a class="btn" href="#" data-noop>Criar conta grátis <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn" href="#" data-noop>Criar conta grátis</a>
     </div>
   </section>
 </main>
@@ -465,8 +464,8 @@ function setColor(c) {
 function screen() {
   const ex = EX[st.ex];
   const now = new Date();
-  const head = `<div class="store">Loja de exemplo</div><div class="meta">Via do cliente · <span style="font-family:var(--mono);font-weight:400">${now.toLocaleDateString("pt-BR")} ${hhmm()}</span></div><div class="perf"></div>`;
-  const total = `<div class="tot"><span class="l">TOTAL</span><span class="v"><small>R$</small>${brl(ex.price)}</span></div>`;
+  const head = `<div class="store">Loja de exemplo</div><div class="meta">Via do cliente, <span style="font-family:var(--mono);font-weight:400">${now.toLocaleDateString("pt-BR")} ${hhmm()}</span></div><div class="perf"></div>`;
+  const total = `<div class="tot"><span class="l">Total</span><span class="v"><small>R$</small>${brl(ex.price)}</span></div>`;
   let body;
   if (st.phase === "form") {
     const labels = ["Nome completo", "E-mail", "CPF", ...(ex.kind === "physical" ? ["CEP"] : [])];
@@ -487,7 +486,7 @@ function screen() {
 }
 function lines(fresh) {
   document.getElementById("lines").innerHTML = st.sales.length
-    ? st.sales.slice(0, 3).map((v, i) => `<div class="sline ${fresh && i === 0 ? "new" : ""}"><span><span class="w">${esc(v.name)}</span><br><span class="s">Pix · ${v.at} · recebido</span></span><span class="a"><span>+ ${brl(v.price)}</span></span></div>`).join("")
+    ? st.sales.slice(0, 3).map((v, i) => `<div class="sline ${fresh && i === 0 ? "new" : ""}"><span><span class="w">${esc(v.name)}</span><br><span class="s">Pix recebido às ${v.at}</span></span><span class="a"><span>+ ${brl(v.price)}</span></span></div>`).join("")
     : `<div class="sline ghost"><span><span class="w">Aguardando a primeira venda</span><br><span class="s">Pix, boleto e cartão aparecem aqui</span></span><span class="a"></span></div>`;
 }
 /* the script: each step is [delay before it, action] */
@@ -544,9 +543,9 @@ function renderRouter(msg) {
     const opts = GW.filter(([, ms]) => ms.includes(m)).map(([n]) => n);
     return `<div class="route"><label class="m" for="r-${m}">${m}</label>${opts.length > 1
       ? `<select id="r-${m}" data-m="${m}">${opts.map((n) => `<option ${route[m] === n ? "selected" : ""}>${n}</option>`).join("")}</select>`
-      : `<span class="only">${opts[0]} <span style="color:var(--ink-3)">· o único para cartão hoje</span></span>`}</div>`;
+      : `<span class="only">${opts[0]} <span style="color:var(--ink-3)">(o único para cartão hoje)</span></span>`}</div>`;
   }).join("");
-  document.getElementById("gwlist").innerHTML = GW.map(([n, ms]) => `<li class="${Object.values(route).includes(n) ? "on" : ""}"><span class="n">${n}</span><span class="ms">${ms.join(" · ")}</span></li>`).join("");
+  document.getElementById("gwlist").innerHTML = GW.map(([n, ms]) => `<li class="${Object.values(route).includes(n) ? "on" : ""}"><span class="n">${n}</span><span class="ms">${ms.join(", ")}</span></li>`).join("");
   document.getElementById("routed").textContent = msg || "";
 }
 document.addEventListener("change", (e) => { const m = e.target.dataset.m; if (!m) return; route[m] = e.target.value; renderRouter(`Pronto: ${m} agora cai no ${e.target.value}.`); document.getElementById(`r-${m}`)?.focus(); });

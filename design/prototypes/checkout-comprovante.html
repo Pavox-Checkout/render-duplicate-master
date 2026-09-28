@@ -144,7 +144,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
     linear-gradient(135deg, var(--paper) 50%, transparent 50%) 0 0 / 10px 8px repeat-x,
     linear-gradient(225deg, var(--paper) 50%, transparent 50%) 0 0 / 10px 8px repeat-x;
 }
-.slip .who { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 8px; border-bottom: 2px dashed var(--rule); font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.slip .who { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 8px; border-bottom: 2px dashed var(--rule); font-size: 14px; font-weight: 800; }
 .slip p, .intro .slip p { margin: 8px 0 0; max-width: none; font-size: 14.5px; color: var(--ink); }
 .stars { display: inline-flex; gap: 1px; color: var(--ink); }
 .stars svg { width: 13px; height: 13px; fill: currentColor; stroke: none; }
@@ -166,7 +166,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 }
 .head { text-align: center; }
 .head .store { font-size: 15px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-.head .meta { margin-top: 4px; font-size: 11.5px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.1em; text-transform: uppercase; }
+.head .meta { margin-top: 4px; font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
 .head .meta .mono { font-weight: 400; letter-spacing: 0.02em; }
 .perf { position: relative; height: 0; margin: 20px calc(var(--pad) * -1); border-top: 2px dashed var(--rule); }
 .perf::before, .perf::after {
@@ -175,7 +175,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 }
 .perf::before { left: -9px; }
 .perf::after { right: -9px; }
-.sec { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 12px; }
+.sec { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 12px; }
 
 .item { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; }
 .item .thumb { width: 56px; height: 56px; border-radius: 6px; overflow: hidden; }
@@ -187,7 +187,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .line.was { margin-top: 4px; color: var(--ink-3); }
 .line.was s { text-decoration-thickness: 1.5px; }
 .total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.total .lbl { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; }
+.total .lbl { font-size: 16px; font-weight: 800; }
 .total .val { font-size: clamp(26px, 7.4vw, 32px); font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
 .total .val small { font-size: 0.5em; font-weight: 600; letter-spacing: 0; margin-right: 4px; }
 
@@ -275,7 +275,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
     linear-gradient(-45deg, var(--paper) 50%, transparent 50%) 0 0 / 14px 10px repeat-x;
 }
 .paybar .line { margin: 0; }
-.paybar .tt { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; font-family: var(--grotesk); }
+.paybar .tt { font-size: 15px; font-weight: 800; font-family: var(--grotesk); }
 .paybar .tv { font-size: 18px; font-weight: 700; letter-spacing: -0.03em; }
 .paybar .pay { min-height: 52px; font-size: 16px; }
 
@@ -422,7 +422,6 @@ const ICON = {
   info: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.75v.01"/></svg>',
   copy: '<svg class="i" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg>',
   check: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-  arrow: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   ext: '<svg class="i" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8M18 14v4.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/></svg>',
   alert: '<svg class="i" viewBox="0 0 24 24"><path d="M12 4.5l8.5 15h-17z"/><path d="M12 10v4M12 16.75v.01"/></svg>',
   pix: '<svg class="i" viewBox="0 0 24 24"><path d="M12 3.2l3.2 3.2-3.2 3.2-3.2-3.2zM12 14.4l3.2 3.2-3.2 3.2-3.2-3.2zM3.2 12l3.2-3.2 3.2 3.2-3.2 3.2zM14.4 12l3.2-3.2 3.2 3.2-3.2 3.2z"/></svg>',
@@ -440,7 +439,7 @@ const PRODUCTS = {
     notice: "O acesso chega no e-mail informado assim que o pagamento for confirmado.",
   },
   physical: {
-    name: "Kit Bicos de Confeitar Inox · 24 peças",
+    name: "Kit Bicos de Confeitar Inox, 24 peças",
     desc: "Bicos de aço inox, adaptador e estojo. Enviado pelos Correios.",
     price: 89.9, compare: 0,
     blurb: "Os 24 bicos que usamos no ateliê, no estojo que vai direto para a gaveta.",
@@ -561,7 +560,7 @@ function head() {
   const now = new Date();
   return `<div class="head">
     <div class="store">${esc(STORE.name)}</div>
-    <div class="meta">Via do cliente · <span class="mono">${now.toLocaleDateString("pt-BR")} ${hhmm(now)}</span></div>
+    <div class="meta">Via do cliente, <span class="mono">${now.toLocaleDateString("pt-BR")} ${hhmm(now)}</span></div>
   </div>`;
 }
 function orderLines() {
@@ -573,7 +572,7 @@ function orderLines() {
     <div class="line num"><span>1 ×</span><span class="dots"></span><span>${brl(p.price)}</span></div>
     ${p.compare ? `<div class="line was num"><span>De</span><span class="dots"></span><s>${brl(p.compare)}</s></div>` : ""}
     <div class="perf"></div>
-    <div class="total"><span class="lbl">TOTAL</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>`;
+    <div class="total"><span class="lbl">Total</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>`;
 }
 function field(id, label, opts = {}) {
   const v = state.values[id] ?? "";
@@ -635,7 +634,7 @@ function payLabel(short) {
   const p = product();
   if (state.submitting) return `<span class="spin" aria-hidden="true"></span> ${state.method === "pix" ? "Gerando o Pix" : state.method === "boleto" ? "Gerando o boleto" : "Processando o cartão"}`;
   const how = state.method === "pix" ? "com Pix" : state.method === "boleto" ? "com boleto" : "no cartão";
-  return short ? `Pagar ${how} ${ICON.arrow}` : `Pagar R$ ${brl(p.price)} ${how} ${ICON.arrow}`;
+  return short ? `Pagar ${how}` : `Pagar R$ ${brl(p.price)} ${how}`;
 }
 
 function payErrorBox() {
@@ -681,7 +680,7 @@ function paperPix(status) {
     ? `<div class="stamp ${state.animate === "stamp" ? "land" : ""}"><span class="big">PAGO</span><span class="small">${state.paidAt.toLocaleDateString("pt-BR")} ${hhmm(state.paidAt)}</span></div>`
     : expired ? `<div class="stamp off"><span class="big">EXPIRADO</span><span class="small">SEM COBRANÇA</span></div>` : "";
   return `${head()}<div class="perf"></div>
-    <div class="total"><span class="lbl">TOTAL</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>
+    <div class="total"><span class="lbl">Total</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>
     <div class="perf"></div>
     <div class="${state.animate === "feed" ? "feed" : ""}">
       <h1 class="state-title">${title}</h1>
@@ -694,8 +693,8 @@ function paperPix(status) {
         <button class="pay copy ${state.copied === true ? "done" : ""}" type="button" data-act="copy">${state.copied === true ? `${ICON.check} Código copiado` : `${ICON.copy} Copiar código Pix`}</button>
         ${state.copied === "fail" ? `<p class="copy-fail" role="status">Não deu para copiar sozinho. O código ficou selecionado: toque e segure para copiar.</p>` : ""}
         ${navigator.onLine ? "" : `<p class="copy-fail net" role="status">Sem internet agora. Se você já pagou, fique tranquilo: quando a conexão voltar, esta página confere de novo.</p>`}
-        <div class="valid">Válido até <span class="num">${hhmm(exp)}</span> · faltam <span class="num" id="countdown">30:00</span></div>`}
-      ${expired ? `<button class="pay" type="button" data-act="restart" style="margin-top:18px">Fazer novo pedido ${ICON.arrow}</button>` : ""}
+        <div class="valid">Faltam <span class="num" id="countdown">30:00</span> (válido até <span class="num">${hhmm(exp)}</span>)</div>`}
+      ${expired ? `<button class="pay" type="button" data-act="restart" style="margin-top:18px">Fazer novo pedido</button>` : ""}
       <div class="perf"></div>
       ${pixLog(status)}
       ${paid || expired ? "" : `<div class="perf"></div><h2 class="sec">Como pagar</h2>
@@ -722,7 +721,7 @@ function paperBoleto() {
   const line = "34191.79001 01043.510047 91020.150008 1 98760000019700";
   const due = new Date(Date.now() + 3 * 86400000);
   return `${head()}<div class="perf"></div>
-    <div class="total"><span class="lbl">TOTAL</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>
+    <div class="total"><span class="lbl">Total</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>
     <div class="perf"></div>
     <div class="${state.animate === "feed" ? "feed" : ""}">
       <h1 class="state-title">Boleto gerado</h1>
@@ -740,14 +739,14 @@ function paperCardPaid() {
   const p = product();
   const now = state.paidAt || new Date();
   return `${head()}<div class="perf"></div>
-    <div class="total"><span class="lbl">TOTAL</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>
+    <div class="total"><span class="lbl">Total</span><span class="val num"><small>R$</small>${brl(p.price)}</span></div>
     <div class="perf"></div>
     <div>
       <h1 class="state-title">Pagamento aprovado</h1>
       <p class="state-sub">A operadora do cartão aprovou a compra. O comprovante vai para ${esc(state.values.email || "o seu e-mail")}.</p>
       <div class="stamp-row"><div class="stamp ${state.animate === "stamp" ? "land" : ""}"><span class="big">PAGO</span><span class="small">${now.toLocaleDateString("pt-BR")} ${hhmm(now)}</span></div></div>
       <div class="perf"></div>
-      <dl class="kv"><div><dt>Pedido</dt><dd class="num">PVX-48213</dd></div><div><dt>Forma</dt><dd>Cartão de crédito · 1x</dd></div><div><dt>Produto</dt><dd>${esc(p.name)}</dd></div></dl>
+      <dl class="kv"><div><dt>Pedido</dt><dd class="num">PVX-48213</dd></div><div><dt>Forma</dt><dd>Cartão de crédito, 1x</dd></div><div><dt>Produto</dt><dd>${esc(p.name)}</dd></div></dl>
     </div>`;
 }
 function paperMessage(kind) {
@@ -808,7 +807,7 @@ function render() {
     <footer class="foot">Checkout processado por <b>PAVOX</b></footer>`;
 
   document.getElementById("paybarHost").innerHTML = formLike ? `
-    <div class="paybar"><div class="line num"><span class="tt">TOTAL</span><span class="dots"></span><span class="tv">R$ ${brl(p.price)}</span></div>
+    <div class="paybar"><div class="line num"><span class="tt">Total</span><span class="dots"></span><span class="tv">R$ ${brl(p.price)}</span></div>
     <button class="pay" type="submit" form="buy" ${state.submitting ? "disabled" : ""}>${payLabel(true)}</button></div>` : "";
   renderPanel();
   state.animate = null;

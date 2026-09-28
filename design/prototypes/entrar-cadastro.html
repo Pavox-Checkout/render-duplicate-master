@@ -99,7 +99,7 @@ form { margin-top: 24px; display: grid; gap: 16px; }
 .plan { display: grid; gap: 10px; align-content: start; padding: 22px 0; border-bottom: 1px solid var(--rule); }
 .plan .hd { display: flex; align-items: baseline; gap: 12px; min-height: 34px; }
 .plan h2 { margin: 0; font-family: var(--display); font-size: 26px; color: var(--navy); letter-spacing: -0.02em; }
-.plan .rec { font-size: 12.5px; font-weight: 800; color: var(--blue); letter-spacing: .04em; text-transform: uppercase; }
+.plan .rec { font-size: 14px; font-weight: 700; color: var(--blue); }
 .plan .price { font-family: var(--display); font-size: 32px; font-weight: 750; color: var(--navy); letter-spacing: -0.03em; }
 .plan .price small { font-family: var(--ui); font-size: 15px; color: var(--ink-3); font-weight: 600; letter-spacing: 0; }
 .plan .fee { font-weight: 700; color: var(--ink-2); font-size: 15px; }
@@ -165,7 +165,6 @@ form { margin-top: 24px; display: grid; gap: 16px; }
 const I = {
   eye: '<svg class="i" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   eyeOff: '<svg class="i" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.6A9.7 9.7 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.7M6.6 6.7C3.9 8.4 2.5 12 2.5 12S6 18.5 12 18.5c1.6 0 3-.4 4.2-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
-  arrow: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   check: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   alert: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.5M12 15.75v.01"/></svg>',
   mail: '<svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/></svg>',
@@ -188,7 +187,7 @@ function field(id, label, o = {}) {
     ${o.type === "password" ? `<div class="pw">${input}<button type="button" data-eye="${id}" aria-label="Mostrar senha">${I.eye}</button></div>` : input}
     ${o.hint && !e ? `<div class="hint" id="h-${id}">${o.hint}</div>` : ""}<div class="err" id="e-${id}" role="alert">${e ? esc(e) : ""}</div></div>`;
 }
-function btn(label, busyLabel) { return `<button class="btn" type="submit" ${st.busy ? "disabled" : ""}>${st.busy ? `<span class="spin" aria-hidden="true"></span>${busyLabel}` : `${label} ${I.arrow}`}</button>`; }
+function btn(label, busyLabel) { return `<button class="btn" type="submit" ${st.busy ? "disabled" : ""}>${st.busy ? `<span class="spin" aria-hidden="true"></span>${busyLabel}` : `${label}`}</button>`; }
 function note() { return st.note ? `<div class="note ${st.note[0]}" role="status">${st.note[0] === "ok" ? I.check : I.alert}<span>${esc(st.note[1])}</span></div>` : ""; }
 
 const pages = {
@@ -227,7 +226,7 @@ const pages = {
       <button type="button" class="btn ${p.slug === "free" || p.rec ? "" : "ghost"}" data-plan="${p.slug}" ${st.busy ? "disabled" : ""}>${st.busy && st.plan === p.slug ? `<span class="spin" aria-hidden="true"></span>Ativando` : p.slug === "free" ? "Começar grátis" : `Escolher ${p.name}`}</button></div>`).join("")}</div>
     <p class="fine">Nos planos Growth e Pro o acesso é liberado na hora. O pagamento da mensalidade será habilitado em breve.</p></div>`,
   pronto: () => `<div class="box"><h1>Plano ${esc(PLANS.find((p) => p.slug === st.plan)?.name || "Free")} ativado</h1><p class="sub">Sua conta está pronta. Próximo passo: conectar o gateway onde o dinheiro vai cair.</p>
-    <div style="margin-top:24px"><a class="btn" href="painel-extrato.html#integracoes">Abrir o painel ${I.arrow}</a></div></div>`,
+    <div style="margin-top:24px"><a class="btn" href="painel-extrato.html#integracoes">Abrir o painel</a></div></div>`,
 };
 
 function render() {
@@ -237,7 +236,7 @@ function render() {
   document.getElementById("purpose").textContent = inFlow ? "Em poucos minutos você está pronto para vender." : "Bom te ver de novo.";
   const idx = { cadastro: 0, confirmar: 1, plano: 2, pronto: 3 }[r];
   document.getElementById("steps").hidden = !inFlow;
-  document.getElementById("mstep").innerHTML = inFlow && idx < 3 ? `${idx + 1} de 4 · <b>${FLOW[idx][1]}</b>` : "";
+  document.getElementById("mstep").innerHTML = inFlow && idx < 3 ? `Passo ${idx + 1} de 4: <b>${FLOW[idx][1]}</b>` : "";
   document.getElementById("steps").innerHTML = FLOW.map(([k, l], i) => `<li class="${inFlow ? (i < idx ? "done" : i === idx ? "now" : "") : ""}"><span>${l}</span></li>`).join("");
   document.getElementById("ptip").innerHTML = `<b>Protótipo</b> · ${{ entrar: "teste o erro com a senha \"errada\"", confirmar: "qualquer código funciona, menos 00000000", pronto: "o botão abre o protótipo do painel" }[r] || "entrar e criar conta"}`;
   document.getElementById("pnav").innerHTML = SCREENS.map(([k, l]) => `<a href="#${k}" ${r === k ? 'aria-current="page"' : ""}>${l}</a>`).join("");

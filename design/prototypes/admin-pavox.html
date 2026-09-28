@@ -46,7 +46,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .mtop { position: sticky; top: 40px; z-index: 30; background: var(--navy); color: #fff; padding: 10px 16px 0; }
 .mtop .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 40px; }
 .mtop img { height: 22px; width: auto; display: block; }
-.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: transparent; border: 1px solid var(--on-navy-2); color: #fff; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: transparent; border: 1px solid var(--on-navy-2); color: #fff; font-size: 13px; font-weight: 700; }
 .mtabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 6px -16px 0; padding: 0 12px; }
 .mtabs a { flex: none; padding: 10px 10px 12px; color: var(--on-navy-2); text-decoration: none; font-weight: 700; font-size: 14px; border-bottom: 3px solid transparent; }
 .mtabs a[aria-current="page"] { color: #fff; border-bottom-color: #7fa6ff; }
@@ -122,7 +122,7 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
 .st svg { width: 13px; height: 13px; stroke-width: 2.4; }
 .st.ok { color: var(--ok); } .st.bad { color: var(--bad); } .st.wait { color: var(--warn); } .st.off { color: var(--ink-3); }
 .thead { display: none; }
-.dayrule { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 0 6px; border-bottom: 1.5px solid var(--navy); font-size: 12.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--navy); }
+.dayrule { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 0 6px; border-bottom: 1.5px solid var(--navy); font-size: 15px; font-weight: 800; color: var(--navy); }
 .dayrule span + span { text-transform: none; letter-spacing: 0; font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; font-size: 14px; color: var(--ink-2); }
 .pager div { display: flex; gap: 6px; }
@@ -142,7 +142,7 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
 .sheet h2 { margin: 6px 0 2px; font-family: var(--display); color: var(--navy); font-size: 28px; letter-spacing: -0.03em; line-height: 1.05; }
 .sheet .close { float: right; width: 40px; height: 40px; border-radius: 10px; border: 1.5px solid var(--rule-2); background: #fff; display: grid; place-items: center; color: var(--navy); }
 .sheet .sec { padding: 16px 0; border-bottom: 1px solid var(--rule); }
-.sheet .sec h3 { margin: 0 0 10px; font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); }
+.sheet .sec h3 { margin: 0 0 10px; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; color: var(--navy); }
 .dl { display: grid; gap: 8px; margin: 0; }
 .dl div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; font-size: 14.5px; }
 .dl dt { color: var(--ink-3); }
@@ -243,7 +243,6 @@ const I = {
   alert: '<svg class="i" viewBox="0 0 24 24"><path d="M12 4.5l8.5 15h-17z"/><path d="M12 10v4M12 16.75v.01"/></svg>',
   minus: '<svg class="i" viewBox="0 0 24 24"><path d="M6 12h12"/></svg>',
   search: '<svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>',
-  arrow: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
 };
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const brl = (n) => "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -328,7 +327,7 @@ function pageVisao() {
   const newM = MERCH.filter((m) => m.created >= s).length;
   const pub = MERCH.reduce((a, m) => a + m.checkouts, 0);
   const a = attention();
-  return `<div class="pagehead"><div><h1>Visão geral</h1><p>Toda a PAVOX nos últimos ${st.days} dias · atualizado às 16:20</p></div>${periodSeg()}</div>
+  return `<div class="pagehead"><div><h1>Visão geral</h1><p>Toda a PAVOX nos últimos ${st.days} dias, atualizado às 16:20</p></div>${periodSeg()}</div>
     <div class="attn" role="status"><span class="t">Precisa de atenção</span>${a.errs || a.rej ? `${a.errs ? `<a href="#integracoes" data-filter-to="error">${I.alert}<span class="c">${a.errs}</span> ${a.errs === 1 ? "integração com erro" : "integrações com erro"}</a>` : ""}${a.rej ? `<a href="#atividade" data-filter-to="rejected">${I.alert}<span class="c">${a.rej}</span> ${a.rej === 1 ? "webhook rejeitado" : "webhooks rejeitados"}</a>` : ""}` : `<span class="none">${I.check}Nada com erro no período</span>`}</div>
     <section class="fig" aria-label="Resumo do período">
       <div><div class="lbl">Volume aprovado</div><div class="big tnum"><small>R$</small>${volume.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div></div>
@@ -370,7 +369,7 @@ function drawChart() {
   const show = (i) => {
     el.querySelectorAll("path.bar").forEach((p) => p.setAttribute("fill", +p.dataset.i === i ? "var(--navy)" : "var(--blue)"));
     const d = data[i]; tip.replaceChildren();
-    const b = document.createElement("b"); b.textContent = brl(d.amount); const s = document.createElement("span"); s.textContent = `${d0(d.day)} · ${d.orders} pedidos pagos`; tip.append(b, s);
+    const b = document.createElement("b"); b.textContent = brl(d.amount); const s = document.createElement("span"); s.textContent = `${d0(d.day)}: ${d.orders} pedidos pagos`; tip.append(b, s);
     tip.classList.add("on"); const x = L + slot * i + slot / 2; tip.style.left = Math.max(0, Math.min(x - tip.offsetWidth / 2, W - tip.offsetWidth)) + "px";
   };
   el.querySelectorAll("[data-hit]").forEach((r) => r.addEventListener("pointerenter", () => show(+r.dataset.hit)));
@@ -401,7 +400,7 @@ function amt(t) {
 function txList(rows, grouped = true, all = rows) {
   const cols = "--cols: 56px minmax(0,1.4fr) minmax(0,1fr) 150px 120px 100px 120px";
   const head = `<div class="thead"><span class="mo">Hora</span><span>Pedido</span><span class="mo">Cliente</span><span class="mo">Pagamento</span><span class="s">Status</span><span class="r mo">Taxa PAVOX</span><span class="r">Valor</span></div>`;
-  const row = (t) => `<div class="lrow"><span class="mo b tnum">${hm(t.t)}</span><span style="min-width:0"><span class="a">${esc(t.merchant)}</span><br><span class="b">${t.ref}<span class="mob"> · ${hm(t.t)}${t.fee ? ` · taxa ${brl(t.fee)}` : ""}</span></span></span><span class="mo b">${esc(t.customer)}</span><span class="mo b">${L(t.method)} · ${GWNAME[t.gateway]}</span><span class="s">${stat(t.status)}</span><span class="r mo b">${t.fee ? brl(t.fee) : "—"}</span><span class="r">${amt(t)}</span></div>`;
+  const row = (t) => `<div class="lrow"><span class="mo b tnum">${hm(t.t)}</span><span style="min-width:0"><span class="a">${esc(t.merchant)}</span><br><span class="b">${t.ref}<span class="mob"> às ${hm(t.t)}${t.fee ? `, taxa ${brl(t.fee)}` : ""}</span></span></span><span class="mo b">${esc(t.customer)}</span><span class="mo b">${L(t.method)} via ${GWNAME[t.gateway]}</span><span class="s">${stat(t.status)}</span><span class="r mo b">${t.fee ? brl(t.fee) : "—"}</span><span class="r">${amt(t)}</span></div>`;
   if (!rows.length) return '<div class="list"><div class="empty">Nenhuma transação com esse filtro.</div></div>';
   if (!grouped) return `<div class="list cols" style="${cols}">${head}${rows.map(row).join("")}</div>`;
   const groups = new Map(); rows.forEach((t) => { const k = dayKey(t.t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); });
@@ -419,14 +418,14 @@ function pageLojistas() {
   const rows = MERCH.filter((m) => (st.filter === "todos" || m.status === st.filter) && match(m.name, m.owner, m.email, m.slug)).sort((a, b) => b.created - a.created);
   return `<div class="pagehead"><div><h1>Lojistas</h1><p>Clique em um lojista para ver o histórico e as notas internas.</p></div></div>${toolbar(fs, "Loja, responsável ou e-mail")}
     <div class="list cols" style="--cols: minmax(0,1.6fr) 110px 130px 110px 130px"><div class="thead"><span>Lojista</span><span class="mo">Plano</span><span class="s">Status</span><span class="r mo">Checkouts</span><span class="r">Cadastro</span></div>
-    ${slice(rows).map((m) => `<button type="button" class="lrow" data-merchant="${m.id}"><span style="min-width:0"><span class="a">${esc(m.name)}</span><br><span class="b">${esc(m.owner)} · ${esc(m.email)}</span></span><span class="mo b">${m.plan}</span><span class="s">${stat(m.status)}</span><span class="r mo b tnum">${m.checkouts}</span><span class="r b">${d0(m.created)}</span></button>`).join("") || '<div class="empty">Nenhum lojista encontrado.</div>'}</div>${pager(rows.length)}`;
+    ${slice(rows).map((m) => `<button type="button" class="lrow" data-merchant="${m.id}"><span style="min-width:0"><span class="a">${esc(m.name)}</span><br><span class="b">${esc(m.owner)}, ${esc(m.email)}</span></span><span class="mo b">${m.plan}</span><span class="s">${stat(m.status)}</span><span class="r mo b tnum">${m.checkouts}</span><span class="r b">${d0(m.created)}</span></button>`).join("") || '<div class="empty">Nenhum lojista encontrado.</div>'}</div>${pager(rows.length)}`;
 }
 function pageAssinaturas() {
   const fs = [["todos", "Todas", MERCH.length], ["active", "Ativas", MERCH.filter((m) => m.status === "active").length], ["past_due", "Em atraso", MERCH.filter((m) => m.status === "past_due").length], ["canceled", "Canceladas", MERCH.filter((m) => m.status === "canceled").length]];
   const rows = MERCH.filter((m) => (st.filter === "todos" || m.status === st.filter) && match(m.name, m.plan));
   return `<div class="pagehead"><div><h1>Assinaturas</h1><p>Plano, mensalidade e taxa de cada lojista.</p></div></div>${toolbar(fs, "Lojista ou plano")}
     <div class="list cols" style="--cols: minmax(0,1.5fr) 90px 120px 110px 120px 120px"><div class="thead"><span>Lojista</span><span class="mo">Plano</span><span class="r mo">Mensalidade</span><span class="r mo">Taxa</span><span class="s">Status</span><span class="r">Fim do período</span></div>
-    ${slice(rows).map((m) => `<button type="button" class="lrow" data-merchant="${m.id}"><span style="min-width:0"><span class="a">${esc(m.name)}</span><br><span class="b">${esc(m.owner)} · ${esc(m.email)}</span></span><span class="mo b">${m.plan}</span><span class="r mo tnum">${PLANS[m.plan][0] ? brl(PLANS[m.plan][0]) : "R$ 0"}</span><span class="r mo b">${PLANS[m.plan][1].toLocaleString("pt-BR")}%</span><span class="s">${stat(m.status)}</span><span class="r b">${m.plan === "Free" ? "—" : d0(m.periodEnd)}</span></button>`).join("")}</div>${pager(rows.length)}`;
+    ${slice(rows).map((m) => `<button type="button" class="lrow" data-merchant="${m.id}"><span style="min-width:0"><span class="a">${esc(m.name)}</span><br><span class="b">${esc(m.owner)}, ${esc(m.email)}</span></span><span class="mo b">${m.plan}</span><span class="r mo tnum">${PLANS[m.plan][0] ? brl(PLANS[m.plan][0]) : "R$ 0"}</span><span class="r mo b">${PLANS[m.plan][1].toLocaleString("pt-BR")}%</span><span class="s">${stat(m.status)}</span><span class="r b">${m.plan === "Free" ? "—" : d0(m.periodEnd)}</span></button>`).join("")}</div>${pager(rows.length)}`;
 }
 function pageIntegracoes() {
   const fs = [["todos", "Todas", INTEG.length], ["connected", "Conectadas", INTEG.filter((i) => i.status === "connected").length], ["error", "Com erro", INTEG.filter((i) => i.status === "error").length], ["disabled", "Desativadas", INTEG.filter((i) => i.status === "disabled").length]];
@@ -452,12 +451,12 @@ function openSheet(id) {
   const tx = TX.filter((t) => t.mid === id), paid = tx.filter((t) => t.status === "Aprovado");
   const notes = m.notes.slice().sort((a, b) => b.t - a.t);
   document.getElementById("sheetBody").innerHTML = `<button type="button" class="close" data-close aria-label="Fechar">${I.x}</button>
-    <h2 id="sh-h" tabindex="-1">${esc(m.name)}</h2><div>${stat(m.status)} <span style="color:var(--ink-3);font-size:13px">· plano ${m.plan} · /c/${esc(m.slug)}</span></div>
+    <h2 id="sh-h" tabindex="-1">${esc(m.name)}</h2><div>${stat(m.status)} <span style="color:var(--ink-3);font-size:13px">Plano ${m.plan}, link /c/${esc(m.slug)}</span></div>
     <div class="sec"><h3>Cadastro</h3><dl class="dl"><div><dt>Responsável</dt><dd>${esc(m.owner)}</dd></div><div><dt>E-mail</dt><dd>${esc(m.email)}</dd></div><div><dt>Cadastro</dt><dd>${d0(m.created)}</dd></div><div><dt>Mensalidade</dt><dd>${PLANS[m.plan][0] ? brl(PLANS[m.plan][0]) : "R$ 0"} · taxa ${PLANS[m.plan][1].toLocaleString("pt-BR")}%</dd></div></dl></div>
-    <div class="sec"><h3>Pedidos · todo o histórico</h3><dl class="dl"><div><dt>Pedidos</dt><dd class="tnum">${num(tx.length)}</dd></div><div><dt>Volume aprovado</dt><dd class="tnum">${brl(paid.reduce((a, t) => a + t.amount, 0))}</dd></div><div><dt>Checkouts publicados</dt><dd class="tnum">${m.checkouts}</dd></div></dl></div>
+    <div class="sec"><h3>Pedidos em todo o histórico</h3><dl class="dl"><div><dt>Pedidos</dt><dd class="tnum">${num(tx.length)}</dd></div><div><dt>Volume aprovado</dt><dd class="tnum">${brl(paid.reduce((a, t) => a + t.amount, 0))}</dd></div><div><dt>Checkouts publicados</dt><dd class="tnum">${m.checkouts}</dd></div></dl></div>
     <div class="sec"><h3>Notas internas</h3>
       ${st.role === "admin" ? `<form class="noteform" id="noteform" novalidate><label class="sr-only" for="note">Nova nota</label><textarea id="note" placeholder="Registre o acompanhamento deste lojista…"></textarea>${st.noteErr ? `<div class="err" role="alert">${st.noteErr}</div>` : ""}<div><button class="btn primary" type="submit">Adicionar nota</button></div></form>` : `<p class="ro">Seu acesso é somente leitura. Peça a um administrador para registrar notas.</p>`}
-      <ul class="notes">${notes.length ? notes.map((n) => `<li class="${st.fresh === n.t ? "fresh" : ""}"><small>${dt(n.t)} · ${esc(n.by)}</small>${esc(n.body)}</li>`).join("") : '<li style="color:var(--ink-3)">Nenhuma nota ainda.</li>'}</ul></div>`;
+      <ul class="notes">${notes.length ? notes.map((n) => `<li class="${st.fresh === n.t ? "fresh" : ""}"><small>${esc(n.by)}, ${dt(n.t)}</small>${esc(n.body)}</li>`).join("") : '<li style="color:var(--ink-3)">Nenhuma nota ainda.</li>'}</ul></div>`;
   const w = document.getElementById("sheet"); w.classList.add("open"); w.setAttribute("aria-hidden", "false");
   const desk = matchMedia("(min-width: 1024px)").matches, body = document.getElementById("sheetBody");
   if (desk) { body.setAttribute("role", "complementary"); body.removeAttribute("aria-modal"); document.body.classList.add("pane-open"); } else { body.setAttribute("role", "dialog"); body.setAttribute("aria-modal", "true"); }
