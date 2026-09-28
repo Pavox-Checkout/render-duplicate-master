@@ -6,7 +6,12 @@ import {
   CheckoutPreview,
   type CheckoutSubmission,
 } from "@/components/pavox/builder/checkout-preview";
-import { normalizeConfig, type CheckoutConfig } from "@/lib/checkout-builder";
+import {
+  LEGACY_DEFAULT_NOTICES,
+  LEGACY_DEFAULT_TESTIMONIALS,
+  normalizeConfig,
+  type CheckoutConfig,
+} from "@/lib/checkout-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -199,6 +204,13 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
     const data = query.data;
     if (!data?.product) return null;
     const base = normalizeConfig(data.checkout.config);
+    // Drop placeholder reviews and notices the builder used to insert by default.
+    const testimonials = base.social.testimonials.filter(
+      (t) => !LEGACY_DEFAULT_TESTIMONIALS.has(t.text.trim()),
+    );
+    const notices = base.notice.messages.filter(
+      (m) => m.text.trim() && !LEGACY_DEFAULT_NOTICES.has(m.text.trim()),
+    );
     const p = data.product;
     const hasCompare = p.compare_at != null && p.compare_at > p.price;
     return {
@@ -216,7 +228,10 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
         image: image.data ?? undefined,
       },
       // Not implemented server-side yet — hidden instead of faking them.
-      summary: { ...base.summary, couponEnabled: false, installmentsEnabled: false },
+      summary: { ...base.summary, installmentsEnabled: false },
+      coupon: { ...base.coupon, enabled: false },
+      social: { ...base.social, enabled: base.social.enabled && testimonials.length > 0, testimonials },
+      notice: { ...base.notice, enabled: base.notice.enabled && notices.length > 0, messages: notices },
       live: { ...base.live, enabled: false },
       scarcity: { ...base.scarcity, enabled: false },
     };
@@ -336,6 +351,7 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
         config={config}
         device={mobile ? "mobile" : "desktop"}
         mode="published"
+        displayName={data.store.checkout_display_name}
         availableMethods={data.payment_methods}
         documentRequiredMethods={data.document_required ?? ["boleto"]}
         phoneRequiredMethods={data.phone_required ?? []}
@@ -359,11 +375,14 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
           )
         }
       />
-      <PublicCheckoutFooter
-        displayName={data.store.checkout_display_name}
-        color={config.colors.textMuted}
-        mutedColor={config.colors.textMuted}
-      />
+      {/* The builder draws its own footer when enabled; only fall back to ours when it is off. */}
+      {config.footer.enabled ? null : (
+        <PublicCheckoutFooter
+          displayName={data.store.checkout_display_name}
+          color={config.colors.textMuted}
+          mutedColor={config.colors.textMuted}
+        />
+      )}
     </div>
   );
 }

@@ -1,14 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Zap,
-  DollarSign,
-  Target,
-  RotateCcw,
-  Megaphone,
-  Rocket,
-  ArrowRight,
-} from "lucide-react";
+import { Zap, DollarSign, Target, RotateCcw, Megaphone, Rocket, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/pavox/page-header";
+import { ComingSoonNotice } from "@/components/pavox/marketing/coming-soon";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { StatCard } from "@/components/pavox/stat-card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +15,7 @@ export const Route = createFileRoute("/_dash/marketing/")({
       { title: "Marketing · PAVOX" },
       {
         name: "description",
-        content:
-          "Ferramentas de conversão, rastreamento e otimização do seu checkout na PAVOX.",
+        content: "Ferramentas de conversão, rastreamento e otimização do seu checkout na PAVOX.",
       },
     ],
   }),
@@ -47,6 +39,8 @@ function MarketingOverview() {
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {OVERVIEW_STATS.map((s, i) => (

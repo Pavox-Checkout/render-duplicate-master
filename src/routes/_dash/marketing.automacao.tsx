@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { Plus, Workflow, Zap, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { ToolStatusBadge } from "@/components/pavox/marketing/tool-status-badge";
@@ -29,11 +29,13 @@ function AutomacaoPage() {
         title="Automação"
         subtitle="Conecte gatilhos a ações e deixe o pós-venda, a recuperação e o rastreamento no piloto automático."
         actions={
-          <Button size="sm" onClick={() => toast.info("Criar automação")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Plus className="h-4 w-4" /> Nova automação
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       {automations.length === 0 ? (
         <EmptyState
@@ -44,10 +46,7 @@ function AutomacaoPage() {
       ) : (
         <div className="space-y-3">
           {automations.map((a) => (
-            <div
-              key={a.id}
-              className="surface flex flex-col gap-3 p-4 lg:flex-row lg:items-center"
-            >
+            <div key={a.id} className="surface flex flex-col gap-3 p-4 lg:flex-row lg:items-center">
               <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2">
                   <Zap className="h-4 w-4 text-primary" />
@@ -74,7 +73,7 @@ function AutomacaoPage() {
 
               <div className="flex items-center gap-3 lg:justify-end">
                 <ToolStatusBadge status={a.status} />
-                <Button variant="outline" size="sm" onClick={() => toast.info("Editar automação")}>
+                <Button variant="outline" size="sm" onClick={() => notYet()}>
                   Editar
                 </Button>
               </div>

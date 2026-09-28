@@ -161,7 +161,7 @@ type Props = {
   device: Device;
   mode?: PreviewMode;
   /** Nome exibido no checkout, compartilhado entre preview e checkout público. */
-  displayName?: string | null;
+  displayName?: string | null | undefined;
   /** Checkout público real: métodos que o backend aceita para esta loja. */
   availableMethods?: string[];
   /** Checkout público real: métodos cujo gateway exige CPF/CNPJ (boleto; Asaas). */
@@ -1207,7 +1207,7 @@ function SecurityGlyph({ item, color }: { item: SecurityItem; color: string }) {
   return <Icon className="h-3.5 w-3.5 shrink-0" style={{ color }} />;
 }
 
-function Footer({ config: c, displayName }: { config: CheckoutConfig; displayName?: string | null }) {
+function Footer({ config: c, displayName }: { config: CheckoutConfig; displayName?: string | null | undefined }) {
   return (
     <div className="space-y-1.5 pt-1" style={{ color: c.footer.color, textAlign: textAlign(c.footer.align) }}>
       {c.footer.showLinks ? (

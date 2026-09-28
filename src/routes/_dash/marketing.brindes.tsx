@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Plus, Gift } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { ToolStatusBadge } from "@/components/pavox/marketing/tool-status-badge";
@@ -48,6 +48,8 @@ function BrindesPage() {
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       {gifts.length === 0 ? (
         <EmptyState
@@ -115,7 +117,7 @@ function BrindesPage() {
             </Button>
             <Button
               onClick={() => {
-                toast.success("Brinde criado com sucesso.");
+                notYet();
                 setOpen(false);
               }}
             >

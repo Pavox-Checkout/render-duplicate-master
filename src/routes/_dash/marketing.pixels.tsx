@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Plus, Activity, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { ToolStatusBadge } from "@/components/pavox/marketing/tool-status-badge";
 import { SettingToggle } from "@/components/pavox/marketing/setting-toggle";
@@ -53,9 +53,12 @@ function PixelsPage() {
         }
       />
 
+      <ComingSoonNotice />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {PIXEL_PLATFORMS.map((p) => {
-          const connected = p.status === "Ativo" || p.status === "Configurando" || p.status === "Erro";
+          const connected =
+            p.status === "Ativo" || p.status === "Configurando" || p.status === "Erro";
           return (
             <div
               key={p.id}
@@ -73,7 +76,9 @@ function PixelsPage() {
               </div>
 
               <h3 className="mt-3 text-[14.5px] font-semibold">{p.name}</h3>
-              <p className="mt-1 text-[12.5px] leading-snug text-muted-foreground">{p.description}</p>
+              <p className="mt-1 text-[12.5px] leading-snug text-muted-foreground">
+                {p.description}
+              </p>
 
               <div className="mt-3 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
                 <Activity className="h-3.5 w-3.5" />
@@ -193,7 +198,7 @@ function PixelConfigDialog({
               </Button>
               <Button
                 onClick={() => {
-                  toast.success(`Pixel ${platform.name} salvo com sucesso.`);
+                  notYet();
                   onClose();
                 }}
               >

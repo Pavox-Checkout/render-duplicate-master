@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Save, MessageCircle, Mail, Smartphone, RotateCcw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { StatCard } from "@/components/pavox/stat-card";
 import { SettingToggle } from "@/components/pavox/marketing/setting-toggle";
@@ -21,7 +21,13 @@ export const Route = createFileRoute("/_dash/marketing/recuperacao")({
   }),
 });
 
-const CHANNELS: { id: string; icon: LucideIcon; label: string; description: string; on: boolean }[] = [
+const CHANNELS: {
+  id: string;
+  icon: LucideIcon;
+  label: string;
+  description: string;
+  on: boolean;
+}[] = [
   {
     id: "whatsapp",
     icon: MessageCircle,
@@ -56,17 +62,29 @@ function RecuperacaoMarketingPage() {
         title="Recuperação"
         subtitle="Reconquiste clientes que abandonaram o checkout com mensagens automáticas multicanal."
         actions={
-          <Button size="sm" onClick={() => toast.success("Configurações de recuperação salvas.")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Save className="h-4 w-4" /> Salvar alterações
           </Button>
         }
       />
 
+      <ComingSoonNotice />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Checkouts abandonados" value="0" hint="Últimos 30 dias" icon={RotateCcw} />
         <StatCard label="Recuperados" value="0" hint="Últimos 30 dias" icon={RotateCcw} />
-        <StatCard label="Taxa de recuperação" value="0,00%" hint="Últimos 30 dias" icon={RotateCcw} />
-        <StatCard label="Receita recuperada" value="R$ 0,00" hint="Últimos 30 dias" icon={RotateCcw} />
+        <StatCard
+          label="Taxa de recuperação"
+          value="0,00%"
+          hint="Últimos 30 dias"
+          icon={RotateCcw}
+        />
+        <StatCard
+          label="Receita recuperada"
+          value="R$ 0,00"
+          hint="Últimos 30 dias"
+          icon={RotateCcw}
+        />
       </div>
 
       <section className="surface space-y-4 p-5">
@@ -79,10 +97,7 @@ function RecuperacaoMarketingPage() {
 
         <div className="space-y-2">
           {CHANNELS.map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center gap-3 rounded-lg border border-border p-3"
-            >
+            <div key={c.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                 <c.icon className="h-5 w-5" />
               </span>

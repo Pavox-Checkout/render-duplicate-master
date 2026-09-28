@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { useState } from "react";
 import { Plus, Layers } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { ToolStatusBadge } from "@/components/pavox/marketing/tool-status-badge";
@@ -16,7 +16,8 @@ export const Route = createFileRoute("/_dash/marketing/order-bump")({
       { title: "Order Bump · PAVOX" },
       {
         name: "description",
-        content: "Ofereça produtos complementares na finalização da compra e aumente o ticket médio.",
+        content:
+          "Ofereça produtos complementares na finalização da compra e aumente o ticket médio.",
       },
     ],
   }),
@@ -32,11 +33,13 @@ function OrderBumpPage() {
         title="Order Bump"
         subtitle="Ofertas complementares exibidas dentro do checkout, com um clique para adicionar ao pedido."
         actions={
-          <Button size="sm" onClick={() => toast.info("Criar order bump")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Plus className="h-4 w-4" /> Novo order bump
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_minmax(320px,420px)]">
         <div className="space-y-3">
@@ -48,7 +51,10 @@ function OrderBumpPage() {
             />
           ) : (
             bumps.map((b) => (
-              <div key={b.id} className="surface flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <div
+                key={b.id}
+                className="surface flex flex-col gap-3 p-4 sm:flex-row sm:items-center"
+              >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
                   <Layers className="h-5 w-5" />
                 </div>
@@ -70,7 +76,7 @@ function OrderBumpPage() {
                     <p className="text-[11px] text-muted-foreground">Preço</p>
                     <p className="text-[14px] font-semibold">{b.price}</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => toast.info("Editar order bump")}>
+                  <Button variant="outline" size="sm" onClick={() => notYet()}>
                     Editar
                   </Button>
                 </div>

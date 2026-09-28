@@ -528,8 +528,10 @@ function baseConfig(): CheckoutConfig {
       spacingBottom: 12,
     },
     notice: {
-      enabled: true,
-      messages: [{ id: newId("msg"), text: "Frete grátis para todo o Brasil nas compras de hoje" }],
+      // Off by default: the lojista writes their own notice; PAVOX never promises
+      // shipping or offers on their behalf.
+      enabled: false,
+      messages: [{ id: newId("msg"), text: "Escreva aqui um aviso para os seus compradores" }],
       background: "#0f172a",
       textColor: "#ffffff",
       size: "sm",
@@ -551,7 +553,8 @@ function baseConfig(): CheckoutConfig {
       installmentsEnabled: true,
     },
     coupon: {
-      enabled: true,
+      // Coupons are not processed by the backend yet.
+      enabled: false,
       position: "after-summary",
     },
     steps: {
@@ -574,24 +577,12 @@ function baseConfig(): CheckoutConfig {
       position: "top",
     },
     social: {
-      enabled: true,
+      // Only real testimonials the lojista adds; none are invented by default.
+      enabled: false,
       layout: "card",
       showStars: true,
       showPhoto: true,
-      testimonials: [
-        {
-          id: newId("tst"),
-          name: "Mariana A.",
-          text: "Compra rápida e checkout simples. Recebi tudo certinho!",
-          rating: 5,
-        },
-        {
-          id: newId("tst"),
-          name: "Rafael S.",
-          text: "Confiei e valeu a pena. Pagamento no Pix caiu na hora.",
-          rating: 5,
-        },
-      ],
+      testimonials: [],
     },
     live: {
       enabled: true,
@@ -984,3 +975,17 @@ export const RECOMMENDATIONS = [
     detail: "Depoimentos próximos ao CTA reforçam a confiança na hora da decisão.",
   },
 ];
+
+/**
+ * Placeholder content older versions of the builder inserted by default. It
+ * was never written by the lojista, so the public checkout drops it instead of
+ * showing invented reviews or an invented free-shipping promise to buyers.
+ */
+export const LEGACY_DEFAULT_TESTIMONIALS = new Set([
+  "Compra rápida e checkout simples. Recebi tudo certinho!",
+  "Confiei e valeu a pena. Pagamento no Pix caiu na hora.",
+]);
+export const LEGACY_DEFAULT_NOTICES = new Set([
+  "Frete grátis para todo o Brasil nas compras de hoje",
+  "Escreva aqui um aviso para os seus compradores",
+]);

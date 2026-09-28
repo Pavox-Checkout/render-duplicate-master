@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { Plus, ArrowUpCircle, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { ToolStatusBadge } from "@/components/pavox/marketing/tool-status-badge";
@@ -14,8 +14,7 @@ export const Route = createFileRoute("/_dash/marketing/upsell")({
       { title: "Upsell · PAVOX" },
       {
         name: "description",
-        content:
-          "Ofertas pós-compra (one-click upsell) exibidas após a aprovação do pagamento.",
+        content: "Ofertas pós-compra (one-click upsell) exibidas após a aprovação do pagamento.",
       },
     ],
   }),
@@ -30,11 +29,13 @@ function UpsellPage() {
         title="Upsell"
         subtitle="Apresente ofertas one-click logo após a compra, aproveitando o cartão já aprovado do cliente."
         actions={
-          <Button size="sm" onClick={() => toast.info("Criar upsell")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Plus className="h-4 w-4" /> Novo upsell
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       <div className="surface flex flex-col items-center gap-2 p-5 sm:flex-row sm:gap-4">
         <FlowStep label="Compra aprovada" tone="muted" />
@@ -62,9 +63,7 @@ function UpsellPage() {
                   <h3 className="truncate text-[14px] font-semibold">{u.offer}</h3>
                   <ToolStatusBadge status={u.status} />
                 </div>
-                <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                  Gatilho: {u.trigger}
-                </p>
+                <p className="mt-0.5 text-[12.5px] text-muted-foreground">Gatilho: {u.trigger}</p>
               </div>
               <div className="flex items-center gap-5 text-right">
                 <div>
@@ -75,7 +74,7 @@ function UpsellPage() {
                   <p className="text-[11px] text-muted-foreground">Preço</p>
                   <p className="text-[14px] font-semibold">{u.price}</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => toast.info("Editar upsell")}>
+                <Button variant="outline" size="sm" onClick={() => notYet()}>
                   Editar
                 </Button>
               </div>

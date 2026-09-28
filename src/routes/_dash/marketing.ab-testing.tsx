@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoonNotice, notYet } from "@/components/pavox/marketing/coming-soon";
 import { Plus, FlaskConical } from "lucide-react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/pavox/page-header";
 import { EmptyState } from "@/components/pavox/empty-state";
 import { ToolStatusBadge } from "@/components/pavox/marketing/tool-status-badge";
@@ -29,11 +29,13 @@ function ABTestingPage() {
         title="A/B Testing"
         subtitle="Teste variações de checkout dividindo o tráfego e acompanhe qual gera melhores resultados."
         actions={
-          <Button size="sm" onClick={() => toast.info("Criar teste A/B")}>
+          <Button size="sm" onClick={() => notYet()}>
             <Plus className="h-4 w-4" /> Novo teste
           </Button>
         }
       />
+
+      <ComingSoonNotice />
 
       {tests.length === 0 ? (
         <EmptyState
@@ -54,9 +56,7 @@ function ABTestingPage() {
                     </span>
                     <div>
                       <h3 className="text-[14.5px] font-semibold">{t.name}</h3>
-                      <p className="text-[12px] text-muted-foreground">
-                        Métrica: {t.metric}
-                      </p>
+                      <p className="text-[12px] text-muted-foreground">Métrica: {t.metric}</p>
                     </div>
                   </div>
                   <ToolStatusBadge status={t.status} />
@@ -78,16 +78,10 @@ function ABTestingPage() {
                 </div>
 
                 <div className="mt-4 flex justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => toast.info("Ver resultados")}>
+                  <Button variant="outline" size="sm" onClick={() => notYet()}>
                     Ver resultados
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      toast.success(t.status === "Ativo" ? "Teste pausado" : "Teste retomado")
-                    }
-                  >
+                  <Button variant="outline" size="sm" onClick={() => notYet()}>
                     {t.status === "Ativo" ? "Pausar" : "Retomar"}
                   </Button>
                 </div>
