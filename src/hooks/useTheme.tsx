@@ -23,10 +23,10 @@ function isThemePreference(value: string | null): value is ThemePreference {
 }
 
 function getStoredTheme(): ThemePreference {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  // New accounts (no stored preference yet) default to Dark, per PAVOX's dark-first strategy.
-  return isThemePreference(stored) ? stored : "dark";
+  // No stored preference yet: the light PAVOX world is the default.
+  return isThemePreference(stored) ? stored : "light";
 }
 
 function applyResolvedTheme(resolved: ResolvedTheme) {
@@ -37,9 +37,9 @@ function applyResolvedTheme(resolved: ResolvedTheme) {
 
 /**
  * Inline script injected into <head> so the correct theme class is applied
- * before first paint, avoiding a light-mode flash for dark-theme users.
+ * before first paint, avoiding a flash for users who chose the dark theme.
  */
-export const THEME_ANTI_FLASH_SCRIPT = `(function(){try{var k="${STORAGE_KEY}";var s=localStorage.getItem(k);var t=(s==="light"||s==="dark"||s==="system")?s:"dark";var r=t==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;var d=document.documentElement;if(r==="dark")d.classList.add("dark");d.style.colorScheme=r;}catch(e){}})();`;
+export const THEME_ANTI_FLASH_SCRIPT = `(function(){try{var k="${STORAGE_KEY}";var s=localStorage.getItem(k);var t=(s==="light"||s==="dark"||s==="system")?s:"light";var r=t==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;var d=document.documentElement;if(r==="dark")d.classList.add("dark");d.style.colorScheme=r;}catch(e){}})();`;
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemePreference>(() => getStoredTheme());

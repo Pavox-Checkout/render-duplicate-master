@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { AlertCircle, CheckCircle2, Copy, ExternalLink, Loader2, XCircle } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import {
   CheckoutPreview,
   type CheckoutSubmission,
@@ -9,13 +9,26 @@ import {
 import { normalizeConfig, type CheckoutConfig } from "@/lib/checkout-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { brl } from "@/lib/mock";
 import {
   MercadoPagoCardForm,
   type MercadoPagoCardFormHandle,
 } from "@/components/pavox/mercadopago-card-form";
 import { toast } from "sonner";
 import { PublicCheckoutFooter } from "@/components/pavox/public-checkout-footer";
+import {
+  CopyCode,
+  Countdown,
+  Perf,
+  ReceiptFrame,
+  ReceiptHead,
+  ReceiptLoading,
+  ReceiptMessage,
+  ReceiptTotal,
+  Stamp,
+  Steps,
+  groundColors,
+  useOnline,
+} from "@/components/pavox/checkout-receipt";
 
 type PublicProduct = {
   id: string;
@@ -252,19 +265,14 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
     setOrder(next);
   };
 
-  if (query.isLoading) {
-    return (
-      <Centered>
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </Centered>
-    );
-  }
+  if (query.isLoading) return <ReceiptLoading />;
 
   if (query.isError) {
     return (
-      <Message
+      <ReceiptMessage
+        stamp="SEM REDE"
         title="Não foi possível carregar o checkout"
-        description="Verifique sua conexão e recarregue a página."
+        description="Confira sua conexão com a internet e recarregue a página."
       />
     );
   }
@@ -272,27 +280,35 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
   const data = query.data;
   if (!data) {
     return (
-      <Message
+      <ReceiptMessage
+        stamp="FORA DO AR"
         title="Checkout indisponível"
-        description="Este link não existe ou o checkout não está mais publicado."
+        description="Este link não existe ou o checkout não está mais publicado. Confira o link com a loja."
       />
     );
   }
 
+  const storeName = data.store.checkout_display_name?.trim() || data.store.name;
+
   if (!data.product || !config) {
     return (
-      <Message
+      <ReceiptMessage
+        stamp="FORA DO AR"
         title="Produto indisponível"
-        description="Este checkout ainda não tem um produto ativo à venda."
+        description="Este checkout ainda não tem um produto à venda. Fale com a loja."
+        storeName={storeName}
       />
     );
   }
 
   if (!data.product.available) {
     return (
-      <Message
+      <ReceiptMessage
+        stamp="ESGOTADO"
         title="Produto esgotado"
-        description="Este produto não está disponível no momento."
+        description="Este produto não está disponível no momento. Fale com a loja para saber quando volta."
+        color={config.colors.button}
+        storeName={storeName}
       />
     );
   }
@@ -301,9 +317,15 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
     return (
       <OrderResult
         order={order}
-        config={config}
+        color={config.colors.button}
+        storeName={storeName}
         displayName={data.store.checkout_display_name}
         onUpdate={setOrder}
+        onRestart={() => {
+          idempotencyKey.current = null;
+          setOrder(null);
+          window.scrollTo({ top: 0 });
+        }}
       />
     );
   }
@@ -348,24 +370,33 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
 
 function OrderResult({
   order,
-  config,
+  color,
+  storeName,
   displayName,
   onUpdate,
+  onRestart,
 }: {
   order: PublicOrder;
-  config: CheckoutConfig;
-  displayName?: string | null;
+  color: string;
+  storeName: string;
+  displayName?: string | null | undefined;
   onUpdate: (order: PublicOrder) => void;
+  onRestart: () => void;
 }) {
-  const col = config.colors;
+  const online = useOnline();
   const pending = order.status === "Pendente";
   const paid = order.status === "Aprovado";
+  const expired = order.status === "Expirado";
+  const refunded = order.status === "Reembolsado";
   const qr = order.payment?.qr_code ?? "";
+  const pix = order.payment_method === "pix" || !!qr;
   const boleto = order.payment_method === "boleto";
   const card = order.payment_method === "card";
   const line = order.payment?.digitable_line ?? "";
+  // The stamp lands only when the payment turns paid while the buyer watches.
+  const [landed] = useState(() => !paid);
 
-  // While the Pix is open, ask the backend to re-check the charge with the
+  // While the payment is open, ask the backend to re-check the charge with the
   // gateway. The status shown here always comes from the server.
   useEffect(() => {
     if (!pending) return;
@@ -382,7 +413,6 @@ function OrderResult({
     return () => clearInterval(timer);
   }, [pending, boleto, order.id, order.status, onUpdate]);
 
-  const tone = paid ? col.success : pending ? col.warning : col.error;
   const title = paid
     ? "Pagamento confirmado"
     : pending
@@ -393,181 +423,208 @@ function OrderResult({
           : card
             ? "Pagamento em análise"
             : "Pedido registrado"
-      : order.status === "Expirado"
+      : expired
         ? boleto
-          ? "Boleto vencido"
-          : "Pix expirado"
-        : order.status === "Reembolsado"
+          ? "Este boleto venceu"
+          : "Este Pix expirou"
+        : refunded
           ? "Pagamento reembolsado"
           : "Pagamento não concluído";
   const description = paid
-    ? "Obrigado pela compra! Seu pagamento foi confirmado e o vendedor já recebeu seu pedido. Guarde o número do pedido abaixo."
+    ? "O banco confirmou seu pagamento e a loja já recebeu seu pedido. Guarde o número do pedido abaixo."
     : pending
       ? qr
-        ? "Escaneie o QR Code ou copie o código Pix no app do seu banco. A confirmação aparece aqui automaticamente."
+        ? "Abra o app do seu banco, escolha Pix copia e cola e cole o código. Esta página confirma sozinha."
         : boleto
-          ? "Pague o boleto no app do seu banco ou em uma lotérica. A confirmação leva até 2 dias úteis após o pagamento."
+          ? "Pague o boleto no app do seu banco ou em uma lotérica. A confirmação leva até 2 dias úteis."
           : card
             ? "O pagamento com cartão está sendo analisado. Esta página se atualiza sozinha."
             : "Seu pedido foi registrado e está aguardando pagamento."
-      : "Este pagamento não foi concluído. Você pode fazer um novo pedido.";
+      : expired
+        ? "O prazo acabou e nenhum valor foi cobrado. Faça um novo pedido para pagar."
+        : refunded
+          ? "O valor foi devolvido pela loja. O prazo para aparecer depende do seu banco."
+          : "Este pagamento não foi concluído e nada foi cobrado. Você pode fazer um novo pedido.";
+
+  const stamp = paid ? (
+    <Stamp
+      big="PAGO"
+      small={
+        order.paid_at
+          ? new Date(order.paid_at).toLocaleString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : undefined
+      }
+      land={landed}
+    />
+  ) : expired ? (
+    <Stamp big={boleto ? "VENCIDO" : "EXPIRADO"} small="SEM COBRANÇA" tone="off" />
+  ) : refunded ? (
+    <Stamp big="DEVOLVIDO" tone="off" />
+  ) : !pending ? (
+    <Stamp big="NÃO PAGO" small="NADA COBRADO" tone="bad" />
+  ) : null;
+
+  const { soft } = groundColors(color);
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center px-4 py-10"
-      style={{ background: col.background, color: col.text }}
+    <ReceiptFrame
+      color={color}
+      storeName={storeName}
+      footer={<PublicCheckoutFooter displayName={displayName} color={soft} mutedColor={soft} />}
     >
-      <div
-        className="w-full max-w-[440px] p-6 text-center"
-        style={{
-          background: col.surface,
-          border: `1px solid ${col.border}`,
-          borderRadius: config.layout.radius,
-        }}
-      >
-        <div
-          className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
-          style={{ background: `${tone}1f`, color: tone }}
-        >
-          {paid ? (
-            <CheckCircle2 className="h-7 w-7" />
-          ) : pending ? (
-            <Loader2 className="h-7 w-7 animate-spin" />
-          ) : (
-            <XCircle className="h-7 w-7" />
-          )}
-        </div>
-        <p className="mt-4 text-[17px] font-bold">{title}</p>
-        <p className="mt-1.5 text-[13.5px]" style={{ color: col.textMuted }}>
-          {description}
-        </p>
-
-        {pending && qr ? (
-          <div className="mt-5 space-y-3">
-            {order.payment.qr_code_base64 ? (
-              <img
-                src={`data:image/png;base64,${order.payment.qr_code_base64}`}
-                alt="QR Code Pix"
-                className="mx-auto h-52 w-52 rounded-md bg-white p-2"
-              />
-            ) : null}
-            <div
-              className="flex items-center gap-2 rounded-lg p-2 text-left"
-              style={{ border: `1px solid ${col.border}` }}
-            >
-              <code className="min-w-0 flex-1 truncate text-[11.5px]">{qr}</code>
-              <button
-                type="button"
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-semibold text-white"
-                style={{ background: col.button }}
-                onClick={() => {
-                  void navigator.clipboard?.writeText(qr);
-                  toast.success("Código Pix copiado");
-                }}
-              >
-                <Copy className="h-4 w-4" /> Copiar
-              </button>
-            </div>
-            {order.expires_at ? (
-              <p className="text-[12px]" style={{ color: col.textMuted }}>
-                Válido até{" "}
-                {new Date(order.expires_at).toLocaleTimeString("pt-BR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        {pending && boleto && (line || order.payment?.ticket_url) ? (
-          <div className="mt-5 space-y-3">
-            {line ? (
-              <div
-                className="flex items-center gap-2 rounded-lg p-2 text-left"
-                style={{ border: `1px solid ${col.border}` }}
-              >
-                <code className="min-w-0 flex-1 break-all text-[11.5px]">{line}</code>
-                <button
-                  type="button"
-                  className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-semibold text-white"
-                  style={{ background: col.button }}
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(line);
-                    toast.success("Linha digitável copiada");
-                  }}
-                >
-                  <Copy className="h-4 w-4" /> Copiar
-                </button>
-              </div>
-            ) : null}
-            {order.payment?.ticket_url ? (
-              <a
-                href={order.payment.ticket_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md text-[13px] font-semibold"
-                style={{ border: `1px solid ${col.border}` }}
-              >
-                <ExternalLink className="h-4 w-4" /> Abrir boleto
-              </a>
-            ) : null}
-            {order.expires_at ? (
-              <p className="text-[12px]" style={{ color: col.textMuted }}>
-                Vence em {new Date(order.expires_at).toLocaleDateString("pt-BR")}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        <dl className="mt-5 space-y-2 text-left text-[13.5px]">
-          <div className="flex justify-between gap-3">
-            <dt style={{ color: col.textMuted }}>Pedido</dt>
-            <dd className="font-semibold">{order.reference}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt style={{ color: col.textMuted }}>Total</dt>
-            <dd className="font-semibold">{brl(Number(order.amount))}</dd>
-          </div>
-          {card && order.payment?.installments && order.payment.installments > 1 ? (
-            <div className="flex justify-between gap-3">
-              <dt style={{ color: col.textMuted }}>Parcelas</dt>
-              <dd className="font-semibold">{order.payment.installments}x no cartão</dd>
-            </div>
-          ) : null}
-          {order.gateway_payment_id ? (
-            <div className="flex justify-between gap-3">
-              <dt style={{ color: col.textMuted }}>Transação</dt>
-              <dd className="truncate font-mono text-[12px]">{order.gateway_payment_id}</dd>
-            </div>
-          ) : null}
-        </dl>
-      </div>
-      <PublicCheckoutFooter
-        displayName={displayName}
-        color={col.textMuted}
-        mutedColor={col.textMuted}
+      <ReceiptHead
+        storeName={storeName}
+        {...(order.paid_at ? { at: new Date(order.paid_at) } : {})}
       />
-    </div>
-  );
-}
+      <Perf />
+      <ReceiptTotal amount={Number(order.amount)} />
+      <Perf />
 
-function Centered({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      {children}
-    </div>
-  );
-}
+      <h1 className="cr-title">{title}</h1>
+      <p className="cr-sub">{description}</p>
 
-function Message({ title, description }: { title: string; description: string }) {
-  return (
-    <Centered>
-      <div className="max-w-sm text-center">
-        <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
-        <h1 className="mt-3 text-lg font-semibold text-foreground">{title}</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
-      </div>
-    </Centered>
+      {qr && (pending || paid || expired) && order.payment.qr_code_base64 ? (
+        <div className={`cr-qr ${pending ? "" : "spent"}`}>
+          <img src={`data:image/png;base64,${order.payment.qr_code_base64}`} alt="QR Code Pix" />
+          {stamp}
+        </div>
+      ) : stamp ? (
+        <div className="cr-stamp-row">{stamp}</div>
+      ) : null}
+
+      {pending && qr ? (
+        <>
+          <CopyCode
+            text={qr}
+            label="Copiar código Pix"
+            doneLabel="Código copiado"
+            failHint="Não deu para copiar sozinho. O código ficou selecionado: toque e segure para copiar."
+          />
+          {order.expires_at ? <Countdown until={order.expires_at} /> : null}
+          <p className="cr-wait">
+            Aguardando o banco
+            <span className="dots" aria-hidden="true" />
+          </p>
+        </>
+      ) : null}
+
+      {pending && boleto && (line || order.payment?.ticket_url) ? (
+        <>
+          {line ? (
+            <CopyCode
+              text={line}
+              label="Copiar linha digitável"
+              doneLabel="Linha copiada"
+              failHint="Não deu para copiar sozinho. A linha ficou selecionada: toque e segure para copiar."
+            />
+          ) : null}
+          {order.payment?.ticket_url ? (
+            <a
+              href={order.payment.ticket_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cr-btn ghost"
+            >
+              <ExternalLink className="size-5" aria-hidden="true" /> Abrir boleto em PDF
+            </a>
+          ) : null}
+          {order.expires_at ? (
+            <p className="cr-note">
+              Vence em{" "}
+              <span className="num">{new Date(order.expires_at).toLocaleDateString("pt-BR")}</span>
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
+      {pending && !online ? (
+        <p className="cr-note" role="status">
+          Sem internet agora. Se você já pagou, fique tranquilo: quando a conexão voltar, esta
+          página confere de novo.
+        </p>
+      ) : null}
+
+      {!pending && !paid ? (
+        <button type="button" className="cr-btn" style={{ marginTop: 20 }} onClick={onRestart}>
+          Fazer novo pedido
+        </button>
+      ) : null}
+
+      {pix || boleto || card ? (
+        <>
+          <Perf />
+          <Steps
+            items={[
+              {
+                label: pix ? "Pix gerado" : boleto ? "Boleto gerado" : "Cartão enviado",
+                state: "done",
+              },
+              {
+                label: "Aguardando o banco",
+                state: pending ? "now" : "done",
+              },
+              paid
+                ? { label: "Pagamento confirmado", state: "ok" }
+                : pending
+                  ? { label: "Pagamento confirmado", state: "todo" }
+                  : {
+                      label: expired
+                        ? "Prazo encerrado, sem cobrança"
+                        : refunded
+                          ? "Valor devolvido"
+                          : "Pagamento não concluído",
+                      state: "done",
+                    },
+            ]}
+          />
+        </>
+      ) : null}
+
+      {pending && qr ? (
+        <>
+          <Perf />
+          <h2 className="cr-sec">Como pagar</h2>
+          <ol className="cr-howto">
+            <li>Abra o app do seu banco e entre na área Pix.</li>
+            <li>Escolha Pix copia e cola e cole o código.</li>
+            <li>Confira o valor e confirme. Esta tela muda sozinha.</li>
+          </ol>
+        </>
+      ) : null}
+
+      <Perf />
+      <dl className="cr-kv">
+        <div>
+          <dt>Pedido</dt>
+          <dd className="num">{order.reference}</dd>
+        </div>
+        <div>
+          <dt>Forma de pagamento</dt>
+          <dd>
+            {pix ? "Pix" : boleto ? "Boleto" : card ? "Cartão de crédito" : order.payment_method}
+          </dd>
+        </div>
+        {card && order.payment?.installments && order.payment.installments > 1 ? (
+          <div>
+            <dt>Parcelas</dt>
+            <dd>{order.payment.installments}x no cartão</dd>
+          </div>
+        ) : null}
+        {order.gateway_payment_id ? (
+          <div>
+            <dt>Transação</dt>
+            <dd className="num" style={{ fontSize: 12.5 }}>
+              {order.gateway_payment_id}
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+    </ReceiptFrame>
   );
 }

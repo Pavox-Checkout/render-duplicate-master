@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AchievementsCard } from "@/components/pavox/achievements-card";
 import type { ChangeEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/pavox/page-header";
@@ -62,12 +63,19 @@ function Conta() {
     const path = authUser?.user_metadata?.avatar_path;
     if (!authUser || typeof path !== "string" || !path) {
       setAvatarUrl(null);
-      return () => { active = false; };
+      return () => {
+        active = false;
+      };
     }
-    void supabase.storage.from("product-images").createSignedUrl(path, 60 * 60 * 24).then(({ data }) => {
-      if (active) setAvatarUrl(data?.signedUrl ?? null);
-    });
-    return () => { active = false; };
+    void supabase.storage
+      .from("product-images")
+      .createSignedUrl(path, 60 * 60 * 24)
+      .then(({ data }) => {
+        if (active) setAvatarUrl(data?.signedUrl ?? null);
+      });
+    return () => {
+      active = false;
+    };
   }, [authUser?.id, authUser?.user_metadata?.avatar_path]);
 
   const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => {
@@ -132,11 +140,13 @@ function Conta() {
     if (avatarFileRef.current) {
       const extension = avatarFileRef.current.type.split("/")[1] || "jpg";
       avatarPath = `${userId}/avatar.${extension}`;
-      const { error: uploadError } = await supabase.storage.from("product-images").upload(avatarPath, avatarFileRef.current, {
-        contentType: avatarFileRef.current.type,
-        cacheControl: "3600",
-        upsert: true,
-      });
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(avatarPath, avatarFileRef.current, {
+          contentType: avatarFileRef.current.type,
+          cacheControl: "3600",
+          upsert: true,
+        });
       if (uploadError) {
         setSavingCpf(false);
         toast.error("Não foi possível salvar a foto de perfil.");
@@ -157,7 +167,9 @@ function Conta() {
       return;
     }
 
-    const { error: metadataError } = await supabase.auth.updateUser({ data: { avatar_path: avatarPath } });
+    const { error: metadataError } = await supabase.auth.updateUser({
+      data: { avatar_path: avatarPath },
+    });
     setSavingCpf(false);
     if (metadataError) {
       toast.error("Não foi possível salvar a foto de perfil.");
@@ -180,6 +192,8 @@ function Conta() {
   return (
     <>
       <PageHeader title="Minha conta" subtitle="Seus dados pessoais e preferências de acesso." />
+
+      <AchievementsCard />
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div className="surface p-5">

@@ -7,7 +7,6 @@ import {
   CreditCard,
   LayoutGrid,
   LogOut,
-  Menu,
   Plug,
   Receipt,
   ShieldCheck,
@@ -16,13 +15,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PavoxLogo } from "@/components/pavox/logo";
 import { ThemeToggle } from "@/components/pavox/theme-toggle";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { AdminError, AdminLoading } from "@/components/pavox/admin/shared";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAccess } from "@/lib/admin/data";
@@ -44,8 +36,8 @@ const navigation = [
   { to: "/admin/atividade", label: "Atividade", icon: Activity },
 ] as const;
 
-function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { profile, user, signOut } = useAuth();
+function useLogout() {
+  const { signOut } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -61,51 +53,50 @@ function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
       setBusy(false);
     }
   };
+  return { busy, logout };
+}
+
+/** Navy rail with the white logo, role badge and the six sections as tabs. */
+function AdminTop({ role }: { role: string }) {
+  const { profile, user } = useAuth();
+  const { busy, logout } = useLogout();
   return (
-    <div className="flex h-full w-[248px] flex-col border-r border-sidebar-border bg-sidebar">
-      <div className="flex h-16 items-center px-5">
-        <PavoxLogo className="dark:[&_img]:brightness-0 dark:[&_img]:invert" />
-      </div>
-      <div className="mx-4 mb-5 mt-3 flex items-center gap-3 rounded-xl border border-border bg-accent/50 p-3">
-        <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
-        <div>
-          <p className="text-sm font-semibold">Pavox Admin</p>
-          <p className="text-xs text-muted-foreground">Gestão da plataforma</p>
-        </div>
-      </div>
-      <nav aria-label="Administração" className="flex-1 space-y-1 overflow-y-auto px-3">
-        {navigation.map(({ to, label, icon: Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            activeOptions={{ exact: true }}
-            onClick={onNavigate}
-            className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent focus-visible:outline-2 focus-visible:outline-ring data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
-          >
-            <Icon className="size-[18px]" aria-hidden="true" />
-            {label}
-          </Link>
-        ))}
-      </nav>
-      <div className="space-y-3 border-t border-border p-4">
-        <Link
-          to="/dashboard"
-          className="flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground hover:bg-accent"
-        >
-          <ArrowLeft className="size-4" />
-          Painel da loja
+    <header className="sticky top-0 z-30 bg-[#001848] text-white">
+      <div className="mx-auto flex h-16 max-w-[1320px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <Link to="/admin" aria-label="Admin PAVOX, visão geral" className="-m-2 p-2">
+          <img
+            src="/pavox-logo-white.png"
+            alt="PAVOX"
+            width={78}
+            height={26}
+            className="h-[26px] w-auto"
+          />
         </Link>
-        <div className="flex min-w-0 items-center gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">
-              {profile?.full_name || "Administrador"}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-          </div>
+        <span className="rounded-md border border-white/60 px-2 py-0.5 text-[13px] font-bold">
+          Admin
+        </span>
+        <span className="hidden text-[14px] text-[#b9c6e4] sm:inline">
+          {role === "viewer" ? "Somente leitura" : "Administrador"}
+        </span>
+        <div className="ml-auto flex items-center gap-1">
+          <Link
+            to="/dashboard"
+            className="hidden min-h-11 items-center gap-2 rounded-lg px-3 text-[14px] font-semibold text-[#dbe4f7] hover:bg-white/10 hover:text-white md:flex"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Painel da loja
+          </Link>
+          <span
+            className="hidden max-w-[220px] truncate px-2 text-[14px] text-[#b9c6e4] lg:block"
+            title={user?.email ?? ""}
+          >
+            {profile?.full_name || user?.email}
+          </span>
+          <ThemeToggle />
           <Button
             size="icon"
-            className="size-11 shrink-0"
             variant="ghost"
+            className="size-11 text-white hover:bg-white/10 hover:text-white"
             aria-label="Sair da conta"
             disabled={busy}
             onClick={() => void logout()}
@@ -114,7 +105,33 @@ function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </Button>
         </div>
       </div>
-    </div>
+      <nav
+        aria-label="Administração"
+        className="mx-auto max-w-[1320px] overflow-x-auto px-2 sm:px-4 lg:px-6"
+      >
+        <ul className="flex min-w-max">
+          {navigation.map(({ to, label }) => (
+            <li key={to}>
+              <Link
+                to={to}
+                activeOptions={{ exact: true }}
+                className="flex min-h-12 items-center border-b-[3px] border-transparent px-3 text-[15px] font-semibold text-[#b9c6e4] transition-colors hover:text-white data-[status=active]:border-[#4d86ff] data-[status=active]:text-white"
+              >
+                {label}
+              </Link>
+            </li>
+          ))}
+          <li className="md:hidden">
+            <Link
+              to="/dashboard"
+              className="flex min-h-12 items-center px-3 text-[15px] font-semibold text-[#b9c6e4] hover:text-white"
+            >
+              Painel da loja
+            </Link>
+          </li>
+        </ul>
+      </nav>
+    </header>
   );
 }
 
@@ -136,7 +153,7 @@ function AdminLayout() {
   if (access.isError)
     return (
       <div className="mx-auto max-w-lg space-y-4 px-4 py-20">
-        <PavoxLogo className="dark:[&_img]:brightness-0 dark:[&_img]:invert" />
+        <PavoxLogo />
         <AdminError error={access.error} retry={() => void access.refetch()} />
         <Button asChild variant="outline">
           <Link to="/dashboard">Voltar ao painel</Link>
@@ -158,59 +175,19 @@ function AdminLayout() {
       </div>
     );
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <a
         href="#admin-content"
         className="sr-only fixed left-4 top-4 z-50 rounded-lg bg-primary p-3 text-primary-foreground focus:not-sr-only"
       >
         Ir para o conteúdo
       </a>
-      <aside className="sticky top-0 hidden h-screen shrink-0 lg:block">
-        <AdminSidebar />
-      </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 lg:hidden"
-                aria-label="Abrir menu administrativo"
-              >
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[248px] p-0">
-              <SheetTitle className="sr-only">Menu administrativo</SheetTitle>
-              <SheetDescription className="sr-only">
-                Navegue pelas áreas da plataforma.
-              </SheetDescription>
-              <AdminSidebar onNavigate={() => setOpen(false)} />
-            </SheetContent>
-          </Sheet>
-          <p className="flex items-center gap-2 text-sm">
-            <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
-            <span className="font-semibold">Administração</span>
-            <span className="hidden text-muted-foreground sm:inline">/ Plataforma Pavox</span>
-          </p>
-          <div className="ml-auto flex items-center gap-3">
-            <span className="hidden rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground sm:block">
-              {access.data.role === "viewer" ? "Somente leitura" : "Administrador"}
-            </span>
-            <ThemeToggle />
-          </div>
-        </header>
-        <main
-          id="admin-content"
-          tabIndex={-1}
-          className="flex-1 px-4 py-6 outline-none sm:px-6 lg:px-8"
-        >
-          <div key={user?.id} className="mx-auto w-full max-w-[1320px] space-y-6">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      <AdminTop role={access.data.role} />
+      <main id="admin-content" tabIndex={-1} className="px-4 py-8 outline-none sm:px-6 lg:px-8">
+        <div key={user?.id} className="mx-auto w-full max-w-[1320px] space-y-6">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 }

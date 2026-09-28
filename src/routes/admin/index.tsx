@@ -1,26 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  ArrowRight,
-  Building2,
-  CircleDollarSign,
-  CreditCard,
-  RefreshCw,
-  ShoppingBag,
-  TrendingUp,
-} from "lucide-react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { ArrowRight, CreditCard, RefreshCw } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/pavox/page-header";
-import { StatCard } from "@/components/pavox/stat-card";
 import {
   AdminEmpty,
   AdminError,
@@ -77,39 +60,48 @@ function AdminOverviewPage() {
       ) : (
         data && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCard
-                label="Volume aprovado"
-                value={money(data.volume)}
-                icon={TrendingUp}
-                hint={`${count(data.paid_orders)} pagamentos aprovados no período`}
-              />
-              <StatCard
-                label="Taxas registradas"
-                value={money(data.fees)}
-                icon={CircleDollarSign}
-                hint="Dos pagamentos aprovados no período"
-              />
-              <StatCard
-                label="Pedidos criados"
-                value={count(data.orders)}
-                icon={ShoppingBag}
-                hint={`${count(data.pending_orders)} ainda pendentes`}
-              />
-              <StatCard
-                label="Lojistas cadastrados"
-                value={count(data.merchants)}
-                icon={Building2}
-                hint={`${count(data.new_merchants)} novos no período`}
-              />
-            </div>
+            <section aria-labelledby="vol-h" className="border-b border-border pb-8">
+              <h2
+                id="vol-h"
+                className="font-sans text-[15px] font-semibold tracking-normal text-muted-foreground"
+              >
+                Volume aprovado
+              </h2>
+              <p className="mt-1 font-display text-[clamp(40px,5.5vw,60px)] font-bold leading-none tracking-[-0.04em] text-[#001848] tabular-nums dark:text-foreground">
+                {money(data.volume)}
+              </p>
+              <p className="mt-2 text-[15px] text-muted-foreground">
+                {count(data.paid_orders)} pagamentos aprovados no período
+              </p>
+              <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:max-w-[760px]">
+                {[
+                  ["Taxas registradas", money(data.fees), "dos pagamentos aprovados"],
+                  [
+                    "Pedidos criados",
+                    count(data.orders),
+                    `${count(data.pending_orders)} ${data.pending_orders === 1 ? "pendente" : "pendentes"}`,
+                  ],
+                  [
+                    "Lojistas",
+                    count(data.merchants),
+                    `${count(data.new_merchants)} ${data.new_merchants === 1 ? "novo" : "novos"} no período`,
+                  ],
+                ].map(([k, v, h]) => (
+                  <div key={k} className="border-t border-border pt-3">
+                    <dt className="text-[13.5px] text-muted-foreground">{k}</dt>
+                    <dd className="mt-0.5 text-xl font-bold tabular-nums">{v}</dd>
+                    {h ? <dd className="text-[13px] text-muted-foreground">{h}</dd> : null}
+                  </div>
+                ))}
+              </dl>
+            </section>
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
               <figure className="surface min-w-0 p-5 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold">Volume de pagamentos</h2>
                     <p className="mt-1 text-[13px] text-muted-foreground">
-                      Aprovados por dia · horário de Brasília
+                      Aprovados em cada dia, no horário de Brasília
                     </p>
                   </div>
                   <span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -122,17 +114,11 @@ function AdminOverviewPage() {
                 ) : (
                   <div className="mt-6 h-[250px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
+                      <BarChart
                         data={data.series}
                         accessibilityLayer
                         margin={{ top: 10, right: 8, bottom: 0, left: 4 }}
                       >
-                        <defs>
-                          <linearGradient id="admin-volume-fill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.24} />
-                            <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
                         <CartesianGrid
                           stroke="var(--border)"
                           vertical={false}
@@ -170,15 +156,13 @@ function AdminOverviewPage() {
                             fontSize: 12,
                           }}
                         />
-                        <Area
-                          type="monotone"
+                        <Bar
                           dataKey="amount"
-                          stroke="var(--primary)"
-                          strokeWidth={2.5}
-                          fill="url(#admin-volume-fill)"
+                          fill="var(--primary)"
+                          radius={[3, 3, 0, 0]}
                           isAnimationActive={false}
                         />
-                      </AreaChart>
+                      </BarChart>
                     </ResponsiveContainer>
                   </div>
                 )}

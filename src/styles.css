@@ -4,14 +4,57 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Self-hosted fonts (OFL), no third-party requests. */
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/hanken-grotesk-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/hanken-grotesk-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  src: url("/fonts/bricolage-grotesque-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 900;
+  src: url("/fonts/schibsted-grotesk-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Martian Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  font-stretch: 75% 112.5%;
+  src: url("/fonts/martian-mono-latin.woff2") format("woff2");
+}
+
 /*
  * PAVOX design system.
- * Fintech premium: near-white canvas, near-black type, electric blue accent.
+ * Brand colors are binding: navy #001848 and PAVOX blue #0055fb.
+ * Light is the default world; dark is a navy night version of it.
+ * Type: Bricolage Grotesque for headings, Hanken Grotesk for everything else.
  */
 
 @theme inline {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -55,83 +98,94 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --shadow-card: 0 1px 2px oklch(0.2 0.03 262 / 0.04), 0 8px 24px -12px oklch(0.2 0.03 262 / 0.12);
-  --shadow-lift: 0 2px 4px oklch(0.2 0.03 262 / 0.05), 0 18px 40px -18px oklch(0.2 0.03 262 / 0.22);
-  --shadow-glow: 0 10px 40px -12px oklch(0.55 0.23 262 / 0.45);
+  --color-navy: var(--navy);
+  --color-highlight: var(--highlight);
+  --shadow-card: 0 1px 2px rgb(16 20 28 / 0.04);
+  --shadow-lift: 0 2px 4px rgb(16 20 28 / 0.05), 0 16px 32px -16px rgb(16 20 28 / 0.18);
+  --shadow-glow: 0 2px 4px rgb(16 20 28 / 0.05), 0 16px 32px -16px rgb(16 20 28 / 0.18);
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(0.984 0.002 260);
-  --foreground: oklch(0.17 0.02 264);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.17 0.02 264);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.17 0.02 264);
-  --primary: oklch(0.55 0.226 262);
-  --primary-foreground: oklch(0.99 0.002 260);
-  --secondary: oklch(0.965 0.005 260);
-  --secondary-foreground: oklch(0.24 0.02 264);
-  --muted: oklch(0.965 0.005 260);
-  --muted-foreground: oklch(0.545 0.02 262);
-  --accent: oklch(0.955 0.02 262);
-  --accent-foreground: oklch(0.42 0.18 262);
-  --destructive: oklch(0.585 0.22 25);
-  --destructive-foreground: oklch(0.99 0.002 260);
-  --success: oklch(0.62 0.16 152);
-  --success-foreground: oklch(0.99 0.002 260);
-  --warning: oklch(0.75 0.15 75);
-  --warning-foreground: oklch(0.22 0.03 60);
-  --border: oklch(0.92 0.005 260);
-  --input: oklch(0.92 0.005 260);
-  --ring: oklch(0.55 0.226 262);
-  --chart-1: oklch(0.55 0.226 262);
-  --chart-2: oklch(0.62 0.16 152);
-  --chart-3: oklch(0.72 0.13 230);
-  --chart-4: oklch(0.75 0.15 75);
-  --chart-5: oklch(0.6 0.2 300);
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.32 0.02 264);
-  --sidebar-primary: oklch(0.55 0.226 262);
-  --sidebar-primary-foreground: oklch(0.99 0.002 260);
-  --sidebar-accent: oklch(0.962 0.012 262);
-  --sidebar-accent-foreground: oklch(0.42 0.18 262);
-  --sidebar-border: oklch(0.93 0.005 260);
-  --sidebar-ring: oklch(0.55 0.226 262);
+  --radius: 0.625rem;
+  --navy: #001848;
+  --highlight: #c9daff;
+  --background: #fcfdfe;
+  --foreground: #0d1733;
+  --card: #ffffff;
+  --card-foreground: #0d1733;
+  --popover: #ffffff;
+  --popover-foreground: #0d1733;
+  --primary: #0055fb;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f5fa;
+  --secondary-foreground: #001848;
+  --muted: #f2f5fa;
+  --muted-foreground: #5a6178;
+  --accent: #e6eeff;
+  --accent-foreground: #0043c9;
+  --destructive: #b8322a;
+  --destructive-foreground: #ffffff;
+  --success: #1b7443;
+  --success-foreground: #ffffff;
+  --warning: #f0b429;
+  --warning-foreground: #2b1d00;
+  --border: #e3e7ef;
+  --input: #d5dbe6;
+  --ring: #0055fb;
+  --chart-1: #0055fb;
+  --chart-2: #c08a2a;
+  --chart-3: #1b7443;
+  --chart-4: #001848;
+  --chart-5: #8a94ab;
+  --sidebar: #f5f7fb;
+  --sidebar-foreground: #444c63;
+  --sidebar-primary: #0055fb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6eeff;
+  --sidebar-accent-foreground: #001848;
+  --sidebar-border: #e3e7ef;
+  --sidebar-ring: #0055fb;
 }
 
 .dark {
-  --background: oklch(0.16 0.015 264);
-  --foreground: oklch(0.97 0.003 260);
-  --card: oklch(0.205 0.018 264);
-  --card-foreground: oklch(0.97 0.003 260);
-  --popover: oklch(0.205 0.018 264);
-  --popover-foreground: oklch(0.97 0.003 260);
-  --primary: oklch(0.65 0.2 262);
-  --primary-foreground: oklch(0.14 0.02 264);
-  --secondary: oklch(0.26 0.02 264);
-  --secondary-foreground: oklch(0.97 0.003 260);
-  --muted: oklch(0.26 0.02 264);
-  --muted-foreground: oklch(0.7 0.02 262);
-  --accent: oklch(0.3 0.05 262);
-  --accent-foreground: oklch(0.85 0.1 262);
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.99 0.002 260);
-  --success: oklch(0.7 0.15 152);
-  --success-foreground: oklch(0.14 0.02 264);
-  --warning: oklch(0.8 0.14 75);
-  --warning-foreground: oklch(0.2 0.03 60);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.65 0.2 262);
-  --sidebar: oklch(0.185 0.018 264);
-  --sidebar-foreground: oklch(0.9 0.005 260);
-  --sidebar-primary: oklch(0.65 0.2 262);
-  --sidebar-primary-foreground: oklch(0.14 0.02 264);
-  --sidebar-accent: oklch(0.28 0.04 262);
-  --sidebar-accent-foreground: oklch(0.88 0.08 262);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.2 262);
+  --navy: #001848;
+  --highlight: #23407e;
+  --background: #06112b;
+  --foreground: #eef2fb;
+  --card: #0b1a3d;
+  --card-foreground: #eef2fb;
+  --popover: #0b1a3d;
+  --popover-foreground: #eef2fb;
+  --primary: #4d86ff;
+  --primary-foreground: #04102e;
+  --secondary: #13244d;
+  --secondary-foreground: #eef2fb;
+  --muted: #13244d;
+  --muted-foreground: #9aa8c7;
+  --accent: #16295a;
+  --accent-foreground: #cddcff;
+  --destructive: #ef6b61;
+  --destructive-foreground: #04102e;
+  --success: #4cc38a;
+  --success-foreground: #04102e;
+  --warning: #f0b429;
+  --warning-foreground: #2b1d00;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.14);
+  --ring: #4d86ff;
+  --chart-1: #4d86ff;
+  --chart-2: #e0a94a;
+  --chart-3: #4cc38a;
+  --chart-4: #cddcff;
+  --chart-5: #8a94ab;
+  --sidebar: #081633;
+  --sidebar-foreground: #c3cde4;
+  --sidebar-primary: #4d86ff;
+  --sidebar-primary-foreground: #04102e;
+  --sidebar-accent: #16295a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-ring: #4d86ff;
 }
 
 @layer base {
@@ -162,52 +216,35 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Former decorative utilities, now flat: no gradient text, no glows, no noise. */
 @utility text-gradient-brand {
-  background-image: linear-gradient(
-    100deg,
-    var(--color-foreground) 0%,
-    var(--color-primary) 60%,
-    oklch(0.68 0.16 250) 100%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+  color: var(--color-primary);
 }
 
 @utility bg-brand-gradient {
-  background-image: linear-gradient(135deg, oklch(0.5 0.24 266) 0%, oklch(0.6 0.2 250) 100%);
+  background-color: var(--color-navy);
 }
 
 @utility grid-noise {
-  background-image:
-    radial-gradient(circle at 20% 10%, oklch(0.55 0.226 262 / 0.14), transparent 45%),
-    radial-gradient(circle at 85% 0%, oklch(0.6 0.2 300 / 0.12), transparent 40%);
+  background-image: none;
 }
 
 @utility landing-light {
-  background:
-    radial-gradient(circle at 76% 54%, oklch(0.5 0.22 257 / 0.22), transparent 36%),
-    linear-gradient(118deg, transparent 34%, oklch(0.42 0.2 260 / 0.07) 62%, transparent 82%);
+  background: none;
 }
 
 @utility landing-device-glow {
-  background: oklch(0.58 0.23 255 / 0.28);
-  filter: blur(72px);
+  display: none;
 }
 
-/* PAVOX landing — subtle technical grid + ambient motion */
-.landing-grid {
-  background-image:
-    linear-gradient(to right, oklch(1 0 0 / 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / 0.045) 1px, transparent 1px);
-  background-size: 58px 58px;
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 78%);
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 78%);
-}
-
+.landing-grid,
 .landing-glow {
-  background: radial-gradient(circle, oklch(0.6 0.22 258 / 0.55) 0%, transparent 68%);
-  filter: blur(70px);
+  display: none;
+}
+
+::selection {
+  background: var(--color-highlight);
+  color: var(--color-foreground);
 }
 
 @keyframes pavox-fade-in {

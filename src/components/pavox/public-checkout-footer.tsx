@@ -1,5 +1,5 @@
 type PublicCheckoutFooterProps = {
-  displayName?: string | null;
+  displayName?: string | null | undefined;
   color?: string;
   mutedColor?: string;
 };
