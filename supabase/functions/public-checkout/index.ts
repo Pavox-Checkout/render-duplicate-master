@@ -1,7 +1,7 @@
 // Public checkout API (no login).
 //
-// POST { action?: "create", checkoutId, paymentMethod, idempotencyKey, buyer, card? }
-//   → creates customer + order (price from the database) and the gateway charge.
+// POST { action?: "create", checkoutId, paymentMethod, idempotencyKey, buyer, card?, couponCode? }
+//   → creates customer + order (price and coupon discount from the database) and the gateway charge.
 //   → 200 { order } — order.payment holds the Pix QR code / boleto line / card result.
 //   `card` is the token made in the browser by the gateway SDK — never card data.
 // POST { action: "config", checkoutId }
@@ -27,6 +27,11 @@ const ORDER_ERRORS: Record<string, { status: number; message: string }> = {
   invalid_phone: { status: 422, message: "Telefone inválido." },
   invalid_document: { status: 422, message: "CPF/CNPJ inválido." },
   invalid_address: { status: 422, message: "Endereço de entrega incompleto." },
+  coupon_invalid: { status: 422, message: "Cupom não encontrado. Confira o código." },
+  coupon_expired: { status: 422, message: "Este cupom venceu." },
+  coupon_not_started: { status: 422, message: "Este cupom ainda não começou a valer." },
+  coupon_exhausted: { status: 422, message: "Este cupom já atingiu o limite de usos." },
+  coupon_minimum: { status: 422, message: "Esta compra não atinge o valor mínimo do cupom." },
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -97,6 +102,7 @@ async function handleCreate(body: Record<string, unknown>) {
     p_buyer: buyerFrom(rawBuyer as Record<string, unknown>),
     p_payment_method: paymentMethod,
     p_idempotency_key: idempotencyKey,
+    p_coupon_code: str(body["couponCode"], 32) || null,
   });
   if (rpcError) {
     log("order.create_failed", { checkout_id: checkoutId, code: rpcError.message });

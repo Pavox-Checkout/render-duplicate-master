@@ -115,7 +115,7 @@ export const PLAN_CATALOG: PlanDisplay[] = [
       "Checkout avançado",
       "Order Bump (em breve)",
       "Upsell (em breve)",
-      "Cupons (em breve)",
+      "Cupons",
       "Recuperação de vendas (em breve)",
       "Analytics completo (em breve)",
       "Relatórios completos (em breve)",

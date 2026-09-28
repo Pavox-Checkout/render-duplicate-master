@@ -156,6 +156,15 @@ export type CheckoutSubmission = {
   values: Record<string, string>;
 };
 
+/** Checkout público real: cupom validado no servidor. */
+export type AppliedCoupon = { code: string; discount: number; amount: number };
+export type CouponControl = {
+  applied: AppliedCoupon | null;
+  /** Resolve com uma mensagem de erro, ou null quando o cupom foi aplicado. */
+  apply: (code: string) => Promise<string | null>;
+  remove: () => void;
+};
+
 type Props = {
   config: CheckoutConfig;
   device: Device;
@@ -173,6 +182,8 @@ type Props = {
   submitting?: boolean;
   /** Checkout público real: formulário seguro do gateway para cartão (substitui os campos de demonstração). */
   cardSlot?: ReactNode;
+  /** Checkout público real: cupom de desconto validado no servidor. */
+  coupon?: CouponControl | undefined;
 };
 
 export function CheckoutPreview({
@@ -186,6 +197,7 @@ export function CheckoutPreview({
   onSubmit,
   submitting = false,
   cardSlot,
+  coupon,
 }: Props) {
   const c = config;
   const col = c.colors;
@@ -390,8 +402,8 @@ export function CheckoutPreview({
     const card = opts.card !== false;
     return (
       <div className={card ? "space-y-3 p-4" : "space-y-3"} style={card ? cardStyle : undefined}>
-        {showSummary ? <Summary config={c} /> : null}
-        {showCoupon ? <Coupon config={c} /> : null}
+        {showSummary ? <Summary config={c} applied={coupon?.applied ?? null} /> : null}
+        {showCoupon ? <Coupon config={c} control={coupon} /> : null}
       </div>
     );
   }
@@ -1153,8 +1165,9 @@ function Avatar({ name, primary }: { name: string; primary: string }) {
   );
 }
 
-function Coupon({ config: c }: { config: CheckoutConfig }) {
+function Coupon({ config: c, control }: { config: CheckoutConfig; control?: CouponControl | undefined }) {
   const col = c.colors;
+  if (control) return <LiveCoupon config={c} control={control} />;
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1">
@@ -1172,21 +1185,112 @@ function Coupon({ config: c }: { config: CheckoutConfig }) {
   );
 }
 
-function Summary({ config: c }: { config: CheckoutConfig }) {
+/** Campo de cupom real: o servidor valida o código e devolve o novo total. */
+function LiveCoupon({ config: c, control }: { config: CheckoutConfig; control: CouponControl }) {
+  const col = c.colors;
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const radius = c.layout.radius * 0.6;
+
+  if (control.applied) {
+    return (
+      <div
+        className="flex items-center justify-between gap-2 px-3 py-2.5 text-[13px]"
+        style={{ borderRadius: radius, border: `1px dashed ${col.success}`, color: col.text }}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <Ticket className="h-4 w-4 shrink-0" style={{ color: col.success }} />
+          <span className="min-w-0 break-words">
+            <b>{control.applied.code}</b> -{brl(control.applied.discount)}
+          </span>
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            control.remove();
+            setMessage(null);
+          }}
+          className="min-h-9 shrink-0 px-2 font-semibold underline underline-offset-2"
+        >
+          Remover
+        </button>
+      </div>
+    );
+  }
+
+  const apply = async () => {
+    if (!code.trim() || busy) return;
+    setBusy(true);
+    setMessage(null);
+    const err = await control.apply(code.trim());
+    setBusy(false);
+    if (err) setMessage(err);
+    else setCode("");
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <label className="sr-only" htmlFor="checkout-coupon">
+          Cupom de desconto
+        </label>
+        <input
+          id="checkout-coupon"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void apply();
+            }
+          }}
+          placeholder="Tem um cupom de desconto?"
+          autoComplete="off"
+          className="h-11 min-w-0 flex-1 px-3 font-medium uppercase outline-none placeholder:normal-case"
+          style={{ borderRadius: radius, border: `1px solid ${col.border}`, background: col.surface, color: col.text, fontSize: 14 }}
+        />
+        <button
+          type="button"
+          onClick={() => void apply()}
+          disabled={busy || !code.trim()}
+          className="inline-flex h-11 items-center gap-1.5 px-4 text-[13.5px] font-semibold disabled:opacity-60"
+          style={{ borderRadius: radius, border: `1px solid ${col.border}`, color: col.text }}
+        >
+          <Ticket className="h-4 w-4" /> {busy ? "Verificando" : "Aplicar"}
+        </button>
+      </div>
+      {message ? (
+        <p role="alert" className="text-[12.5px] font-medium" style={{ color: col.error }}>
+          {message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function Summary({ config: c, applied = null }: { config: CheckoutConfig; applied?: AppliedCoupon | null }) {
   const col = c.colors;
   const p = c.product;
-  const total = p.price;
+  const total = applied ? applied.amount : p.price;
+  const hasCompare = !!(p.showCompare && p.compareAt && p.compareAt > p.price);
   return (
     <>
       <div className="space-y-1.5 text-[12.5px]" style={{ color: col.textMuted }}>
         <div className="flex justify-between">
           <span>{p.title}</span>
-          <span>{brl(p.price)}</span>
+          <span>{brl(hasCompare ? p.compareAt! : p.price)}</span>
         </div>
-        {p.showCompare && p.compareAt && p.compareAt > p.price ? (
+        {hasCompare && p.compareAt ? (
           <div className="flex justify-between">
             <span>Desconto</span>
             <span style={{ color: col.success }}>-{brl(p.compareAt - p.price)}</span>
+          </div>
+        ) : null}
+        {applied ? (
+          <div className="flex justify-between">
+            <span>Cupom {applied.code}</span>
+            <span style={{ color: col.success }}>-{brl(applied.discount)}</span>
           </div>
         ) : null}
       </div>

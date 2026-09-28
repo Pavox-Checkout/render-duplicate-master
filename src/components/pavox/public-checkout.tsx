@@ -4,6 +4,7 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 import { ExternalLink, Loader2 } from "lucide-react";
 import {
   CheckoutPreview,
+  type AppliedCoupon,
   type CheckoutSubmission,
 } from "@/components/pavox/builder/checkout-preview";
 import {
@@ -83,6 +84,14 @@ type PublicOrder = {
 
 const POLL_MS = 5000;
 
+const COUPON_ERRORS: Record<string, string> = {
+  coupon_invalid: "Cupom não encontrado. Confira o código.",
+  coupon_expired: "Este cupom venceu.",
+  coupon_not_started: "Este cupom ainda não começou a valer.",
+  coupon_exhausted: "Este cupom já atingiu o limite de usos.",
+  coupon_minimum: "Esta compra não atinge o valor mínimo do cupom.",
+};
+
 // The demo card fields are never sent: real card payments are typed in the
 // gateway's secure form (MercadoPagoCardForm) and arrive here as a token.
 const CARD_FIELD_IDS = new Set(["card_number", "card_name", "card_exp", "card_cvv"]);
@@ -129,12 +138,20 @@ function cardDeclineMessage(detail: string | undefined) {
 
 async function readFunctionError(
   error: unknown,
-): Promise<{ message: string; order?: PublicOrder }> {
+): Promise<{ message: string; code?: string; order?: PublicOrder }> {
   if (error instanceof FunctionsHttpError) {
     try {
-      const body = (await error.context.json()) as { message?: string; order?: PublicOrder };
+      const body = (await error.context.json()) as {
+        message?: string;
+        error?: string;
+        order?: PublicOrder;
+      };
       if (body?.message)
-        return { message: body.message, ...(body.order ? { order: body.order } : {}) };
+        return {
+          message: body.message,
+          ...(body.error ? { code: body.error } : {}),
+          ...(body.order ? { order: body.order } : {}),
+        };
     } catch {
       // fall through
     }
@@ -152,6 +169,7 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
   const mobile = useIsMobile();
   const [submitting, setSubmitting] = useState(false);
   const [order, setOrder] = useState<PublicOrder | null>(null);
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
   const idempotencyKey = useRef<string | null>(null);
   const cardForm = useRef<MercadoPagoCardFormHandle>(null);
 
@@ -182,6 +200,48 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
       return (data as { card: { provider: string; publicKey: string } | null }).card;
     },
   });
+
+  // The coupon field only shows when the store has an active coupon.
+  const hasCoupons = useQuery({
+    queryKey: ["public-checkout-coupons", query.data?.checkout.id],
+    enabled: !!query.data?.checkout.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "public_checkout_has_coupons" as never,
+        {
+          p_checkout_id: query.data!.checkout.id,
+        } as never,
+      );
+      if (error) return false;
+      return data === true;
+    },
+  });
+
+  const applyCoupon = async (code: string): Promise<string | null> => {
+    const data = query.data;
+    if (!data) return "Checkout indisponível.";
+    const { data: result, error } = await supabase.rpc(
+      "check_public_coupon" as never,
+      {
+        p_checkout_id: data.checkout.id,
+        p_code: code,
+      } as never,
+    );
+    if (error) return "Não foi possível verificar o cupom agora. Tente de novo.";
+    const r = result as {
+      valid: boolean;
+      reason?: string;
+      code?: string;
+      discount?: number;
+      amount?: number;
+    };
+    if (!r.valid) return COUPON_ERRORS[r.reason ?? ""] ?? "Cupom inválido.";
+    // A new order must be created with the discounted amount.
+    idempotencyKey.current = null;
+    setCoupon({ code: r.code!, discount: Number(r.discount), amount: Number(r.amount) });
+    return null;
+  };
 
   const product = query.data?.product ?? null;
   const imagePath = product?.image ?? null;
@@ -229,7 +289,15 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
       },
       // Not implemented server-side yet — hidden instead of faking them.
       summary: { ...base.summary, installmentsEnabled: false },
-      coupon: { ...base.coupon, enabled: false },
+      coupon: {
+        ...base.coupon,
+        enabled: hasCoupons.data === true,
+        position: base.coupon.enabled
+          ? base.coupon.position
+          : base.summary.enabled
+            ? "after-summary"
+            : "before-payment",
+      },
       // The builder's placeholder name never reaches buyers: use the real store name.
       header: {
         ...base.header,
@@ -251,7 +319,7 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
       live: { ...base.live, enabled: false },
       scarcity: { ...base.scarcity, enabled: false },
     };
-  }, [query.data, image.data]);
+  }, [query.data, image.data, hasCoupons.data]);
 
   const submit = async (submission: CheckoutSubmission) => {
     const data = query.data;
@@ -267,11 +335,40 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
       }
     }
     idempotencyKey.current ??= crypto.randomUUID();
+    if (coupon) {
+      // Registers the coupon for this order key; the server validates it again
+      // when it creates the order and charges the discounted amount.
+      const { data: intent, error: intentError } = await supabase.rpc(
+        "set_public_coupon_intent" as never,
+        {
+          p_checkout_id: data.checkout.id,
+          p_idempotency_key: idempotencyKey.current,
+          p_code: coupon.code,
+        } as never,
+      );
+      const r = intent as { valid?: boolean; reason?: string } | null;
+      if (intentError || !r?.valid) {
+        setSubmitting(false);
+        if (r && r.reason !== "order_exists") {
+          setCoupon(null);
+          toast.error(
+            COUPON_ERRORS[r.reason ?? ""] ?? "Este cupom não vale mais para esta compra.",
+          );
+          return;
+        }
+        if (intentError) {
+          toast.error("Não foi possível confirmar o cupom agora. Tente de novo.");
+          return;
+        }
+      }
+      setSubmitting(true);
+    }
     const { data: result, error } = await supabase.functions.invoke("public-checkout", {
       body: {
         checkoutId: data.checkout.id,
         paymentMethod: submission.method,
         idempotencyKey: idempotencyKey.current,
+        ...(coupon ? { couponCode: coupon.code } : {}),
         buyer: buyerFromSubmission(
           submission,
           data.product.type === "fisico" || submission.method === "boleto",
@@ -283,7 +380,13 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
     if (error) {
       // On a gateway failure the order exists but has no charge yet: the same
       // idempotency key retries the charge for that same order.
-      toast.error((await readFunctionError(error)).message);
+      const failure = await readFunctionError(error);
+      if (failure.code?.startsWith("coupon_")) {
+        // The coupon stopped being valid (expired, used up): drop it and let the buyer retry.
+        setCoupon(null);
+        idempotencyKey.current = null;
+      }
+      toast.error(failure.message);
       return;
     }
     const next = (result as { order: PublicOrder }).order;
@@ -373,12 +476,20 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
         phoneRequiredMethods={data.phone_required ?? []}
         onSubmit={(s) => void submit(s)}
         submitting={submitting}
+        coupon={{
+          applied: coupon,
+          apply: applyCoupon,
+          remove: () => {
+            setCoupon(null);
+            idempotencyKey.current = null;
+          },
+        }}
         cardSlot={
           cardConfig.data ? (
             <MercadoPagoCardForm
               ref={cardForm}
               publicKey={cardConfig.data.publicKey}
-              amount={Number(data.product.price)}
+              amount={coupon ? coupon.amount : Number(data.product.price)}
             />
           ) : cardConfig.isLoading ? (
             <div className="flex justify-center py-6">
