@@ -29,13 +29,13 @@ export function PaymentConversion() {
     <section
       id="conversao"
       aria-labelledby="conversion-title"
-      className="relative overflow-hidden bg-white py-24 text-[#071127] sm:py-32"
+      className="relative overflow-hidden bg-white py-16 text-[#071127] sm:py-20"
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_38%,rgb(0_85_251/0.06),transparent_34%)]"
       />
-      <div className="relative mx-auto grid w-full max-w-[1120px] gap-14 px-5 md:px-8 lg:grid-cols-[0.84fr_1.16fr] lg:items-center lg:gap-20">
+      <div className="relative mx-auto grid w-full max-w-[1120px] items-center gap-10 px-5 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <Reveal from="left">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#0055fb]/20 bg-[#0055fb]/[0.06] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0055fb]">
@@ -122,7 +122,7 @@ export function PaymentConversion() {
         </Reveal>
       </div>
 
-      <div className="relative mx-auto mt-16 grid w-full max-w-[1120px] grid-cols-1 gap-px overflow-hidden rounded-2xl border border-[#e5ebf4] bg-[#e5ebf4] sm:grid-cols-2 lg:grid-cols-4">
+      <div className="relative mx-auto mt-10 grid w-full max-w-[1120px] grid-cols-1 gap-px overflow-hidden rounded-2xl border border-[#e5ebf4] bg-[#e5ebf4] sm:grid-cols-2 lg:grid-cols-4">
         {highlights.map(({ icon: Icon, title, description }, index) => (
           <Reveal key={title} delay={index * 70} className="bg-white">
             <div className="h-full p-5 sm:p-6">
