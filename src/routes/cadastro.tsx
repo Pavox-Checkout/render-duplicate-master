@@ -97,7 +97,19 @@ function CadastroPage() {
   };
 
   return (
-    <AuthShell greeting="Seu checkout no ar ainda hoje.">
+    <AuthShell
+      greeting="Seu checkout no ar ainda hoje."
+      railContent={
+        <div className="max-w-[290px]">
+          <h2 className="font-display text-[28px] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+            Comece a vender com a PAVOX.
+          </h2>
+          <p className="mt-4 text-[16px] leading-[1.55] text-[#b9c6e4]">
+            Crie seu checkout, conecte seu gateway e tenha tudo pronto para começar a vender.
+          </p>
+        </div>
+      }
+    >
       <AuthTitle title="Criar sua conta">É grátis. Você escolhe o plano depois.</AuthTitle>
 
       <form onSubmit={submit} className="flex flex-col gap-5">
