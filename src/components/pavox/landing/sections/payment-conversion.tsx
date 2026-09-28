@@ -29,16 +29,16 @@ export function PaymentConversion() {
     <section
       id="conversao"
       aria-labelledby="conversion-title"
-      className="relative overflow-hidden bg-[#071127] py-24 text-white sm:py-32"
+      className="relative overflow-hidden bg-white py-24 text-[#071127] sm:py-32"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_38%,rgb(0_85_251/0.16),transparent_34%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_38%,rgb(0_85_251/0.06),transparent_34%)]"
       />
       <div className="relative mx-auto grid w-full max-w-[1120px] gap-14 px-5 md:px-8 lg:grid-cols-[0.84fr_1.16fr] lg:items-center lg:gap-20">
         <Reveal from="left">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#4d8dff]/30 bg-[#0055fb]/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8db8ff]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#0055fb]/20 bg-[#0055fb]/[0.06] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0055fb]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#4d8dff]" />
               Alta conversão
             </span>
@@ -48,13 +48,13 @@ export function PaymentConversion() {
             >
               Mais conversão em cada pagamento.
             </h2>
-            <p className="mt-6 max-w-[44ch] text-[17px] leading-7 text-white/60">
+            <p className="mt-6 max-w-[44ch] text-[17px] leading-7 text-[#53627a]">
               Uma experiência de checkout pensada para reduzir atritos, facilitar o pagamento e
               ajudar seu negócio a vender mais.
             </p>
             <div className="mt-9 border-l-2 border-[#0055fb] pl-5">
-              <p className="text-base font-bold text-white">Checkout otimizado para conversão</p>
-              <p className="mt-2 max-w-[40ch] text-[15px] leading-6 text-white/55">
+              <p className="text-base font-bold text-[#071127]">Checkout otimizado para conversão</p>
+              <p className="mt-2 max-w-[40ch] text-[15px] leading-6 text-[#53627a]">
                 Pix, cartão e boleto em uma experiência simples, rápida e preparada para diferentes
                 jornadas de compra.
               </p>
@@ -63,21 +63,21 @@ export function PaymentConversion() {
         </Reveal>
 
         <Reveal from="right" delay={120}>
-          <div className="relative rounded-[26px] border border-white/10 bg-white/[0.045] p-3 shadow-[0_30px_100px_-35px_rgb(0_85_251/0.65)] sm:p-4">
-            <div className="rounded-[19px] border border-white/10 bg-[#0c1933] p-5 sm:p-6">
+          <div className="relative rounded-[26px] border border-[#dce5f2] bg-white p-3 shadow-[0_24px_70px_-42px_rgb(0_85_251/0.28)] sm:p-4">
+            <div className="rounded-[19px] border border-[#e5ebf4] bg-[#f8faff] p-5 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-white/45">Visão do checkout</p>
-                  <h3 className="mt-1 text-lg font-bold text-white">Performance de pagamentos</h3>
+                  <p className="text-xs font-medium text-[#71809a]">Visão do checkout</p>
+                  <h3 className="mt-1 text-lg font-bold text-[#071127]">Performance de pagamentos</h3>
                 </div>
                 <span className="grid size-9 place-items-center rounded-xl bg-[#0055fb]/15 text-[#70a3ff] ring-1 ring-[#0055fb]/30">
                   <Gauge className="size-4" />
                 </span>
               </div>
 
-              <div className="mt-7 rounded-2xl border border-white/10 bg-[#09142b] p-4">
+              <div className="mt-7 rounded-2xl border border-[#e5ebf4] bg-white p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/45">Fluxo de conversão</span>
+                  <span className="text-xs text-[#71809a]">Fluxo de conversão</span>
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-[#70a3ff]">
                     <ArrowUpRight className="size-3.5" /> Em movimento
                   </span>
@@ -94,7 +94,7 @@ export function PaymentConversion() {
                     />
                   ))}
                 </div>
-                <div className="mt-3 flex justify-between text-[10px] uppercase tracking-[0.14em] text-white/30">
+                <div className="mt-3 flex justify-between text-[10px] uppercase tracking-[0.14em] text-[#9aa8bc]">
                   <span>Entrada</span>
                   <span>Checkout</span>
                   <span>Pagamento</span>
@@ -105,10 +105,10 @@ export function PaymentConversion() {
                 {["Pix", "Cartão", "Boleto"].map((method, index) => (
                   <div
                     key={method}
-                    className="rounded-xl border border-white/10 bg-white/[0.035] p-3"
+                    className="rounded-xl border border-[#e5ebf4] bg-white p-3"
                   >
-                    <span className="text-[11px] text-white/45">{method}</span>
-                    <div className="mt-3 h-1.5 rounded-full bg-white/10">
+                    <span className="text-[11px] text-[#71809a]">{method}</span>
+                    <div className="mt-3 h-1.5 rounded-full bg-[#e8eef7]">
                       <div
                         className="h-full rounded-full bg-[#4d8dff]"
                         style={{ width: `${[78, 64, 48][index]}%` }}
@@ -122,13 +122,13 @@ export function PaymentConversion() {
         </Reveal>
       </div>
 
-      <div className="relative mx-auto mt-16 grid w-full max-w-[1120px] grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="relative mx-auto mt-16 grid w-full max-w-[1120px] grid-cols-1 gap-px overflow-hidden rounded-2xl border border-[#e5ebf4] bg-[#e5ebf4] sm:grid-cols-2 lg:grid-cols-4">
         {highlights.map(({ icon: Icon, title, description }, index) => (
-          <Reveal key={title} delay={index * 70} className="bg-[#071127]">
+          <Reveal key={title} delay={index * 70} className="bg-white">
             <div className="h-full p-5 sm:p-6">
               <Icon className="size-5 text-[#70a3ff]" />
-              <h3 className="mt-5 text-sm font-bold text-white">{title}</h3>
-              <p className="mt-2 text-[13px] leading-5 text-white/50">{description}</p>
+              <h3 className="mt-5 text-sm font-bold text-[#071127]">{title}</h3>
+              <p className="mt-2 text-[13px] leading-5 text-[#71809a]">{description}</p>
             </div>
           </Reveal>
         ))}
