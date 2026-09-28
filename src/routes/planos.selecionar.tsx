@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Minus } from "lucide-react";
 import { toast } from "sonner";
-import { PavoxLogo } from "@/components/pavox/logo";
+import { AuthShell, AuthTitle } from "@/components/pavox/auth-shell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -97,7 +97,9 @@ function SelecionarPlano() {
       // Não silenciar a causa: mostra o código/mensagem reais do Supabase.
       const e = err as { code?: string; message?: string; details?: string };
       console.error("[v0] falha ao selecionar plano:", e);
-      const detail = e.code ? `Erro ${e.code}: ${e.message ?? ""}` : e.message ?? "Tente novamente.";
+      const detail = e.code
+        ? `Erro ${e.code}: ${e.message ?? ""}`
+        : (e.message ?? "Tente novamente.");
       toast.error("Não foi possível salvar seu plano.", { description: detail });
     } finally {
       setSaving(null);
@@ -113,36 +115,24 @@ function SelecionarPlano() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10 sm:px-6">
-      <div className="mx-auto w-full max-w-5xl">
-        <div className="flex justify-center">
-          <PavoxLogo />
-        </div>
+    <AuthShell greeting="Conta criada. Agora, o plano." wide>
+      <AuthTitle title="Escolha seu plano">
+        Você pode mudar de plano quando quiser. A taxa PAVOX vale só para vendas aprovadas e é
+        separada da taxa do seu gateway.
+      </AuthTitle>
 
-        <div className="mt-8 text-center">
-          <h1 className="text-2xl font-bold sm:text-[32px]">Escolha seu plano</h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-            Escolha o plano ideal para sua operação. Você pode alterar seu plano posteriormente.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {PLAN_CATALOG.map((plan) => (
-            <PlanCard
-              key={plan.slug}
-              plan={plan}
-              saving={saving === plan.slug}
-              disabled={saving !== null}
-              onSelect={() => void handleSelect(plan)}
-            />
-          ))}
-        </div>
-
-        <p className="mt-8 text-center text-[12.5px] text-muted-foreground">
-          A taxa PAVOX é cobrada por transação aprovada e é separada da taxa do seu gateway de pagamento.
-        </p>
+      <div className="grid gap-4 md:grid-cols-3">
+        {PLAN_CATALOG.map((plan) => (
+          <PlanCard
+            key={plan.slug}
+            plan={plan}
+            saving={saving === plan.slug}
+            disabled={saving !== null}
+            onSelect={() => void handleSelect(plan)}
+          />
+        ))}
       </div>
-    </div>
+    </AuthShell>
   );
 }
 
@@ -161,51 +151,54 @@ function PlanCard({
   return (
     <div
       className={cn(
-        "surface flex flex-col p-5",
-        plan.highlight && "border-primary/40 shadow-[var(--shadow-lift)]",
+        "flex flex-col rounded-2xl border-[1.5px] bg-card p-6",
+        plan.highlight ? "border-primary" : "border-border",
       )}
     >
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">PAVOX {plan.name}</h2>
+      <h2 className="font-sans text-xl font-bold tracking-normal text-[#001848] dark:text-foreground">
+        {plan.name}
         {plan.highlight && (
-          <span className="rounded-full bg-accent px-2.5 py-0.5 text-[11.5px] font-semibold text-accent-foreground">
-            Mais escolhido
-          </span>
+          <span className="ml-2 text-sm font-semibold text-primary">Recomendado</span>
         )}
-      </div>
+      </h2>
 
-      <p className="mt-3 font-display text-2xl font-bold">
-        {brl(plan.monthlyPrice)}
-        <span className="text-[13px] font-medium text-muted-foreground">/mês</span>
+      <p className="mt-3 text-[34px] font-bold tracking-[-0.02em] text-[#001848] tabular-nums dark:text-foreground">
+        {brl(plan.monthlyPrice)}{" "}
+        <span className="text-base font-medium tracking-normal text-muted-foreground">por mês</span>
       </p>
+      <p className="mt-1 font-semibold">{pct(plan.feePercent)} por venda aprovada</p>
+      <p className="text-[15px] text-muted-foreground">{plan.checkoutLabel}</p>
 
-      <dl className="mt-4 space-y-1.5 text-[13px]">
-        <div className="flex justify-between">
-          <dt className="text-muted-foreground">Taxa PAVOX</dt>
-          <dd className="font-semibold">{pct(plan.feePercent)} por transação</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-muted-foreground">Checkouts</dt>
-          <dd className="font-medium">{plan.checkoutLabel}</dd>
-        </div>
-      </dl>
-
-      <ul className="mt-4 flex-1 space-y-2 border-t border-border pt-4">
-        {plan.features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-[13px]">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" /> {f}
-          </li>
-        ))}
+      <ul className="mt-5 flex-1 space-y-2 border-t border-border pt-5">
+        {plan.features.map((f) => {
+          const without = f.startsWith("Sem ");
+          return (
+            <li
+              key={f}
+              className={cn(
+                "flex items-start gap-2 text-[15px]",
+                without ? "text-muted-foreground" : "text-foreground",
+              )}
+            >
+              {without ? (
+                <Minus aria-hidden="true" className="mt-1 size-4 shrink-0" />
+              ) : (
+                <Check aria-hidden="true" className="mt-1 size-4 shrink-0 text-primary" />
+              )}
+              {f}
+            </li>
+          );
+        })}
       </ul>
 
       <Button
-        className="mt-5"
-        variant={plan.highlight ? "default" : free ? "default" : "outline"}
+        className="mt-6 h-12 rounded-[10px] text-[16px] font-bold"
+        variant={plan.slug === "pro" ? "outline" : "default"}
         disabled={disabled}
         onClick={onSelect}
       >
-        {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-        {free ? "Começar gratuitamente" : `Escolher ${plan.name}`}
+        {saving && <Loader2 className="size-4 animate-spin" />}
+        {free ? "Começar no Free" : `Escolher o ${plan.name}`}
       </Button>
     </div>
   );

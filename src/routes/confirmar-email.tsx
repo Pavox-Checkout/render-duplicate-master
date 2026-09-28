@@ -1,7 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { PavoxLogo } from "@/components/pavox/logo";
+import {
+  AuthShell,
+  AuthTitle,
+  authButton,
+  authInput,
+  authLabel,
+  authLink,
+} from "@/components/pavox/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +16,6 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-const confirmHeroAsset = { url: "/pavox-auth-banner.png" };
 
 // Must match "Email OTP Length" in Supabase (Authentication → Sign In / Providers → Email).
 const CODE_LENGTH = 8;
@@ -97,89 +103,85 @@ function ConfirmarEmailPage() {
   };
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-2">
-      <div className="flex items-center justify-center px-5 py-12">
-        <div className="w-full max-w-[380px]">
-          <PavoxLogo />
-          <h1 className="font-display mt-8 text-[26px] font-bold tracking-tight">
-            Confirme seu e-mail
-          </h1>
-          <p className="mt-1.5 text-[14px] text-muted-foreground">
-            {emailFromSearch ? (
-              <>
-                Enviamos um código de {CODE_LENGTH} dígitos para{" "}
-                <span className="font-medium text-foreground">{emailFromSearch}</span>.
-              </>
-            ) : (
-              <>Digite o código de {CODE_LENGTH} dígitos que enviamos para o seu e-mail.</>
-            )}
-          </p>
+    <AuthShell greeting="Falta só confirmar o seu e-mail.">
+      <AuthTitle title="Confirme seu e-mail">
+        {emailFromSearch ? (
+          <>
+            Enviamos um código de {CODE_LENGTH} números para{" "}
+            <span className="font-semibold text-foreground">{emailFromSearch}</span>.
+          </>
+        ) : (
+          <>Digite o código de {CODE_LENGTH} números que enviamos para o seu e-mail.</>
+        )}
+      </AuthTitle>
 
-          <form onSubmit={submit} className="mt-7 space-y-5">
-            {!emailFromSearch && (
-              <div className="space-y-1.5">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="voce@suaempresa.com"
-                />
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="codigo">Código de confirmação</Label>
-              <InputOTP
-                id="codigo"
-                maxLength={CODE_LENGTH}
-                inputMode="numeric"
-                pattern="^[0-9]*$"
-                autoComplete="one-time-code"
-                autoFocus
-                value={code}
-                onChange={setCode}
-                onComplete={(value: string) => void verify(value)}
-                disabled={busy}
-              >
-                <InputOTPGroup>
-                  {Array.from({ length: CODE_LENGTH }, (_, i) => (
-                    <InputOTPSlot
-                      key={i}
-                      index={i}
-                      className="h-11 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            <Button type="submit" className="w-full" disabled={busy || code.length !== CODE_LENGTH}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Confirmar
-            </Button>
-          </form>
-
-          <div className="mt-5 flex flex-col items-start gap-2 text-[13px]">
-            <button
-              type="button"
-              onClick={resend}
-              disabled={resending || cooldown > 0}
-              className="text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
-            >
-              {cooldown > 0 ? `Reenviar código em ${cooldown}s` : "Reenviar código"}
-            </button>
-            <Link to="/login" className="text-muted-foreground hover:text-foreground">
-              Voltar para o login
-            </Link>
+      <form onSubmit={submit} className="flex flex-col gap-5">
+        {!emailFromSearch && (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email" className={authLabel}>
+              E-mail
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="voce@sualoja.com"
+              className={authInput}
+            />
           </div>
+        )}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="codigo" className={authLabel}>
+            Código de confirmação
+          </Label>
+          <InputOTP
+            id="codigo"
+            maxLength={CODE_LENGTH}
+            inputMode="numeric"
+            pattern="^[0-9]*$"
+            autoComplete="one-time-code"
+            autoFocus
+            value={code}
+            onChange={setCode}
+            onComplete={(value: string) => void verify(value)}
+            disabled={busy}
+          >
+            <InputOTPGroup>
+              {Array.from({ length: CODE_LENGTH }, (_, i) => (
+                <InputOTPSlot
+                  key={i}
+                  index={i}
+                  className="h-12 w-[42px] bg-card text-lg font-semibold sm:w-12"
+                />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
         </div>
-      </div>
+        <Button type="submit" className={authButton} disabled={busy || code.length !== CODE_LENGTH}>
+          {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+          {busy ? "Confirmando" : "Confirmar"}
+        </Button>
+      </form>
 
-      <div
-        className="relative hidden bg-contain bg-center bg-no-repeat lg:flex"
-        style={{ backgroundImage: `url(${confirmHeroAsset.url})` }}
-      ></div>
-    </div>
+      <div className="mt-6 flex flex-col items-start gap-1 border-t border-border pt-4 text-[15px]">
+        <button
+          type="button"
+          onClick={resend}
+          disabled={resending || cooldown > 0}
+          className={`min-h-11 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline ${authLink}`}
+        >
+          {cooldown > 0 ? `Reenviar código em ${cooldown}s` : "Reenviar código"}
+        </button>
+        <Link
+          to="/login"
+          className="flex min-h-11 items-center text-muted-foreground hover:text-foreground"
+        >
+          Voltar para o login
+        </Link>
+      </div>
+    </AuthShell>
   );
 }
