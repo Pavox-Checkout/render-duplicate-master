@@ -164,6 +164,9 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
   .sheet-wrap .scrim { display: none; }
   .sheet { width: 480px; box-shadow: -1px 0 0 var(--rule-2), -18px 0 36px -24px rgba(0,0,0,.25); }
   body.pane-open .main { padding-right: 520px; }
+  body.pane-open .list.cols .mo { display: none; }
+  body.pane-open .list.cols .lrow, body.pane-open .list.cols .thead { grid-template-columns: minmax(0, 1fr) 120px 100px; }
+  body.pane-open .search { flex-basis: 100%; max-width: none; }
 }
 @keyframes sheet { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fresh { 0% { background: var(--hl); } 100% { background: transparent; } }
@@ -196,9 +199,12 @@ button.lrow { width: 100%; border: 0; border-bottom: 1px solid var(--rule); back
   .lrow > :first-child { grid-column: 1; grid-row: 1 / span 2; }
   .lrow > .r { grid-column: 2; grid-row: 1; }
   .lrow > .s { grid-column: 2; grid-row: 2; text-align: right; }
-  .lrow { align-items: start; }
+  .lrow { align-items: start; grid-template-rows: 22px auto; }
+  .kv { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kv dt { font-size: 12px; }
+  .kv dd { font-size: 17px; }
+  .kv dd span { display: block; margin: 0; font-size: 11.5px; }
   .kv div { padding: 8px 10px 8px 0; }
-  .kv dd { font-size: 19px; }
   .fig { gap: 14px; padding: 16px 0; }
   .pagehead { margin-bottom: 12px; }
   .attn { padding: 10px 0; font-size: 14px; }
