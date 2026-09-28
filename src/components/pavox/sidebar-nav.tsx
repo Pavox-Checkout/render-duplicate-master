@@ -94,7 +94,7 @@ function NavItem({
       to={to}
       onClick={onNavigate}
       activeOptions={{ exact: to === "/dashboard" }}
-      className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
+      className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14.5px] font-medium text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
     >
       <Icon className="h-[17px] w-[17px] shrink-0 opacity-80 group-data-[status=active]:opacity-100" />
       <span className="truncate">{label}</span>
@@ -220,7 +220,7 @@ export function SidebarNav({
           <NavItem to="/admin" label="Administração" icon={ShieldCheck} onNavigate={onNavigate} />
         )}
 
-        <p className="px-2.5 pt-5 pb-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+        <p className="px-2.5 pt-5 pb-2 text-[13px] font-semibold text-muted-foreground">
           Configurações
         </p>
         {settings.map((item) => (
@@ -233,7 +233,7 @@ export function SidebarNav({
           <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">
               {avatarUrl ? <AvatarImage src={avatarUrl} alt={`Foto de perfil de ${name}`} /> : null}
-              <AvatarFallback className="bg-brand-gradient text-[12px] font-semibold text-primary-foreground">
+              <AvatarFallback className="bg-[#001848] text-[12px] font-semibold text-white">
                 {initialsOf(name, email)}
               </AvatarFallback>
             </Avatar>

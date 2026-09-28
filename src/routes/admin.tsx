@@ -64,7 +64,7 @@ function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full w-[248px] flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex h-16 items-center px-5">
-        <PavoxLogo className="dark:[&_img]:brightness-0 dark:[&_img]:invert" />
+        <PavoxLogo />
       </div>
       <div className="mx-4 mb-5 mt-3 flex items-center gap-3 rounded-xl border border-border bg-accent/50 p-3">
         <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
@@ -136,7 +136,7 @@ function AdminLayout() {
   if (access.isError)
     return (
       <div className="mx-auto max-w-lg space-y-4 px-4 py-20">
-        <PavoxLogo className="dark:[&_img]:brightness-0 dark:[&_img]:invert" />
+        <PavoxLogo />
         <AdminError error={access.error} retry={() => void access.refetch()} />
         <Button asChild variant="outline">
           <Link to="/dashboard">Voltar ao painel</Link>

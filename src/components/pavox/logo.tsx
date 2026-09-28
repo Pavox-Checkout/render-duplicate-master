@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-const dashboardLogoAsset = { url: "/pavox-logo.png" };
 
+/** Official PAVOX wordmark: navy on light surfaces, white in the dark theme. */
 export function PavoxLogo({
   className,
   compact = false,
@@ -8,12 +8,22 @@ export function PavoxLogo({
   className?: string;
   compact?: boolean;
 }) {
+  const img = cn("h-7 w-auto object-contain object-left", compact && "w-7 object-cover");
   return (
     <span className={cn("flex h-8 items-center", className)}>
       <img
-        src={dashboardLogoAsset.url}
-        alt="PAVOX Checkout"
-        className={cn("h-8 object-contain object-left", compact ? "w-8" : "w-[95px]")}
+        src="/pavox-wordmark.png"
+        alt="PAVOX"
+        width={84}
+        height={28}
+        className={cn(img, "dark:hidden")}
+      />
+      <img
+        src="/pavox-logo-white.png"
+        alt="PAVOX"
+        width={84}
+        height={28}
+        className={cn(img, "hidden dark:block")}
       />
     </span>
   );
