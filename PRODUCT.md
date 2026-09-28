@@ -48,7 +48,7 @@ The PAVOX name, logo and colors are binding. The user confirmed this while revie
 - **Assets:** the files in `public/` (`pavox-logo.png`, `favicon.png`, `pavox-banner.png`, `pavox-auth-banner.png`) are still in use.
 - **Buyer checkout:** it uses the lojista's own color. PAVOX blue is only the default.
 
-The user asked that every redesign be prototyped in a separate file first and replace the live UI only after they approve it.
+The user asked that every redesign be prototyped in a separate file first and replace the live UI only after they approve it. The 2026 redesign was approved and applied (see DESIGN.md); the previous design is kept on the `design-antigo` branch.
 
 ## Evidence on Hand
 
