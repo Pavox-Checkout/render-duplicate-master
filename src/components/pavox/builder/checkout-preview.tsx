@@ -224,18 +224,40 @@ export function CheckoutPreview({
     if (stepIndex > steps.length - 1) setStepIndex(Math.max(0, steps.length - 1));
   }, [steps.length, stepIndex]);
 
+  // "Comprovante" model: the whole form is one paper receipt on the store color.
+  const receipt = c.preset === "comprovante";
+  const PAPER = "#fbfcfd";
   const rootStyle: CSSProperties = {
-    background: col.background,
+    background: receipt ? col.primary : col.background,
     fontFamily: FONT_STACKS[c.typography.fontFamily],
     color: col.text,
     lineHeight: c.typography.lineHeight,
   };
-  const cardStyle: CSSProperties = {
-    background: col.surface,
-    border: `1px solid ${col.border}`,
-    borderRadius: c.layout.radius,
-    color: col.text,
-  };
+  const cardStyle: CSSProperties = receipt
+    ? {
+        background: "transparent",
+        border: "none",
+        borderBottom: `2px dashed ${col.border}`,
+        borderRadius: 0,
+        color: col.text,
+      }
+    : {
+        background: col.surface,
+        border: `1px solid ${col.border}`,
+        borderRadius: c.layout.radius,
+        color: col.text,
+      };
+  const columnStyle: CSSProperties = receipt
+    ? {
+        maxWidth: mobile ? "100%" : c.layout.width,
+        background: PAPER,
+        color: col.text,
+        borderRadius: "4px 4px 0 0",
+        padding: "8px 4px 16px",
+        gap: 0,
+        boxShadow: "0 18px 30px -18px rgb(0 0 0 / 0.35)",
+      }
+    : { maxWidth: mobile ? "100%" : c.layout.width };
 
   const docRequired = live && (method === "boleto" || (documentRequiredMethods ?? []).includes(method));
   const phoneRequired = live && (phoneRequiredMethods ?? []).includes(method);
@@ -418,8 +440,11 @@ export function CheckoutPreview({
       {/* banner */}
       <Banner config={c} device={device} />
 
-      <div className="px-4 py-4" style={{ fontSize: bodySize }}>
-        <div className="mx-auto flex flex-col gap-4" style={{ maxWidth: mobile ? "100%" : c.layout.width }}>
+      <div
+        className={cn("px-4 py-4", receipt && !mobile && "py-10")}
+        style={{ fontSize: bodySize }}
+      >
+        <div className="mx-auto flex flex-col gap-4" style={columnStyle}>
           {/* cabeçalho */}
           <Header config={c} device={device} />
 
@@ -531,6 +556,16 @@ export function CheckoutPreview({
           {/* resumo/cupom — final do checkout */}
           {renderSlot("end")}
         </div>
+        {receipt ? (
+          <div
+            aria-hidden="true"
+            className="mx-auto h-2.5"
+            style={{
+              maxWidth: mobile ? "100%" : c.layout.width,
+              background: `radial-gradient(circle at 7px 0, transparent 6.5px, ${PAPER} 7px) 0 0 / 14px 10px repeat-x`,
+            }}
+          />
+        ) : null}
       </div>
 
       {/* compra ao vivo */}

@@ -230,8 +230,24 @@ export function PublicCheckout({ store, checkout }: { store: string; checkout: s
       // Not implemented server-side yet — hidden instead of faking them.
       summary: { ...base.summary, installmentsEnabled: false },
       coupon: { ...base.coupon, enabled: false },
-      social: { ...base.social, enabled: base.social.enabled && testimonials.length > 0, testimonials },
-      notice: { ...base.notice, enabled: base.notice.enabled && notices.length > 0, messages: notices },
+      // The builder's placeholder name never reaches buyers: use the real store name.
+      header: {
+        ...base.header,
+        storeName:
+          !base.header.storeName.trim() || base.header.storeName === "Sua Loja"
+            ? data.store.checkout_display_name?.trim() || data.store.name
+            : base.header.storeName,
+      },
+      social: {
+        ...base.social,
+        enabled: base.social.enabled && testimonials.length > 0,
+        testimonials,
+      },
+      notice: {
+        ...base.notice,
+        enabled: base.notice.enabled && notices.length > 0,
+        messages: notices,
+      },
       live: { ...base.live, enabled: false },
       scarcity: { ...base.scarcity, enabled: false },
     };
