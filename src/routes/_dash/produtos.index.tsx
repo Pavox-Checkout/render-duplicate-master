@@ -5,6 +5,7 @@ import {
   Activity,
   Archive,
   Copy,
+  ExternalLink,
   Filter,
   MoreHorizontal,
   Package,
@@ -42,6 +43,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { brl } from "@/lib/mock";
 import { useProducts } from "@/lib/pavox-data";
+import { useAuth } from "@/hooks/useAuth";
 import { PRODUCT_TYPE_LABEL } from "@/lib/products";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -64,6 +66,17 @@ function Produtos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: items = [], isLoading } = useProducts();
+  const { profile } = useAuth();
+  const publicUrl = (slug: string) => `${window.location.origin}/p/${profile?.store_slug ?? ""}/${slug}`;
+  const copyPublic = async (slug: string) => {
+    if (!profile?.store_slug || !slug) return;
+    await navigator.clipboard.writeText(publicUrl(slug));
+    toast.success("Link público copiado");
+  };
+  const openPublic = (slug: string) => {
+    if (!profile?.store_slug || !slug) return;
+    window.open(publicUrl(slug), "_blank", "noopener,noreferrer");
+  };
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
   const [type, setType] = useState("todos");
@@ -318,6 +331,12 @@ function Produtos() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => void navigate({ to: "/produtos/$id", params: { id: p.id } })}>
                               <Pencil className="h-4 w-4" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => void copyPublic(p.slug)}>
+                              <Copy className="h-4 w-4" /> Copiar link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openPublic(p.slug)}>
+                              <ExternalLink className="h-4 w-4" /> Abrir produto
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => void duplicate(p.id)}>
                               <Copy className="h-4 w-4" /> Duplicar
